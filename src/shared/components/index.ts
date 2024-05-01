@@ -6,3 +6,4 @@ export {VexaLogo} from './VexaLogo';
 export {MicrophoneOptions} from './MicrophoneOptions';
 export {MicrophoneSelector} from './MicrophoneSelector';
 export {MicrophoneHints} from './MicrophoneHints';
+export {MicrophoneLevelIndicator} from './MicrophoneLevelIndicator';

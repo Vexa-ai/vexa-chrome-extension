@@ -82,14 +82,6 @@ export enum StoreKeys {
     FIRST_INSTALL = 'FIRST_INSTALL',
 }
 
-export interface UserData {
-    id: number
-    email: string
-    phone: any
-    firstName: string
-    lastName: string
-    guid: string
-    token: string
-    message: string
-    statusCode: number
+export interface AuthorizationData {
+    token: string;
   }

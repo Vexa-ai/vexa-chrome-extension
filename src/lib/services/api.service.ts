@@ -1,10 +1,10 @@
-import { type UserData, StorageService, StoreKeys } from "./storage.service";
+import { type AuthorizationData, StorageService, StoreKeys } from "./storage.service";
 
 export class ApiService {
 
     private readonly baseURL = process.env.PLASMO_PUBLIC_API_ENDPOINT;
     private readonly loginURL = process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT;
-    private static loggedInUser?: UserData;
+    private static loggedInUser?: AuthorizationData;
 
     constructor() {
         ApiService.watchUserChanges();
@@ -194,7 +194,7 @@ export class ApiService {
     }
 
     async getLoggedInUser(logoutIfNoUser = false) {
-        ApiService.loggedInUser = await StorageService.get<UserData>(StoreKeys.USER, null);
+        ApiService.loggedInUser = await StorageService.get<AuthorizationData>(StoreKeys.USER, null);
         if(logoutIfNoUser && !ApiService.loggedInUser) {
             StorageService.clear(true);
             chrome.tabs.create({ url: this.loginURL }, function (tab) {
@@ -208,7 +208,6 @@ export class ApiService {
     // This has to be defined static for approach to work.
     private static watchUserChanges() {
         StorageService.watchValueChange(StoreKeys.USER, (updatedData) => {
-            console.log('Logged in user updated', updatedData);
             ApiService.loggedInUser = updatedData.newValue
         });
     }

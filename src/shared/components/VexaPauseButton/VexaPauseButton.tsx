@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import pauseIcon from "data-base64:~assets/images/svg/pause-red.svg";
 
 import './VexaPauseButton.css';
+import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 
 export interface VexaPauseButtonProps {
-  recordedSeconds?: number;
+  // recordedSeconds?: number;
   [key: string]: any;
 }
 
-export function VexaPauseButton({ recordedSeconds = 0, ...rest }: VexaPauseButtonProps) {
+export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
   const [recordedSecondsToMinutes, setRecordedSecondsToMinutes] = useState('0:00');
+  const audioCapture = useAudioCapture();
 
   const secondsToHMS = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -20,16 +22,16 @@ export function VexaPauseButton({ recordedSeconds = 0, ...rest }: VexaPauseButto
   }
 
   useEffect(() => {
-    const {hours, minutes, seconds} = secondsToHMS(recordedSeconds);
+    const {hours, minutes, seconds} = secondsToHMS(audioCapture.state.captureTime);
     setRecordedSecondsToMinutes(
       `${hours > 0 ? hours + ':' : ''}${minutes.toLocaleString('en-US', { minimumIntegerDigits: 2 })}:${seconds.toLocaleString('en-US', { minimumIntegerDigits: 2 })}`); //Properly convert and format here
-  }, [recordedSeconds]);
+  }, [audioCapture.state.captureTime]);
 
   return <div {...rest} className='VexaPauseButton'>
-    <button className='bg-[#F04438] hover:bg-[#d1807a] h-9 px-2 py-2 flex gap-3 items-center justify-center rounded-3xl font-medium text-white'>
+    <button onClick={() => audioCapture.stopAudioCapture()} className='bg-[#F04438] hover:bg-[#d1807a] h-9 px-2 py-2 flex gap-3 items-center justify-center rounded-3xl font-medium text-white'>
       <span className='text-base'>{recordedSecondsToMinutes}</span>
       <div className="rounded-[50%] bg-black p-1">
-        <img className='w-3 h-3' src={pauseIcon} />
+        <img alt='' className='w-3 h-3' src={pauseIcon} />
       </div>
       
     </button>

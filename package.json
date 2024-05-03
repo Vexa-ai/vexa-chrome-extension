@@ -10,6 +10,7 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.10.0",
     "plasmo": "0.86.1",
     "react": "18.2.0",
@@ -31,6 +32,11 @@
     "typescript": "5.3.3"
   },
   "manifest": {
+    "permissions": [
+      "offscreen",
+      "tabCapture",
+      "activeTab"
+    ],
     "host_permissions": [
       "https://*/*"
     ]

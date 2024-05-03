@@ -14,16 +14,9 @@ export function AudioRecordingControlButton({
 }: AudioRecordingControlButtonProps) {
   const audioCapture = useAudioCapture();
 
-  useEffect(() => {
-    console.log({audioCapture});
-  }, [audioCapture]);
   return (
-    <AudioCaptureContext.Provider value={audioCapture}>
-      <div className={`${className}`}>
-        { audioCapture.state.isCapturing ? <VexaPauseButton onClick={() => audioCapture.stopAudioCapture()} recordedSeconds={audioCapture.captureTime} /> : <VexaPlayButton onClick={() => audioCapture.startAudioCapture()} />}
-        
-      </div>
-    </AudioCaptureContext.Provider>
-   
+    <div className={`${className}`}>
+      {audioCapture.state.isCapturing ? <VexaPauseButton /> : <VexaPlayButton />}
+    </div>
   );
 }

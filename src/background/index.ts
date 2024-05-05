@@ -3,15 +3,6 @@ import { MessageListenerService, MessageType } from "~lib/services/message-liste
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 
-console.log('background here');
-// chrome.action.onClicked.addListener(async (tab) => {
-chrome.tabs.onCreated.addListener((tab) => {
-    // const tabs = await chrome.tabs.query({ active: true, currentWindow: true});
-    // if(tabs.length) {
-        chrome.sidePanel.open({ tabId: tab.id});
-    // }
-});
-
 async function createOffscreenDocument() {
     const existingContexts = await chrome.runtime.getContexts({});
     const offscreenDocument = existingContexts.find(

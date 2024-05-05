@@ -1,10 +1,13 @@
 .MicrophoneSelector {
   .react-dropdown-select-dropdown {
     @apply rounded-lg p-1 bg-slate-950 border-[#333741] #{!important};
+    // & > div > p {
+    //   max-width: calc(100% - 26px);
+    // }
   }
 
   .react-dropdown-select-content {
-    @apply block;
+    @apply block overflow-hidden;
   }
 
   .react-dropdown-select-dropdown-handle {

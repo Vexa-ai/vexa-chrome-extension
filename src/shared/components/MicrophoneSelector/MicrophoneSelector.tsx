@@ -5,29 +5,27 @@ import microphoneIcon from "data-base64:~assets/images/svg/microphone-02.svg";
 import checkIcon from "data-base64:~assets/images/svg/check.svg";
 import './MicrophoneSelector.scss';
 import { MicrophoneLevelIndicator } from '../MicrophoneLevelIndicator';
-
+import { useAudioCapture } from '~shared/hooks/use-audiocapture';
+import { useStorage } from '@plasmohq/storage/hook';
 export interface MicrophoneSelectorProps { }
 
 export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
-  const [selectedMicrophone, setSelectedMicrophone] = useState([]);
+  const [selectedMicrophone, setSelectedMicrophone] = useStorage<MediaDeviceInfo>('selectedMicrophone');
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const audioCapture = useAudioCapture();
 
-  const options = [
-    {
-      value: 1,
-      label: 'Microphone 1'
-    },
-    {
-      value: 2,
-      label: 'Microphone 2'
-    }
-  ];
-
-  const onMicrophoneSelected = (value) => {
-    console.log(value);
-    setSelectedMicrophone(value);
+  const onMicrophoneSelected = (value: MediaDeviceInfo[]) => {
+    // debugger;
+    console.log('selecting mic')
+    setSelectedMicrophone(value[0]);
+    audioCapture.setSelectedAudioInputDevice(value[0]);
   };
+
+  useEffect(() => {
+    setMicrophones(audioCapture.state.availableAudioInputs?.map(device => ({...device, value: device.label})));
+  }, [audioCapture.availableAudioInputs]);
 
   const customContentRenderer = ({ props, state, methods }: SelectRenderer<any>) => {
     // Renders the selected value for the Select
@@ -38,20 +36,20 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
         {/* Selected <b>{state.values.length}</b> out of{" "}
         <b>{props.options.length}</b> */}
 
-        <div className='flex gap-2 text-[#94969C] items-center w-full'>
+        <div className='flex gap-2 text-[#94969C] items-center w-full overflow-hidden'>
           {
             state.values.length === 0
               ? (
                 <>
-                  <img className='w-5' src={microphoneOffIcon} />
+                  <img alt='' className='w-5' src={microphoneOffIcon} />
                   <p className='min-h-6'>No microphone</p>
                 </>
 
               )
               : (
-                <div className='flex w-full gap-1'>
-                  <img className='w-5' src={microphoneIcon} />
-                  <p className='text-[#F5F5F6] min-h-6 mr-auto w-auto'>{state.values[0].label}</p>
+                <div className='flex max-w-full gap-1 overflow-hidden'>
+                  <img alt='' className='w-5' src={microphoneIcon} />
+                  <p className='text-[#F5F5F6] min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis overflow-hidden' title={state.values[0].label}>{state.values[0].label}</p>
                   <MicrophoneLevelIndicator level={5} />
                 </div>
 
@@ -64,11 +62,16 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   };
 
   const customOptionRenderer = ({ item, props, state, methods }: SelectItemRenderer<any>) => (
-    <div onClick={() => methods.addItem(item)} className={`flex gap-2 items-center ${selectedMicrophone?.[0]?.value === item.value ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
-      <p className='mr-auto min-h-6'>{item.label}</p>
-      { selectedMicrophone?.[0]?.value === item.value && <img className='w-6' src={checkIcon} /> }
+    <div onClick={() => methods.addItem(item)} className={`flex gap-2 items-center ${selectedMicrophone?.[0]?.deviceId === item.deviceId ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
+      <p className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full' title={item.label}>{item.label}</p>
+      {selectedMicrophone?.[0]?.deviceId === item.deviceId && <img alt='' className='w-6' src={checkIcon} />}
     </div>
   );
+
+  const onDropdownOpenHandler = () => {
+    setIsOpen(true);
+    audioCapture.requestMicrophones();
+  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -95,15 +98,14 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
         }
       }
         className='w-full text-white rounded-lg px-[14px] py-[10px] !border-[#333741] !min-h-11'
-        options={options}
+        options={microphones}
         onChange={onMicrophoneSelected}
-        values={selectedMicrophone}
+        values={[]}
         contentRenderer={customContentRenderer}
         itemRenderer={customOptionRenderer}
         keepOpen={isOpen}
-        onDropdownOpen={() => setIsOpen(true)}
+        onDropdownOpen={onDropdownOpenHandler}
         onDropdownClose={() => setIsOpen(false)}
-      // dropdownHandleRenderer={customDropdownRenderer}
       />
     </div>
 

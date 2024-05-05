@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import './AudioRecordingControlButton.scss';
 import { VexaPlayButton } from '../VexaPlayButton';
 import { VexaPauseButton } from '../VexaPauseButton';
-import { AudioCaptureContext, useAudioCapture } from '~shared/hooks/use-audiocapture';
+import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 
 export interface AudioRecordingControlButtonProps {
   className?: string;

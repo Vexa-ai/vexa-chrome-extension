@@ -44,12 +44,11 @@ export const useAudioCapture = (): AudioCapture => {
 
 
     const startAudioCapture = (label?: string) => {
-        debugger;
         setState({
             ...stateRef.current,
             isCapturing: true,
         });
-        messageSender.sendBackgroundMessage({ type: MessageType.START_RECORDING, data: { micLabel: label || selectedMicrophone?.label }});
+        messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_START_RECORDING, data: { micLabel: label || selectedMicrophone?.label }});
     }
 
     const setSelectedAudioInputDevice = (device: MediaDeviceInfo) => {
@@ -58,8 +57,8 @@ export const useAudioCapture = (): AudioCapture => {
             ...stateRef.current,
             selectedAudioInput: device,
         });
-        debugger;
-        messageSender.sendSidebarMessage({ type: MessageType.ON_MICROPHONE_SELECTED, data: { device }})
+        messageSender.sendSidebarMessage({ type: MessageType.ON_MICROPHONE_SELECTED, data: { device }});
+        messageSender.sendBackgroundMessage({ type: MessageType.START_MIC_LEVEL_STREAMING, data: { micLabel: device.label || selectedMicrophone?.label } })
     }
 
     const requestMicrophones = () => {
@@ -67,7 +66,6 @@ export const useAudioCapture = (): AudioCapture => {
     };
 
     const stopAudioCapture = () => {
-        debugger;
         setIsCapturing(false);
         setState({
             ...stateRef.current,
@@ -91,7 +89,6 @@ export const useAudioCapture = (): AudioCapture => {
         const speakers = devices.filter(device => device.kind === 'audiooutput');
         setAvailableMicrophones(microphones);
         setAvailableSpeakers(speakers);
-        console.log({_}, {...selectedAudioInputRef.current})
         setState({
             ...stateRef.current,
             availableAudioOutputs: speakers,

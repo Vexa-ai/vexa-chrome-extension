@@ -17,7 +17,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   const audioCapture = useAudioCapture();
 
   const onMicrophoneSelected = (value: MediaDeviceInfo[]) => {
-    // debugger;
     console.log('selecting mic')
     setSelectedMicrophone(value[0]);
     audioCapture.setSelectedAudioInputDevice(value[0]);
@@ -28,14 +27,10 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   }, [audioCapture.availableAudioInputs]);
 
   const customContentRenderer = ({ props, state, methods }: SelectRenderer<any>) => {
-    // Renders the selected value for the Select
     return false ? (
       <div>Loading...</div>
     ) : (
       <div>
-        {/* Selected <b>{state.values.length}</b> out of{" "}
-        <b>{props.options.length}</b> */}
-
         <div className='flex gap-2 text-[#94969C] items-center w-full overflow-hidden'>
           {
             state.values.length === 0
@@ -47,10 +42,10 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
 
               )
               : (
-                <div className='flex max-w-full gap-1 overflow-hidden'>
+                <div className='flex w-full gap-1 overflow-hidden'>
                   <img alt='' className='w-5' src={microphoneIcon} />
                   <p className='text-[#F5F5F6] min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis overflow-hidden' title={state.values[0].label}>{state.values[0].label}</p>
-                  <MicrophoneLevelIndicator level={5} />
+                  <MicrophoneLevelIndicator />
                 </div>
 
               )
@@ -62,9 +57,9 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   };
 
   const customOptionRenderer = ({ item, props, state, methods }: SelectItemRenderer<any>) => (
-    <div onClick={() => methods.addItem(item)} className={`flex gap-2 items-center ${selectedMicrophone?.[0]?.deviceId === item.deviceId ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
+    <div onClick={() => methods.addItem(item)} className={`flex gap-2 items-center ${selectedMicrophone?.deviceId === item.deviceId ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
       <p className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full' title={item.label}>{item.label}</p>
-      {selectedMicrophone?.[0]?.deviceId === item.deviceId && <img alt='' className='w-6' src={checkIcon} />}
+      {selectedMicrophone?.deviceId === item.deviceId && <img alt='' className='w-6' src={checkIcon} />}
     </div>
   );
 
@@ -100,7 +95,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
         className='w-full text-white rounded-lg px-[14px] py-[10px] !border-[#333741] !min-h-11'
         options={microphones}
         onChange={onMicrophoneSelected}
-        values={[]}
+        values={selectedMicrophone ? [selectedMicrophone] : []}
         contentRenderer={customContentRenderer}
         itemRenderer={customOptionRenderer}
         keepOpen={isOpen}

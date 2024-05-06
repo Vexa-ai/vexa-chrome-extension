@@ -11,10 +11,6 @@ const Vexa = () => {
     const audioCapture = useAudioCapture();
     const storage = new Storage()
 
-    useEffect(() => {
-        storage.clear();
-    }, [])
-    
     return (
         <div className="flex flex-col h-screen w-full bg-slate-950 p-4">
             <AudioCaptureContext.Provider value={audioCapture}>

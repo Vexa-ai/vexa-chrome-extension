@@ -12,7 +12,6 @@ export interface VexaPlayButtonProps {
 export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   const audioCapture = useAudioCapture();
   const [selectedMicrophone] = useStorage('selectedMicrophone');
-
   const startCapture = () => {
     audioCapture.startAudioCapture();
   }

@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import './MicrophoneHints.scss';
 import closeIcon from "data-base64:~assets/images/svg/x-close.svg";
-import { AudioCaptureContext, useAudioCapture } from '~shared/hooks/use-audiocapture';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { useStorage } from '@plasmohq/storage/hook';
 
@@ -18,25 +17,18 @@ export interface MicrophoneHintsProps {
 export function MicrophoneHints({ className = '' }: MicrophoneHintsProps) {
   const [isClosed, setIsClosed] = useState(false);
   const [status, setStatus] = useState(MicrophoneStatus.MUTED);
-  const audioCapture = useContext(AudioCaptureContext);
   const [selectedMicrophone] = useStorage('selectedMicrophone');
 
   const closeSelf = () => { }
 
   MessageListenerService.unRegisterMessageListener(MessageType.ON_MICROPHONE_SELECTED);
   MessageListenerService.registerMessageListener(MessageType.ON_MICROPHONE_SELECTED, (evtData) => {
-    console.log(evtData.data);
     setStatus(evtData.data?.device ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED)
   });
 
   useEffect(() => {
-    console.log('xxxx2', audioCapture.state, audioCapture.selectedAudioInput);
-    setStatus(audioCapture.selectedAudioInput ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED)
-  }, [audioCapture.selectedAudioInput]); // Include audioCapture.selectedAudioInput in the dependency array
-
-  useEffect(() => {
-    console.log('xxxx3', audioCapture, audioCapture.selectedAudioInput);
-  }, [audioCapture.state]);
+    setStatus(selectedMicrophone ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED)
+  }, [selectedMicrophone]);
 
   return (
     <div className={`MicrophoneHints ${className}`}>

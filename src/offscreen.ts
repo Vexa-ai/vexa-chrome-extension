@@ -1,18 +1,15 @@
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
-import { getPort } from "@plasmohq/messaging/port"
-import { relayMessage } from "@plasmohq/messaging";
-
+import VOLUME_PROCESSOR_PATH from 'url:~lib/services/volume-processor'
 
 MessageListenerService.initializeListenerService();
 
 const messageSender = new MessageSenderService();
-// const mediaDevicesPort = getPort("media-devices");
 
 let recorder = null;
 let streamsToClose = [];
 
-let audioContext;
+let audioContext: AudioContext;
 
 async function getMicDeviceIdByLabel(micLabel, tab?) {
   try {
@@ -36,41 +33,70 @@ let micCheckStopper = () => {
 };
 
 MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES, async (evtData, sender, sendResponse) => {
-  console.log('Here');
-  console.log(evtData.data);
   try {
     await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: false,
     });
     navigator.mediaDevices.enumerateDevices().then(devices => {
-      messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices }})
-      // sendResponse(devices);
+      messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices } })
     }).catch(error => console.error('Error getting available microphones:', error));
   } catch (error) {
+    if (error.message === 'Permission dismissed') {
+      messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS })
+    }
     console.log('Failed to get media permissions', error);
     // sendResponse([]);
-    messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices: [] }})
-
+    messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices: [] } })
   }
 });
 
-// mediaDevicesPort.onMessage.addListener(async (message, port) => {
-//   console.log(message);
-//   try {
-//     await navigator.mediaDevices.getUserMedia({
-//       audio: true,
-//       video: false,
-//     });
-//     navigator.mediaDevices.enumerateDevices().then(devices => {
-//       // const microphones = devices.filter(device => device.kind === 'audioinput');
-//       // const speakers = devices.filter(device => device.kind === 'audiooutput');
-//       port.postMessage(devices);
-//     }).catch(error => console.error('Error getting available microphones:', error));
-//   } catch (error) {
-//     console.log('Failed to get media permissions', error);
-//   }
-// });
+MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
+  const micLabel: string = evtData.data.micLabel;
+  micCheckStopper(); // Stop previous checker
+  debugger;
+  const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { deviceId: { exact: deviceId } },
+  });
+
+  audioContext = new AudioContext();
+  console.log("Creating processor");
+  await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH); // Load the audio worklet processor
+  const microphone = audioContext.createMediaStreamSource(stream);
+  const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
+  microphone.connect(volumeProcessorNode).connect(audioContext.destination);
+
+  const micLevelAccumulator = new Array(100);
+  let pointer = 0;
+  const ACC_CAPACITY = 50;
+  volumeProcessorNode.port.onmessage = (event) => {
+    // pointer = (pointer + 1) % 100;
+    micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
+    pointer++;
+  };
+
+  const _interval = setInterval(() => {
+    const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
+    messageSender.sendSidebarMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
+  }, 150);
+
+  micCheckStopper = async () => {
+    console.log("Kill checker");
+    if (audioContext) {
+      await audioContext.close(); // Close any existing audio context
+    }
+    microphone.disconnect();
+    volumeProcessorNode.disconnect();
+    clearInterval(_interval);
+  };
+
+});
+
+MessageListenerService.registerMessageListener(MessageType.START_RECORDING, async (message, sender, sendResponse) => {
+  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.token, message.data.domain, message.data.url));
+});
 
 chrome.runtime.onMessage.addListener(async (message, { tab }, callback) => {
   if (message.target === 'offscreen') {
@@ -180,13 +206,12 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
     counter = 1;
 
     let combinedStream = await getCombinedStream(deviceId, streamId);
-
+    debugger
     if (!combinedStream) {
       return;
     }
 
     recorder = new MediaRecorder(combinedStream, {
-      // mimeType: 'video/webm;codecs=vp8,opus',
       mimeType: 'audio/webm;codecs=opus',
     });
 
@@ -194,9 +219,7 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
     let i = 0;
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
-        // downloadFile(`${timestamp}-${counter++}.webm`, event.data); return;
-
-        fetch(`${domain}/audio?connection_id=${connectionId}&token=${token}&i=${i++}&url=${url}`, {
+        fetch(`${domain}/audio?meeting_id=meeting_1connection_id=${connectionId}&token=${token}&i=${i++}&url=${url}`, {
           method: 'PUT',
           body: event.data,
           headers: {
@@ -208,30 +231,21 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
 
     recorder.onerror = (error) => {
       console.log("Error", error);
-      // socket.close();
     };
 
     recorder.onstop = () => {
       recorder = null;
       window.location.hash = '';
-
       isStopped = true;
-
-      // Wait a bit before socket to be closed
-      // setTimeout(_ => socket.close(), 5000);
     }
 
-    // setTimeout(() => {
     recorder.start(3000);
-    // recorder.start();
-    // }, 1000);
-
     window.location.hash = 'recording';
 
     return true;
   } catch (error) {
+    debugger;
     console.log(error)
-    // sendMsgToSW({action: 'getPermission'});
     await stopRecording();
   }
 
@@ -276,15 +290,13 @@ const getCombinedStream = async (deviceId, streamId) => {
   const microphone = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
   });
+  debugger;
 
   const streamOriginal = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      deviceId: {
-        exact: streamId
-      }
-    },
+    audio: {mandatory: {chromeMediaSource: "tab", chromeMediaSourceId: streamId}},
     // video: { mandatory: { chromeMediaSource: "tab", chromeMediaSourceId: streamId } },
-  });
+  } as any);
+  debugger;
 
   streamsToClose = [microphone, streamOriginal];
 

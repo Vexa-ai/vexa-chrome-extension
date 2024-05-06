@@ -9,6 +9,7 @@ export interface MicrophoneOptionsProps {
 }
 
 export function MicrophoneOptions({ className = '' }: MicrophoneOptionsProps) {
+
   return (
     <div className={`MicrophoneOptions flex flex-col w-full ${className}`}>
       <MicrophoneSelector />

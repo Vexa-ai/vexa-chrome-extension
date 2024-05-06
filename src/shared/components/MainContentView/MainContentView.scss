@@ -1,0 +1,5 @@
+.MainContentView {
+  .react-tabs__tab--selected {
+    @apply border-b-2 border-b-white font-medium text-white;
+  }
+}

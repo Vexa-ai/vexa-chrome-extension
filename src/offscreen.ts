@@ -6,8 +6,8 @@ MessageListenerService.initializeListenerService();
 
 const messageSender = new MessageSenderService();
 
-let recorder = null;
-let streamsToClose = [];
+let recorder: MediaRecorder = null;
+let streamsToClose: MediaStream[] = [];
 
 let audioContext: AudioContext;
 
@@ -54,7 +54,6 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
   const micLabel: string = evtData.data.micLabel;
   micCheckStopper(); // Stop previous checker
-  debugger;
   const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
 
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -96,6 +95,10 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
 
 MessageListenerService.registerMessageListener(MessageType.START_RECORDING, async (message, sender, sendResponse) => {
   sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.token, message.data.domain, message.data.url));
+});
+
+MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender, sendResponse) => {
+  stopRecording();
 });
 
 chrome.runtime.onMessage.addListener(async (message, { tab }, callback) => {
@@ -206,7 +209,6 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
     counter = 1;
 
     let combinedStream = await getCombinedStream(deviceId, streamId);
-    debugger
     if (!combinedStream) {
       return;
     }
@@ -231,20 +233,23 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
 
     recorder.onerror = (error) => {
       console.log("Error", error);
+      messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } })
     };
 
     recorder.onstop = () => {
       recorder = null;
       window.location.hash = '';
       isStopped = true;
+      messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' }  })
+
     }
 
     recorder.start(3000);
     window.location.hash = 'recording';
+    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED })
 
     return true;
   } catch (error) {
-    debugger;
     console.log(error)
     await stopRecording();
   }
@@ -263,10 +268,12 @@ async function stopRecording() {
       })
     }
     window.location.hash = '';
+    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
 
     return true;
   } catch (e) {
     console.log(e)
+    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } })
   }
 
   return false;
@@ -290,13 +297,10 @@ const getCombinedStream = async (deviceId, streamId) => {
   const microphone = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
   });
-  debugger;
 
   const streamOriginal = await navigator.mediaDevices.getUserMedia({
     audio: {mandatory: {chromeMediaSource: "tab", chromeMediaSourceId: streamId}},
-    // video: { mandatory: { chromeMediaSource: "tab", chromeMediaSourceId: streamId } },
   } as any);
-  debugger;
 
   streamsToClose = [microphone, streamOriginal];
 

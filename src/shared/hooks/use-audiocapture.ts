@@ -44,10 +44,6 @@ export const useAudioCapture = (): AudioCapture => {
 
 
     const startAudioCapture = (label?: string) => {
-        setState({
-            ...stateRef.current,
-            isCapturing: true,
-        });
         messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_START_RECORDING, data: { micLabel: label || selectedMicrophone?.label }});
     }
 
@@ -66,20 +62,29 @@ export const useAudioCapture = (): AudioCapture => {
     };
 
     const stopAudioCapture = () => {
-        setIsCapturing(false);
-        setState({
-            ...stateRef.current,
-            isCapturing: false,
-        });
+        // setIsCapturing(false);
+        messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
     };
 
     const pauseAudioCapture = () => {
         setIsCapturing(false);
+    };
+
+    MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (evtData) => {
+        setIsCapturing(true);
+        setState({
+            ...stateRef.current,
+            isCapturing: true,
+        });
+    });
+
+    MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (evtData) => {
+        setIsCapturing(false);
         setState({
             ...stateRef.current,
             isCapturing: false,
         });
-    };
+    });
 
     MessageListenerService.unRegisterMessageListener(MessageType.MEDIA_DEVICES);
     MessageListenerService.registerMessageListener(MessageType.MEDIA_DEVICES, (evtData) => {

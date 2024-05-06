@@ -7,3 +7,6 @@ export {MicrophoneOptions} from './MicrophoneOptions';
 export {MicrophoneSelector} from './MicrophoneSelector';
 export {MicrophoneHints} from './MicrophoneHints';
 export {MicrophoneLevelIndicator} from './MicrophoneLevelIndicator';
+export {TranscriptList} from './TranscriptList';
+export {MainContentView} from './MainContentView';
+export {TranscriptEntry} from './TranscriptEntry';

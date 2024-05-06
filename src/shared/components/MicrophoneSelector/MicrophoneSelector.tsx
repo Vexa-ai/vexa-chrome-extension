@@ -17,7 +17,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   const audioCapture = useAudioCapture();
 
   const onMicrophoneSelected = (value: MediaDeviceInfo[]) => {
-    console.log('selecting mic')
     setSelectedMicrophone(value[0]);
     audioCapture.setSelectedAudioInputDevice(value[0]);
   };

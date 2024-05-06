@@ -59,6 +59,11 @@ const extensionInstallHandler = () => {
 
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
+
+MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
+    messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+});
+
 MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDING, (message) => {
     chrome.tabs.query({ lastFocusedWindow: true, active: true, currentWindow: true }, async tabs => {
         const tab = tabs[0];

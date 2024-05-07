@@ -1,7 +1,6 @@
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
-const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('~lib/services/volume-processor.js');
-
+const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
 MessageListenerService.initializeListenerService();
 
 const messageSender = new MessageSenderService();

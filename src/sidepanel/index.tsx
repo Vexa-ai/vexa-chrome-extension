@@ -26,7 +26,7 @@ export const getStyle = () => {
   }
 
 export const config: PlasmoCSConfig = {
-    matches: ['<all_urls>*'],
+    matches: ['<all_urls>'],
     css: ["./index.scss"],
 };
 

@@ -54,7 +54,7 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "~lib/services/volume-processor.js"
+          "js/*.js"
         ],
         "matches": ["<all_urls>"]
       }

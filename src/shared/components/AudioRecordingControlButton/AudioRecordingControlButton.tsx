@@ -13,10 +13,15 @@ export function AudioRecordingControlButton({
   className = ''
 }: AudioRecordingControlButtonProps) {
   const audioCapture = useAudioCapture();
+
+  useEffect(() => {
+    console.log(audioCapture.state.isCapturing, audioCapture.isCapturing);
+  }, [audioCapture.state, audioCapture.isCapturing]);
+  
   
   return (
     <div className={`${className}`}>
-      {audioCapture.state.isCapturing ? <VexaPauseButton /> : <VexaPlayButton />}
+      {audioCapture.isCapturing ? <VexaPauseButton /> : <VexaPlayButton />}
     </div>
   );
 }

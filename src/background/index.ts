@@ -97,7 +97,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                 });
             });
         });
-    })
+    });
 });
 
 createOffscreenDocument();

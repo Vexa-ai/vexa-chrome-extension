@@ -52,7 +52,6 @@ export class MessageListenerService {
                     }
                 }
             }
-            return true;
         });
         MessageListenerService.isListenerInitialized = true;
     }
@@ -80,5 +79,6 @@ export enum MessageType {
     REQUEST_STOP_RECORDING = "REQUEST_STOP_RECORDING",
     STOP_RECORDING = "STOP_RECORDING",
     PAUSE_RECORDING = "PAUSE_RECORDING",
-    RESUME_RECORDING = "RESUME_RECORDING"
+    RESUME_RECORDING = "RESUME_RECORDING",
+    TRANSCRIPTION_RESULT = "TRANSCRIPTION_RESULT"
 }

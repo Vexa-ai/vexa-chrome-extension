@@ -28,12 +28,11 @@ export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
   }, [audioCapture.state.captureTime]);
 
   return <div {...rest} className='VexaPauseButton'>
-    <button onClick={() => audioCapture.stopAudioCapture()} className='bg-[#F04438] hover:bg-[#d1807a] h-9 px-2 py-2 flex gap-3 items-center justify-center rounded-3xl font-medium text-white'>
+    <div className='bg-[#F04438] hover:bg-[#d1807a] h-9 px-2 py-2 flex gap-3 items-center justify-center rounded-3xl font-medium text-white'>
       <span className='text-base'>{recordedSecondsToMinutes}</span>
-      <div className="rounded-[50%] bg-black p-1">
+      <button className="rounded-[50%] bg-black p-1 cursor-pointer" onClick={() => audioCapture.stopAudioCapture()}>
         <img alt='' className='w-3 h-3' src={pauseIcon} />
-      </div>
-      
-    </button>
+      </button>
+    </div>
   </div>;
 }

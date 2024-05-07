@@ -85,8 +85,10 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     domain: 'https://chrome.away.guru',
                     token: 'expected_secure_token',
                     url: tab.url,
+                    meetingId: 'meeting_1', //TODO: Replace with generated or persisted value
                 }
             }).then(result => {
+                console.log('persisting record starting details')
                 chrome.storage.session.set({
                     '_dl_recording': result ? 1 : 0,
                     '_dl_recording_started': (new Date()).getTime(),

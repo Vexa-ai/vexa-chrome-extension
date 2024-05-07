@@ -16,5 +16,11 @@
       ]
     },
     "baseUrl": "."
-  }
+  },
+  "copyFiles": [
+    {
+      "from": "src/**/*.js",
+      "to": "build/chrome-mv3-prod/"
+    }
+  ]
 }

@@ -1,11 +1,10 @@
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
-import VOLUME_PROCESSOR_PATH from 'url:~lib/services/volume-processor'
+const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('~lib/services/volume-processor.js');
 
 MessageListenerService.initializeListenerService();
 
 const messageSender = new MessageSenderService();
-
 let recorder: MediaRecorder = null;
 let streamsToClose: MediaStream[] = [];
 
@@ -93,102 +92,26 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
 
 });
 
+MessageListenerService.registerMessageListener(MessageType.PAUSE_RECORDING, async (message, sender, sendResponse) => {
+  sendResponse(pauseRecording());
+});
+
+MessageListenerService.registerMessageListener(MessageType.RESUME_RECORDING, async (message, sender, sendResponse) => {
+  sendResponse(unpauseRecording());
+});
+
 MessageListenerService.registerMessageListener(MessageType.START_RECORDING, async (message, sender, sendResponse) => {
-  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.token, message.data.domain, message.data.url));
+  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.meetingId, message.data.token, message.data.domain, message.data.url));
 });
 
 MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender, sendResponse) => {
   stopRecording();
 });
 
-chrome.runtime.onMessage.addListener(async (message, { tab }, callback) => {
-  if (message.target === 'offscreen') {
-    switch (message.type) {
-      case 'stop-mic-level-check':
-        micCheckStopper();
-
-        break;
-      case 'start-mic-level-check':
-        // TODO: restart every X minutes or depend on background script to stop on tab closed
-        micCheckStopper(); // Stop previous checker
-
-        const micLabel = message.micLabel;
-
-        const deviceId = await getMicDeviceIdByLabel(micLabel, tab);
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { deviceId: { exact: deviceId } },
-        });
-
-        audioContext = new AudioContext();
-        console.log("Creating processor");
-        await audioContext.audioWorklet.addModule('volume-processor.js'); // Load the audio worklet processor
-
-        const microphone = audioContext.createMediaStreamSource(stream);
-        const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
-        microphone.connect(volumeProcessorNode).connect(audioContext.destination);
-
-        const micLevelAccumulator = new Array(100);
-        let pointer = 0;
-        const ACC_CAPACITY = 50;
-        volumeProcessorNode.port.onmessage = (event) => {
-          // pointer = (pointer + 1) % 100;
-          micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
-          pointer++;
-        };
-
-        const _interval = setInterval(() => {
-          const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-          chrome.runtime.sendMessage({ tabId: message.tabId, action: 'mic-level', level, pointer });
-        }, 150);
-
-        micCheckStopper = async () => {
-          console.log("Kill checker");
-          if (audioContext) {
-            await audioContext.close(); // Close any existing audio context
-          }
-          microphone.disconnect();
-          volumeProcessorNode.disconnect();
-          clearInterval(_interval);
-        };
-
-        break;
-      // case 'stop-mic-level-check':
-      //   startRecording(message.data.deviceId, message.data.streamId, message.data.connectionId);
-      //   break;
-      case 'start-recording':
-        callback(startRecording(message.data.deviceId, message.data.streamId, message.data.connectionId, message.data.token, message.data.domain, message.data.url));
-        break;
-      case 'stop-recording':
-        callback(stopRecording());
-        break;
-      case 'pause-recording':
-        callback(pauseRecording());
-        break;
-      case 'unpause-recording':
-        callback(unpauseRecording());
-        break;
-      default:
-        throw new Error('Unrecognized message:', message.type);
-    }
-  }
-
-  return true;
-});
-
-
-function downloadFile(name, blob) {
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = name;
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
-
 let timestamp;
 let counter;
 
-async function startRecording(micLabel, streamId, connectionId, token, domain, url) {
+async function startRecording(micLabel, streamId, connectionId, meetingId, token, domain, url) {
   let deviceId;
   try {
     deviceId = await getMicDeviceIdByLabel(micLabel);
@@ -221,12 +144,17 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
     let i = 0;
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
-        fetch(`${domain}/audio?meeting_id=meeting_1connection_id=${connectionId}&token=${token}&i=${i++}&url=${url}`, {
+        const timestamp = new Date();
+        fetch(`${domain}/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${i++}&url=${url}`, {
           method: 'PUT',
           body: event.data,
           headers: {
             'Content-Type': 'application/octet-stream'
           }
+        }).then(response => {
+          // We are only polling for transcripts only if the user has sent a chunk.
+          // We wait 1 second, then poll for a transcript, may change implementation
+          pollTranscript(meetingId, token, timestamp);
         });
       }
     };
@@ -255,6 +183,17 @@ async function startRecording(micLabel, streamId, connectionId, token, domain, u
   }
 
   return false;
+}
+
+async function pollTranscript(meetingId: string, token: string, timestamp = new Date()) {
+  setTimeout(() => {
+    fetch(`https://main.away.guru/api/v1/transcription?meetingId=${meetingId}&token=${token}&last_msg_timestamp=${timestamp.toISOString()}`, {
+    method: 'GET',
+    }).then(async res => {
+      console.log('Transcript', await res.json());
+    });
+  }, 1500);
+  
 }
 
 async function stopRecording() {

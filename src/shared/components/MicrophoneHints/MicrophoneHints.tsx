@@ -19,7 +19,9 @@ export function MicrophoneHints({ className = '' }: MicrophoneHintsProps) {
   const [status, setStatus] = useState(MicrophoneStatus.MUTED);
   const [selectedMicrophone] = useStorage('selectedMicrophone');
 
-  const closeSelf = () => { }
+  const closeSelf = () => {
+    setIsClosed(true);
+  }
 
   MessageListenerService.unRegisterMessageListener(MessageType.ON_MICROPHONE_SELECTED);
   MessageListenerService.registerMessageListener(MessageType.ON_MICROPHONE_SELECTED, (evtData) => {
@@ -27,7 +29,8 @@ export function MicrophoneHints({ className = '' }: MicrophoneHintsProps) {
   });
 
   useEffect(() => {
-    setStatus(selectedMicrophone ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED)
+    setStatus(selectedMicrophone ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED);
+    setIsClosed(false);
   }, [selectedMicrophone]);
 
   return (

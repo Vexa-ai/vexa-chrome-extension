@@ -10,3 +10,6 @@ export {MicrophoneLevelIndicator} from './MicrophoneLevelIndicator';
 export {TranscriptList} from './TranscriptList';
 export {MainContentView} from './MainContentView';
 export {TranscriptEntry} from './TranscriptEntry';
+export {AssistantEntry} from './AssistantEntry';
+export {AssistantList} from './AssistantList';
+export {AssistantInput} from './AssistantInput';

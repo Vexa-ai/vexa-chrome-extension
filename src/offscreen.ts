@@ -1,5 +1,7 @@
+import { Storage } from "@plasmohq/storage";
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
+import { StorageService, StoreKeys } from "~lib/services/storage.service";
 const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
 MessageListenerService.initializeListenerService();
 
@@ -50,45 +52,50 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
 });
 
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
-  const micLabel: string = evtData.data.micLabel;
-  micCheckStopper(); // Stop previous checker
-  const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
-
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { deviceId: { exact: deviceId } },
-  });
-
-  audioContext = new AudioContext();
-  console.log("Creating processor");
-  await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH); // Load the audio worklet processor
-  const microphone = audioContext.createMediaStreamSource(stream);
-  const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
-  microphone.connect(volumeProcessorNode).connect(audioContext.destination);
-
-  const micLevelAccumulator = new Array(100);
-  let pointer = 0;
-  const ACC_CAPACITY = 50;
-  volumeProcessorNode.port.onmessage = (event) => {
-    // pointer = (pointer + 1) % 100;
-    micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
-    pointer++;
-  };
-
-  const _interval = setInterval(() => {
-    const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-    messageSender.sendSidebarMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
-  }, 150);
-
-  micCheckStopper = async () => {
-    console.log("Kill checker");
-    if (audioContext) {
-      await audioContext.close(); // Close any existing audio context
-    }
-    microphone.disconnect();
-    volumeProcessorNode.disconnect();
-    clearInterval(_interval);
-  };
-
+  try {
+    console.log('Starting mic stream');
+    const micLabel: string = evtData.data.micLabel;
+    micCheckStopper(); // Stop previous checker
+    const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
+  
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: { exact: deviceId } },
+    });
+  
+    audioContext = new AudioContext();
+    console.log("Creating processor", VOLUME_PROCESSOR_PATH);
+    await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH); // Load the audio worklet processor
+    const microphone = audioContext.createMediaStreamSource(stream);
+    const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
+    microphone.connect(volumeProcessorNode).connect(audioContext.destination);
+  
+    const micLevelAccumulator = new Array(100);
+    let pointer = 0;
+    const ACC_CAPACITY = 50;
+    volumeProcessorNode.port.onmessage = (event) => {
+      // pointer = (pointer + 1) % 100;
+      micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
+      pointer++;
+    };
+  
+    const _interval = setInterval(() => {
+      const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
+      messageSender.sendSidebarMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
+    }, 150);
+  
+    micCheckStopper = async () => {
+      console.log("Kill checker");
+      if (audioContext) {
+        await audioContext.close(); // Close any existing audio context
+      }
+      microphone.disconnect();
+      volumeProcessorNode.disconnect();
+      clearInterval(_interval);
+    };
+  } catch(err) {
+    console.error(err);
+    stopRecording();
+  }
 });
 
 MessageListenerService.registerMessageListener(MessageType.PAUSE_RECORDING, async (message, sender, sendResponse) => {
@@ -172,7 +179,8 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
     }
 
     recorder.start(3000);
-    window.location.hash = 'recording';
+    // window.location.hash = 'recording';
+    console.log('Updating state')
     messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED })
 
     return true;
@@ -213,7 +221,6 @@ async function stopRecording() {
     console.log(e)
     messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } })
   }
-
   return false;
 }
 

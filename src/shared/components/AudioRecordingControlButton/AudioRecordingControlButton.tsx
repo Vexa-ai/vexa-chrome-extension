@@ -4,6 +4,7 @@ import './AudioRecordingControlButton.scss';
 import { VexaPlayButton } from '../VexaPlayButton';
 import { VexaPauseButton } from '../VexaPauseButton';
 import { useAudioCapture } from '~shared/hooks/use-audiocapture';
+import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
 export interface AudioRecordingControlButtonProps {
   className?: string;
@@ -12,16 +13,11 @@ export interface AudioRecordingControlButtonProps {
 export function AudioRecordingControlButton({
   className = ''
 }: AudioRecordingControlButtonProps) {
-  const audioCapture = useAudioCapture();
-
-  useEffect(() => {
-    console.log(audioCapture.state.isCapturing, audioCapture.isCapturing);
-  }, [audioCapture.state, audioCapture.isCapturing]);
-  
+  const [isCapturingStore] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
   
   return (
     <div className={`${className}`}>
-      {audioCapture.isCapturing ? <VexaPauseButton /> : <VexaPlayButton />}
+      {isCapturingStore ? <VexaPauseButton /> : <VexaPlayButton />}
     </div>
   );
 }

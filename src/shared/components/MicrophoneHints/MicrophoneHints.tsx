@@ -3,6 +3,7 @@ import './MicrophoneHints.scss';
 import closeIcon from "data-base64:~assets/images/svg/x-close.svg";
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { useStorage } from '@plasmohq/storage/hook';
+import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
 export enum MicrophoneStatus {
   MUTED = 'MUTED',
@@ -17,7 +18,7 @@ export interface MicrophoneHintsProps {
 export function MicrophoneHints({ className = '' }: MicrophoneHintsProps) {
   const [isClosed, setIsClosed] = useState(false);
   const [status, setStatus] = useState(MicrophoneStatus.MUTED);
-  const [selectedMicrophone] = useStorage('selectedMicrophone');
+  const [selectedMicrophone] = StorageService.useHookStorage(StoreKeys.SELECTED_MICROPHONE);
 
   const closeSelf = () => {
     setIsClosed(true);
@@ -29,7 +30,7 @@ export function MicrophoneHints({ className = '' }: MicrophoneHintsProps) {
   });
 
   useEffect(() => {
-    setStatus(selectedMicrophone ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED);
+    // setStatus(selectedMicrophone ? MicrophoneStatus.SELECTED : MicrophoneStatus.MUTED);
     setIsClosed(false);
   }, [selectedMicrophone]);
 

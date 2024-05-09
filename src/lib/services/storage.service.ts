@@ -11,7 +11,7 @@ export class StorageService {
      * @param watchFn If a watch function is supplied, the set value will be watched for changes and the function ran everytime the value changes
      */
     static async set<T = any>(key: StoreKeys, value: T) {
-        await StorageService.storage.set(key, value);
+        return await StorageService.storage.set(key, value);
     }
 
     /**
@@ -72,14 +72,17 @@ export class StorageService {
      * @param key 
      * @param onInit — If it is a function, the returned value will be rendered and persisted. If it is a static value, it will only be rendered, not persisted
      */
-    static useHookStorage(key: StoreKeys, onInit?: any) {
-        return useStorage(key, onInit)
+    static useHookStorage<T>(key: StoreKeys, onInit?: any) {
+        return useStorage<T>(key, onInit)
     }
 }
 
 export enum StoreKeys {
     USER = 'USER',
     FIRST_INSTALL = 'FIRST_INSTALL',
+    RECORD_START_TIME = 'RECORD_START_TIME',
+    SELECTED_MICROPHONE = "SELECTED_MICROPHONE",
+    CAPTURING_STATE = "CAPTURING_STATE",
 }
 
 export interface AuthorizationData {

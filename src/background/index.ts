@@ -6,6 +6,16 @@ import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 let currentTab = null;
 let newTab = null;
 
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+chrome.runtime.onConnect.addListener(port => {
+    if (port.name === 'mySidepanel') {
+        port.onDisconnect.addListener(() => {
+            chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+            console.log('Side panel closed!');
+        });
+    }
+});
+
 const stopRecording = async (tab, isPause = false) => {
     chrome.action.setIcon({ path: "assets/icons/not-recording.png" });
     currentTab = null;
@@ -28,7 +38,7 @@ const stopRecording = async (tab, isPause = false) => {
 
 async function getConnectionId() {
     const uuid = String(self.crypto.randomUUID());
-    await chrome.storage.local.set({_dl_connection_id: uuid, _dl_connection_session: 0});
+    await chrome.storage.local.set({ _dl_connection_id: uuid, _dl_connection_session: 0 });
 
     return uuid;
 }
@@ -59,7 +69,9 @@ const extensionInstallHandler = () => {
 
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
-
+MessageListenerService.registerMessageListener(MessageType.ON_APP_OPEN, () => {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+});
 MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
@@ -74,10 +86,19 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
             targetTabId: tab.id
         }, async (streamId) => {
             console.log({ streamId });
-            if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError.message);
-              }
-            messageSender.sendBackgroundMessage({ type: MessageType.START_RECORDING, data: 
+            try {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError.message);
+                    messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+                    return;
+                }
+            } catch (error) {
+                console.error(error);
+                return;
+            }
+            
+            messageSender.sendBackgroundMessage({
+                type: MessageType.START_RECORDING, data:
                 {
                     micLabel: message.data.micLabel,
                     streamId,

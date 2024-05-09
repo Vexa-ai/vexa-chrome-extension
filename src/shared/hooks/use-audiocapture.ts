@@ -3,6 +3,7 @@ import useStateRef from 'react-usestateref';
 import { MessageSenderService } from '~lib/services/message-sender.service';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { useStorage } from '@plasmohq/storage/hook';
+import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
 export type AudioCaptureState = boolean;
 MessageListenerService.initializeListenerService();
@@ -38,8 +39,9 @@ export const useAudioCapture = (): AudioCapture => {
     const [selectedAudioInput, setSelectedAudioInput, selectedAudioInputRef] = useStateRef<MediaDeviceInfo>();
     const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
     const [availableSpeakers, setAvailableSpeakers] = useState<MediaDeviceInfo[]>([]);
-    const [selectedMicrophone] = useStorage<MediaDeviceInfo>('selectedMicrophone');
-
+    const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
+    const [isCapturingStore, setIsCapturingStoreState] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+    const [recordStartTime, setRecordStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
     const messageSender = new MessageSenderService();
 
 
@@ -70,16 +72,23 @@ export const useAudioCapture = (): AudioCapture => {
         setIsCapturing(false);
     };
 
-    MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (evtData) => {
+    MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_STARTED);
+    MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, async () => {
+        console.log('setting record start time', recordStartTime);
         setIsCapturing(true);
+        await setIsCapturingStoreState(true);
+        await setRecordStartTime(new Date().getTime());
         setState({
             ...stateRef.current,
             isCapturing: true,
         });
     });
-
-    MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (evtData) => {
+    MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_END);
+    MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, async () => {
+        console.log('setting record end time');
         setIsCapturing(false);
+        await setIsCapturingStoreState(false);
+        await setRecordStartTime(0);
         setState({
             ...stateRef.current,
             isCapturing: false,

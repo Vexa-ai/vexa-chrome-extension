@@ -4,6 +4,7 @@ import playIcon from "data-base64:~assets/images/svg/play-circle.svg";
 import './VexaPlayButton.scss';
 import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 import { useStorage } from '@plasmohq/storage/hook';
+import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
 export interface VexaPlayButtonProps {
   [key: string]: any;
@@ -11,7 +12,7 @@ export interface VexaPlayButtonProps {
 
 export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   const audioCapture = useAudioCapture();
-  const [selectedMicrophone] = useStorage('selectedMicrophone');
+  const [selectedMicrophone] = StorageService.useHookStorage(StoreKeys.SELECTED_MICROPHONE);
   const startCapture = () => {
     audioCapture.startAudioCapture();
   }

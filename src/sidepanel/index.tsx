@@ -5,9 +5,17 @@ import React, { useEffect } from "react";
 import { SidebarReloadButton } from "~devtools/components";
 import { MainContentView, MicrophoneOptions, VexaToolbar } from "~shared/components";
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
+import { MessageType } from "~lib/services/message-listener.service";
+import { MessageSenderService } from "~lib/services/message-sender.service";
+const messageSender = new MessageSenderService();
 
 const Vexa = () => {
     const audioCapture = useAudioCapture();
+
+    useEffect(() => {
+        chrome.runtime.connect({ name: 'mySidepanel' });
+        messageSender.sendBackgroundMessage({ type: MessageType.ON_APP_OPEN });
+    }, []);  
 
     return (
         <div className="flex flex-col h-screen w-full bg-slate-950 p-4">

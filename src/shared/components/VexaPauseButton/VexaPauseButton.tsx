@@ -4,20 +4,16 @@ import pauseIcon from "data-base64:~assets/images/svg/pause-red.svg";
 import './VexaPauseButton.css';
 import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
-import { useStorage } from '@plasmohq/storage/hook';
-import CountUp, { useCountUp } from 'react-countup';
 import { useStopwatch } from 'react-timer-hook';
 
 export interface VexaPauseButtonProps {
-  // recordedSeconds?: number;
   [key: string]: any;
 }
 
 export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
   const [storedStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
-  const [isCapturingStore] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  useCountUp({ ref: 'counter', end: 100000 });
+
   const {
     totalSeconds,
     seconds,
@@ -28,14 +24,23 @@ export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
     start,
     pause,
     reset,
-  } = useStopwatch({ autoStart: true });
+  } = useStopwatch();
 
   const audioCapture = useAudioCapture();
 
   useEffect(() => {
-    console.log({storedStartTime, timeElapsed});
+    console.log({ storedStartTime, timeElapsed });
     if (storedStartTime) {
-      setTimeElapsed(() => new Date().getTime() - storedStartTime);
+      const elapsedTime = new Date().getTime() - storedStartTime;
+      setTimeElapsed(() => elapsedTime);
+      console.log('setting start time');
+      const startTimeDate = new Date(storedStartTime);
+      const currentTime = new Date();
+
+      // Calculate total time difference and adjust current time
+      const timeDifference = currentTime.getTime() - startTimeDate.getTime();
+      currentTime.setTime(currentTime.getTime() + timeDifference);
+      reset(currentTime, true);
     }
   }, [storedStartTime]);
 

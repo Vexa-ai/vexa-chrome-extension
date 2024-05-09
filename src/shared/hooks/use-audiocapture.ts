@@ -39,7 +39,7 @@ export const useAudioCapture = (): AudioCapture => {
     const [selectedAudioInput, setSelectedAudioInput, selectedAudioInputRef] = useStateRef<MediaDeviceInfo>();
     const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
     const [availableSpeakers, setAvailableSpeakers] = useState<MediaDeviceInfo[]>([]);
-    const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
+    const [selectedMicrophone, setSelectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
     const [isCapturingStore, setIsCapturingStoreState] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
     const [recordStartTime, setRecordStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
     const messageSender = new MessageSenderService();
@@ -49,8 +49,9 @@ export const useAudioCapture = (): AudioCapture => {
         messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_START_RECORDING, data: { micLabel: label || selectedMicrophone?.label }});
     }
 
-    const setSelectedAudioInputDevice = (device: MediaDeviceInfo) => {
+    const setSelectedAudioInputDevice = async (device: MediaDeviceInfo) => {
         setSelectedAudioInput(device);
+        await setSelectedMicrophone(device);
         setState({
             ...stateRef.current,
             selectedAudioInput: device,

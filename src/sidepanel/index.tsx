@@ -7,10 +7,12 @@ import { MainContentView, MicrophoneOptions, VexaToolbar } from "~shared/compone
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
 import { MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
+import { StorageService, StoreKeys } from "~lib/services/storage.service";
 const messageSender = new MessageSenderService();
 
 const Vexa = () => {
     const audioCapture = useAudioCapture();
+    const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
 
     useEffect(() => {
         chrome.runtime.connect({ name: 'mySidepanel' });
@@ -21,7 +23,7 @@ const Vexa = () => {
         <div className="flex flex-col h-screen w-full bg-slate-950 p-4">
             <AudioCaptureContext.Provider value={audioCapture}>
                 <VexaToolbar />
-                {audioCapture.state.isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3"/>}
+                {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3"/>}
             </AudioCaptureContext.Provider>
         </div>
     )

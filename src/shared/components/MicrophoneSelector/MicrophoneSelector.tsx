@@ -11,15 +11,14 @@ import { StorageService, StoreKeys } from '~lib/services/storage.service';
 export interface MicrophoneSelectorProps { }
 
 export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
-  const [selectedMicrophone, setSelectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
+  const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
   const audioCapture = useAudioCapture();
 
   const onMicrophoneSelected = async (value: MediaDeviceInfo[]) => {
-    await setSelectedMicrophone(value[0]);
-    // audioCapture.setSelectedAudioInputDevice(value[0]);
+    audioCapture.setSelectedAudioInputDevice(value[0]);
   };
 
   useEffect(() => {

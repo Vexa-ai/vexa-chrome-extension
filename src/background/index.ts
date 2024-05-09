@@ -2,6 +2,7 @@ import { AudioCaptureManagerService } from "~lib/services/audio-capture-manager.
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
+import { StorageService, StoreKeys } from "~lib/services/storage.service";
 
 let currentTab = null;
 let newTab = null;
@@ -13,6 +14,13 @@ chrome.runtime.onConnect.addListener(port => {
             chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
             console.log('Side panel closed!');
         });
+    }
+});
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+    const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
+    if(capturingTabId && capturingTabId === tabId) {
+        messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
     }
 });
 
@@ -72,6 +80,13 @@ MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionIns
 MessageListenerService.registerMessageListener(MessageType.ON_APP_OPEN, () => {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
 });
+MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message) => {
+    const { tabId } = message.data;
+    StorageService.set(StoreKeys.CAPTURED_TAB_ID, tabId);
+});
+MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (message) => {
+    StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
+});
 MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
@@ -127,6 +142,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     domain: 'https://chrome.away.guru',
                     token: 'expected_secure_token',
                     url: tab.url,
+                    tabId: tab.id,
                     meetingId: 'meeting_1', //TODO: Replace with generated or persisted value
                 }
             }).then(result => {

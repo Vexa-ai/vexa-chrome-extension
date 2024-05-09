@@ -83,6 +83,7 @@ export enum StoreKeys {
     RECORD_START_TIME = 'RECORD_START_TIME',
     SELECTED_MICROPHONE = "SELECTED_MICROPHONE",
     CAPTURING_STATE = "CAPTURING_STATE",
+    CAPTURED_TAB_ID = "CAPTURED_TAB_ID",
 }
 
 export interface AuthorizationData {

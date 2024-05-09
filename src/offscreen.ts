@@ -107,7 +107,7 @@ MessageListenerService.registerMessageListener(MessageType.RESUME_RECORDING, asy
 });
 
 MessageListenerService.registerMessageListener(MessageType.START_RECORDING, async (message, sender, sendResponse) => {
-  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.meetingId, message.data.token, message.data.domain, message.data.url));
+  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.meetingId, message.data.token, message.data.domain, message.data.tabId));
 });
 
 MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender, sendResponse) => {
@@ -117,7 +117,7 @@ MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async
 let timestamp;
 let counter;
 
-async function startRecording(micLabel, streamId, connectionId, meetingId, token, domain, url) {
+async function startRecording(micLabel, streamId, connectionId, meetingId, token, domain, tabId) {
   let deviceId;
   try {
     deviceId = await getMicDeviceIdByLabel(micLabel);
@@ -181,7 +181,7 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
     recorder.start(3000);
     // window.location.hash = 'recording';
     console.log('Updating state')
-    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED })
+    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED, data: { tabId } })
 
     return true;
   } catch (error) {

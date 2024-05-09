@@ -15,6 +15,6 @@ export function MicrophoneLevelIndicator({}: MicrophoneLevelIndicatorProps) {
     });
   }, []);
   return <div className='MicrophoneLevelIndicator flex flex-col-reverse h-6 w-1 rounded-xl bg-[#161B26] mx-2'>
-    <div className="indicator rounded-xl bg-[#9E77ED] w-full" style={{ height: `${micLevel * 300}%`, transition: 'height 0.2s ease-in-out'  }}></div>
+    <div className="indicator rounded-xl bg-[#9E77ED] w-full" style={{ height: `${micLevel * 150}%`, transition: 'height 0.2s ease-in-out'  }}></div>
   </div>;
 }

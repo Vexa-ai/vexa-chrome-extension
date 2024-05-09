@@ -76,6 +76,27 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDIN
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
 
+MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, (message, sender, sendResponse) => {
+    const token = 'expected_secure_token';
+    const { prompt, meetingId } = message.data;
+    fetch(`https://main.away.guru/api/v1/copilot?token=${token}`, {
+        method: 'POST',
+        body: JSON.stringify({
+            content: prompt,
+            meeting_id: 'meeting_1',
+            context_id: '1',
+            user_id: 'user_1'
+        })
+    }).then(async res => {
+        const responseJson = await res.json();
+      console.log('Response', responseJson);
+      sendResponse({response: responseJson})
+    }, err => {
+        console.error(err);
+        sendResponse(null);
+    });
+});
+
 MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDING, (message) => {
     chrome.tabs.query({ lastFocusedWindow: true, active: true, currentWindow: true }, async tabs => {
         const tab = tabs[0];

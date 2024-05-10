@@ -1,9 +1,28 @@
 .MicrophoneSelector {
   .react-dropdown-select-dropdown {
     @apply rounded-lg p-1 bg-slate-950 border-[#333741] #{!important};
-    // & > div > p {
-    //   max-width: calc(100% - 26px);
-    // }
+
+    /* width */
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    /* Track */
+    &::-webkit-scrollbar-track {
+      background: #0C111D;
+      border-radius: 4px;
+    }
+
+    /* Handle */
+    &::-webkit-scrollbar-thumb {
+      background: #272829;
+      border-radius: 4px;
+    }
+
+    /* Handle on hover */
+    &::-webkit-scrollbar-thumb:hover {
+      background: #333741;
+    }
   }
 
   .react-dropdown-select-content {

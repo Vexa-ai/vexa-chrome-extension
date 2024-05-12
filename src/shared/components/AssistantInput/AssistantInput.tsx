@@ -1,16 +1,14 @@
 import React, { useRef } from 'react';
 import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
 import './AssistantInput.scss';
-import { MessageSenderService } from '~lib/services/message-sender.service';
-import { MessageType } from '~lib/services/message-listener.service';
 
 export interface AssistantInputProps {
   className?: string;
+  onEnter: (prompt: string) => Promise<boolean>;
 }
 
-export function AssistantInput({ className = '' }: AssistantInputProps) {
+export function AssistantInput({ className = '', onEnter }: AssistantInputProps) {
   const promptInputRef = useRef<HTMLInputElement>(null);
-  const messageSender = new MessageSenderService();
 
   const handlePromptSubmit = async (evt) => {
     evt.preventDefault();
@@ -20,9 +18,10 @@ export function AssistantInput({ className = '' }: AssistantInputProps) {
 
     try {
       const promptText = promptInputRef.current.value;
-      const requestResult = await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt: promptText }});
-      console.log(requestResult);
-      promptInputRef.current.value = '';
+      const response = await onEnter(promptText);
+      if(response) {
+        promptInputRef.current.value = '';
+      }
     } catch(err) {
       console.error(err);
     }

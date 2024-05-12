@@ -193,11 +193,16 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
 }
 
 async function pollTranscript(meetingId: string, token: string, timestamp = new Date()) {
+  timestamp.setMinutes(timestamp.getMinutes() - 5);
   setTimeout(() => {
-    fetch(`https://main.away.guru/api/v1/transcription?meetingId=${meetingId}&token=${token}&last_msg_timestamp=${timestamp.toISOString()}`, {
+    fetch(`https://main.away.guru/api/v1/transcription?meetingId=${meetingId}&token=${token}`, {
     method: 'GET',
     }).then(async res => {
-      console.log('Transcript', await res.json());
+      const transcripts = await res.json();
+      messageSender.sendSidebarMessage({ 
+        type: MessageType.TRANSCRIPTION_RESULT, 
+        data: transcripts,
+      });
     });
   }, 1500);
   

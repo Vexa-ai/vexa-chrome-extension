@@ -11,9 +11,9 @@ export interface MainContentViewProps {
 
 export function MainContentView({}: MainContentViewProps) {
   return (
-    <div className='MainContentView flex flex-grow'>
-      <Tabs className='text-gray-300 h-[inherit] w-full flex flex-col'>
-        <TabList className='flex text-gray-300'>
+    <div className='MainContentView flex flex-grow overflow-y-auto h-auto'>
+      <Tabs className='text-gray-300 w-full flex flex-col flex-1'>
+        <TabList className='flex text-gray-300 top-0 sticky w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm'>
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Transcript</Tab>
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Notes</Tab>
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>

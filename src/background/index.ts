@@ -19,30 +19,10 @@ chrome.runtime.onConnect.addListener(port => {
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
-    if(capturingTabId && capturingTabId === tabId) {
+    if (capturingTabId && capturingTabId === tabId) {
         messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
     }
 });
-
-const stopRecording = async (tab, isPause = false) => {
-    chrome.action.setIcon({ path: "assets/icons/not-recording.png" });
-    currentTab = null;
-    newTab = null;
-
-    chrome.runtime.sendMessage({
-        type: 'stop-recording',
-        target: 'offscreen'
-    }, {}, result => {
-        chrome.storage.session.set({
-            '_dl_recording': result ? 0 : 1,
-            '_dl_recording_started': 0,
-            '_dl_recording_ms_before_pause': 0,
-            '_dl_recording_paused': 0,
-        });
-    });
-
-    chrome.tabs.sendMessage(tab.id, { status: isPause ? 'pause' : 'stop' });
-};
 
 async function getConnectionId() {
     const uuid = String(self.crypto.randomUUID());
@@ -96,16 +76,23 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
     const { prompt, meetingId } = message.data;
     fetch(`https://main.away.guru/api/v1/copilot?token=${token}`, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
             content: prompt,
-            meeting_id: 'meeting_1',
+            meeting_id: 'meeting1',
             context_id: '1',
             user_id: 'user_1'
         })
     }).then(async res => {
         const responseJson = await res.json();
-      console.log('Response', responseJson);
-      sendResponse({response: responseJson})
+        console.log('Response', responseJson);
+        // messageSender.sendSidebarMessage({
+        //     type: MessageType.ASSISTANT_PROMPT_RESULT,
+        //     data: responseJson,
+        // });
+        sendResponse({ data: responseJson?.messages || [] });
     }, err => {
         console.error(err);
         sendResponse(null);
@@ -132,7 +119,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                 console.error(error);
                 return;
             }
-            
+
             messageSender.sendBackgroundMessage({
                 type: MessageType.START_RECORDING, data:
                 {
@@ -143,7 +130,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     token: 'expected_secure_token',
                     url: tab.url,
                     tabId: tab.id,
-                    meetingId: 'meeting_1', //TODO: Replace with generated or persisted value
+                    meetingId: 'meeting1', //TODO: Replace with generated or persisted value
                 }
             }).then(result => {
                 console.log('persisting record starting details')
@@ -157,5 +144,14 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
         });
     });
 });
-
+chrome.runtime.onInstalled.addListener(() => {
+    console.log('New install');
+    // TODO: modify to get user credentials (token, id, e.t.c), then clear storage before storing user creds in DB again ) 
+    // setTimeout(() => {
+    //     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+    // }, 1000);
+    // StorageService.set(StoreKeys.RECORD_START_TIME, null);
+    // StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
+    StorageService.clear();
+});
 createOffscreenDocument();

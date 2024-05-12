@@ -17,15 +17,18 @@ const Vexa = () => {
     useEffect(() => {
         chrome.runtime.connect({ name: 'mySidepanel' });
         messageSender.sendBackgroundMessage({ type: MessageType.ON_APP_OPEN });
-    }, []);  
+    }, []);
 
     return (
-        <div className="flex flex-col h-screen w-full bg-slate-950 p-4">
-            <AudioCaptureContext.Provider value={audioCapture}>
-                <VexaToolbar />
-                {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3"/>}
-            </AudioCaptureContext.Provider>
-        </div>
+        // <div className="m-4">
+            <div className="flex flex-col h-screen w-full px-4 pt-4 pb-4 overflow-y-auto">
+                <AudioCaptureContext.Provider value={audioCapture}>
+                    <VexaToolbar />
+                    {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
+                </AudioCaptureContext.Provider>
+            </div>
+        // </div>
+
     )
 };
 
@@ -33,7 +36,7 @@ export const getStyle = () => {
     const style = document.createElement("style")
     style.textContent = rootCssText
     return style
-  }
+}
 
 export const config: PlasmoCSConfig = {
     matches: ['<all_urls>'],

@@ -1,29 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import './TranscriptList.scss';
 import { TranscriptEntry } from '../TranscriptEntry';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 
-export interface TranscriptListProps {}
+export interface TranscriptListProps { }
 
-export function TranscriptList({}: TranscriptListProps) {
+export function TranscriptList({ }: TranscriptListProps) {
 
-  const [transcripts, setTranscripts] = useState<{speaker: string; text: string}[]>([]);
+  const [transcripts, setTranscripts] = useState<{ speaker: string; content: string }[]>([]);
+  const transcriptListRef = useRef<HTMLDivElement>(null);
+  const lastEntryRef = useRef<HTMLDivElement>(null);
+
+  MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
+  MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
+    const transcription: { speaker: string; content: string }[] = message.data;
+    setTranscripts([...transcripts, ...transcription]);
+  });
 
   useEffect(() => {
-    MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
-    MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
-      const transcription: {speaker: string; text: string}[] = message.data;
-      setTranscripts([...transcripts, ...transcription]);
-    });
+    if (lastEntryRef.current) {
+      lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [transcripts]);
+
+  useEffect(() => {
     return () => {
       MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
     }
-  }, [])
-  
+  }, []);
+
   return (
-    <div className='TranscriptList pt-3'>
-      {transcripts.map((transcript, key) => <TranscriptEntry key={key} text={transcript.text} speaker={transcript.speaker} />)}
+    <div ref={transcriptListRef} className='TranscriptList pt-3'>
+      {transcripts.map((transcript, index) => (
+        <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
+          <TranscriptEntry text={transcript.content} speaker={transcript.speaker} />
+        </div>
+      ))}
     </div>
   );
 }

@@ -74,6 +74,9 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED,
     const { tabId } = message.data;
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, tabId);
 });
+MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (message) => {
+    messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+});
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (message) => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
 });
@@ -99,6 +102,12 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             user_id: 'user_1'
         })
     }).then(async res => {
+        if (!(res.status < 401)) {
+            if (res.status === 401) {
+                messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+            }
+            return;
+        }
         const responseJson = await res.json();
         console.log('Response', responseJson);
         messageSender.sendBackgroundMessage({
@@ -107,6 +116,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         });
     }, err => {
         console.error(err);
+        debugger;
         sendResponse(null);
     });
 });

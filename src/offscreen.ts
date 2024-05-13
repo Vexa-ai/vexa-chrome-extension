@@ -158,9 +158,15 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
             'Content-Type': 'application/octet-stream'
           }
         }).then(response => {
-          // We are only polling for transcripts only if the user has sent a chunk.
-          // We wait 1 second, then poll for a transcript, may change implementation
+          if(!(response.status < 401)) {
+            if (response.status === 401) {
+              messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+            }
+            return;
+          }
           pollTranscript(meetingId, token, timestamp);
+        }, error => {
+          debugger;
         });
       }
     };
@@ -198,11 +204,20 @@ async function pollTranscript(meetingId: string, token: string, timestamp = new 
     fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meetingId=${meetingId}&token=${token}`, {
     method: 'GET',
     }).then(async res => {
+      if(!(res.status < 401)) {
+        if (res.status === 401) {
+          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+        }
+        return;
+      }
       const transcripts = await res.json();
       messageSender.sendSidebarMessage({ 
         type: MessageType.TRANSCRIPTION_RESULT, 
         data: transcripts,
       });
+    }, error => {
+      console.log(error);
+      debugger;
     });
   }, 1500);
   

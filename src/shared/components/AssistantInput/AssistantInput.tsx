@@ -1,32 +1,32 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
 import './AssistantInput.scss';
 
 export interface AssistantInputProps {
   className?: string;
   onEnter: (prompt: string) => Promise<boolean>;
+  clearField: boolean;
+  setClearField: (clear: boolean) => void;
 }
 
-export function AssistantInput({ className = '', onEnter }: AssistantInputProps) {
+export function AssistantInput({ className = '', onEnter, clearField, setClearField }: AssistantInputProps) {
   const promptInputRef = useRef<HTMLInputElement>(null);
 
   const handlePromptSubmit = async (evt) => {
     evt.preventDefault();
-    if(!promptInputRef.current.value?.trim()) {
+    if (!promptInputRef.current.value?.trim()) {
       return;
     }
-
-    try {
-      const promptText = promptInputRef.current.value;
-      const response = await onEnter(promptText);
-      if(response) {
-        promptInputRef.current.value = '';
-      }
-    } catch(err) {
-      console.error(err);
-    }
-    
+    const promptText = promptInputRef.current.value;
+    onEnter(promptText);
   };
+
+  useEffect(() => {
+    if (clearField) {
+      promptInputRef.current.value = '';
+      setClearField(false); // Reset the clearField state
+    }
+  }, [clearField, setClearField]);
 
   return <div className={`AssistantInput mt-auto ${className}`}>
     <form onSubmit={handlePromptSubmit} className="flex gap-1">

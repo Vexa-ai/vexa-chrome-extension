@@ -88,11 +88,11 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
     }).then(async res => {
         const responseJson = await res.json();
         console.log('Response', responseJson);
-        // messageSender.sendSidebarMessage({
-        //     type: MessageType.ASSISTANT_PROMPT_RESULT,
-        //     data: responseJson,
-        // });
-        sendResponse({ data: responseJson?.messages || [] });
+        messageSender.sendBackgroundMessage({
+            type: MessageType.ASSISTANT_PROMPT_RESULT,
+            data: responseJson?.messages || [],
+        });
+        // sendResponse({ data: responseJson?.messages || [] });
     }, err => {
         console.error(err);
         sendResponse(null);

@@ -36,12 +36,6 @@ export function AssistantList({ }: AssistantListProps) {
     }
 
   }
-  // MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
-  // MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_RESULT, (message) => {
-  //   const response: AssistantEntryData[] = message.data;
-  //   console.log(response);
-  //   setResponses([...responses, ...response]);
-  // });
 
   useEffect(() => {
     if (lastEntryRef.current) {
@@ -55,8 +49,8 @@ export function AssistantList({ }: AssistantListProps) {
     }
   }, [])
 
-  return <div ref={assistantListRef} className='AssistantList pt-3 flex flex-col h-full'>
-    <div className="flex-grow-1">
+  return <div ref={assistantListRef} className='AssistantList pt-3 flex flex-col max-h-full overflow-hidden'>
+    <div className="flex-grow overflow-y-auto">
       {/* <AssistantEntry /> */}
       {responses.map((entry, index) => (
         <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>

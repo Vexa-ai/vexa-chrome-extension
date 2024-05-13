@@ -49,7 +49,7 @@ export function AssistantList({ }: AssistantListProps) {
     }
   }, [])
 
-  return <div ref={assistantListRef} className='AssistantList pt-3 flex flex-col max-h-full overflow-hidden'>
+  return <div ref={assistantListRef} className='AssistantList flex flex-col mb-11 max-h-full w-full overflow-hidden'>
     <div className="flex-grow overflow-y-auto">
       {/* <AssistantEntry /> */}
       {responses.map((entry, index) => (
@@ -58,6 +58,6 @@ export function AssistantList({ }: AssistantListProps) {
         </div>
       ))}
     </div>
-    <AssistantInput onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 sticky bottom-0' />
+    <AssistantInput onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute w-full bottom-0' />
   </div>;
 }

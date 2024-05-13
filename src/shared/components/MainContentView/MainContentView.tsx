@@ -19,7 +19,7 @@ export function MainContentView({}: MainContentViewProps) {
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>
         </TabList>
 
-        <TabPanel>
+        <TabPanel className='h-[-webkit-fill-available] flex w-full'>
           <TranscriptList />
         </TabPanel>
 
@@ -27,7 +27,7 @@ export function MainContentView({}: MainContentViewProps) {
           Notes here
         </TabPanel>
 
-        <TabPanel className='h-[-webkit-fill-available]'>
+        <TabPanel className='h-[-webkit-fill-available] flex w-full'>
           <AssistantList />
         </TabPanel>
       </Tabs>

@@ -31,12 +31,15 @@ export function TranscriptList({ }: TranscriptListProps) {
   }, []);
 
   return (
-    <div ref={transcriptListRef} className='TranscriptList pt-3'>
-      {transcripts.map((transcript, index) => (
-        <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
-          <TranscriptEntry text={transcript.content} speaker={transcript.speaker} />
-        </div>
-      ))}
+    <div ref={transcriptListRef} className='TranscriptList flex flex-col max-h-full w-full overflow-hidden'>
+      <div className="flex-grow overflow-y-auto">
+        {transcripts.map((transcript, index) => (
+          <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
+            <TranscriptEntry text={transcript.content} speaker={transcript.speaker} />
+          </div>
+        ))}
+      </div>
+
     </div>
   );
 }

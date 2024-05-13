@@ -65,7 +65,7 @@ export class StorageService {
      * @param includeCopies — Also cleanup copied data from secondary storage
      */
     static clear(includeCopies = true) {
-        StorageService.storage.clear(includeCopies);
+        return StorageService.storage.clear(includeCopies);
     }
 
     /**
@@ -84,8 +84,10 @@ export enum StoreKeys {
     SELECTED_MICROPHONE = "SELECTED_MICROPHONE",
     CAPTURING_STATE = "CAPTURING_STATE",
     CAPTURED_TAB_ID = "CAPTURED_TAB_ID",
+    AUTHORIZATION_DATA = "AUTHORIZATION_DATA",
 }
 
 export interface AuthorizationData {
-    token: string;
+    __vexa_token: string;
+    __vexa_domain: string;
   }

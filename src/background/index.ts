@@ -1,11 +1,7 @@
-import { AudioCaptureManagerService } from "~lib/services/audio-capture-manager.service";
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
-import { StorageService, StoreKeys } from "~lib/services/storage.service";
-
-let currentTab = null;
-let newTab = null;
+import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 chrome.runtime.onConnect.addListener(port => {
@@ -51,14 +47,28 @@ async function createOffscreenDocument() {
 
 MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
-const extensionInstallHandler = () => {
-    console.log('Vexa installed');
+const extensionInstallHandler = async () => {
+    console.log('Extension install complete');
 };
 
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
 MessageListenerService.registerMessageListener(MessageType.ON_APP_OPEN, () => {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+});
+MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
+    chrome.tabs.query({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL }, async (tabs) => {
+        const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+            __vexa_token: "",
+            __vexa_domain: ""
+        });
+        if (authData.__vexa_domain && authData.__vexa_token) {
+            tabs.forEach(tab => {
+                chrome.tabs.remove(tab.id);
+            });
+        }
+
+    });
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message) => {
     const { tabId } = message.data;
@@ -71,10 +81,13 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDIN
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
 
-MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, (message, sender, sendResponse) => {
-    const token = 'expected_secure_token';
+MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_domain: ""
+    });
     const { prompt, meetingId } = message.data;
-    fetch(`https://main.away.guru/api/v1/copilot?token=${token}`, {
+    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/copilot?token=${authData.__vexa_token}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -92,7 +105,6 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             type: MessageType.ASSISTANT_PROMPT_RESULT,
             data: responseJson?.messages || [],
         });
-        // sendResponse({ data: responseJson?.messages || [] });
     }, err => {
         console.error(err);
         sendResponse(null);
@@ -108,6 +120,10 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
         chrome.tabCapture.getMediaStreamId({
             targetTabId: tab.id
         }, async (streamId) => {
+            const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+                __vexa_token: "",
+                __vexa_domain: ""
+            });
             console.log({ streamId });
             try {
                 if (chrome.runtime.lastError) {
@@ -126,8 +142,8 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     micLabel: message.data.micLabel,
                     streamId,
                     connectionId: await getConnectionId(),
-                    domain: 'https://chrome.away.guru',
-                    token: 'expected_secure_token',
+                    domain: process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL,
+                    token: authData.__vexa_token,
                     url: tab.url,
                     tabId: tab.id,
                     meetingId: 'meeting1', //TODO: Replace with generated or persisted value
@@ -144,14 +160,22 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
         });
     });
 });
-chrome.runtime.onInstalled.addListener(() => {
-    console.log('New install');
-    // TODO: modify to get user credentials (token, id, e.t.c), then clear storage before storing user creds in DB again ) 
-    // setTimeout(() => {
-    //     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
-    // }, 1000);
-    // StorageService.set(StoreKeys.RECORD_START_TIME, null);
-    // StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
-    StorageService.clear();
+
+chrome.runtime.onInstalled.addListener(async () => {
+    console.log('Vexa install');
+    setTimeout(async () => {
+        await messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+        const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+            __vexa_token: "",
+            __vexa_domain: ""
+        });
+        await StorageService.clear();
+        if (authData.__vexa_domain && authData.__vexa_token) {
+            await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
+        }
+        chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
+        chrome.runtime.openOptionsPage();
+    }, 500);
+
 });
 createOffscreenDocument();

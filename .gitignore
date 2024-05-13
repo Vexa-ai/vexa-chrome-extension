@@ -28,6 +28,7 @@ yarn-error.log*
 out/
 build/
 dist/
+!build/artefacts/*
 
 # plasmo - https://www.plasmo.com
 .plasmo

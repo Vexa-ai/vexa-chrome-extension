@@ -195,7 +195,7 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
 async function pollTranscript(meetingId: string, token: string, timestamp = new Date()) {
   timestamp.setMinutes(timestamp.getMinutes() - 5);
   setTimeout(() => {
-    fetch(`https://main.away.guru/api/v1/transcription?meetingId=${meetingId}&token=${token}`, {
+    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meetingId=${meetingId}&token=${token}`, {
     method: 'GET',
     }).then(async res => {
       const transcripts = await res.json();

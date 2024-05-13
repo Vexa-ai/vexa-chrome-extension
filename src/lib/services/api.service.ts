@@ -221,7 +221,7 @@ export class ApiService {
     }
 
     private setRequestBearer(headers: { [key: string]: string } = {}) {
-        const { token } = ApiService.loggedInUser || { token: '' };
+        const { __vexa_token: token } = ApiService.loggedInUser || { __vexa_token: '' };
         return { ...headers, "Content-Type": "application/json", ...{ Authorization: `Bearer ${ token }` }}
     }
 }

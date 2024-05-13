@@ -29,7 +29,7 @@ export function AssistantList({ }: AssistantListProps) {
       console.log(requestResult);
       const response: AssistantEntryData[] = requestResult.data;
       console.log(response);
-      setResponses([...responses, ...response]);
+      setResponses(response);
       return true;
     } catch (error) {
       return false;

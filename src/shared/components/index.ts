@@ -13,3 +13,4 @@ export {TranscriptEntry} from './TranscriptEntry';
 export {AssistantEntry} from './AssistantEntry';
 export {AssistantList} from './AssistantList';
 export {AssistantInput} from './AssistantInput';
+export {AssistantSuggestions} from './AssistantSuggestions';

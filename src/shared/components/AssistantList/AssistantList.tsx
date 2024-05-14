@@ -54,14 +54,14 @@ export function AssistantList({ }: AssistantListProps) {
     }
   }, [])
 
-  return <div ref={assistantListRef} className='AssistantList flex flex-col mb-11 max-h-full w-full overflow-hidden'>
-    <div className="flex-grow overflow-y-auto">
+  return <div ref={assistantListRef} className='AssistantList flex flex-col mb-[100px] max-h-full w-full overflow-hidden'>
+    {responses.length ? <div className="flex-grow overflow-y-auto">
       {responses.map((entry, index) => (
         <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>
           <AssistantEntry entryData={entry} />
         </div>
       ))}
-    </div>
-    <AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute w-full bottom-0' />
+    </div> : null}
+    <AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute w-full bottom-3' />
   </div>;
 }

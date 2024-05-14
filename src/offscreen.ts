@@ -201,7 +201,7 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
 async function pollTranscript(meetingId: string, token: string, timestamp = new Date()) {
   timestamp.setMinutes(timestamp.getMinutes() - 5);
   setTimeout(() => {
-    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meetingId=${meetingId}&token=${token}`, {
+    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}`, {
     method: 'GET',
     }).then(async res => {
       if(!(res.status < 401)) {

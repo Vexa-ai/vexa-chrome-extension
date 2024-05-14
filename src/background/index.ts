@@ -154,7 +154,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     connectionId: await getConnectionId(),
                     domain: process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL,
                     token: authData.__vexa_token,
-                    url: tab.url,
+                    url: authData.__vexa_domain,
                     tabId: tab.id,
                     meetingId: 'meeting1', //TODO: Replace with generated or persisted value
                 }

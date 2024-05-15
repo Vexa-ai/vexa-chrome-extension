@@ -2,7 +2,6 @@ import rootCssText from "data-text:~root.scss";
 import './index.scss';
 import type { PlasmoCSConfig } from "plasmo";
 import React, { useEffect } from "react";
-import { SidebarReloadButton } from "~devtools/components";
 import { MainContentView, MicrophoneOptions, VexaToolbar } from "~shared/components";
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
 import { MessageType } from "~lib/services/message-listener.service";
@@ -10,7 +9,7 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 const messageSender = new MessageSenderService();
 
-const Vexa = () => {
+const SidePanel = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
 
@@ -43,4 +42,4 @@ export const config: PlasmoCSConfig = {
     css: ["./index.scss"],
 };
 
-export default Vexa;
+export default SidePanel;

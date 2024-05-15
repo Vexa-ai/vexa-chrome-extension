@@ -183,8 +183,8 @@ chrome.runtime.onInstalled.addListener(async () => {
         if (authData.__vexa_domain && authData.__vexa_token) {
             await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
         }
-        chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
-        chrome.runtime.openOptionsPage();
+        // chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
+        // chrome.runtime.openOptionsPage(); //TODO: Uncomment when done
     }, 500);
 
 });

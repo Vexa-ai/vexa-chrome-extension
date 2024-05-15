@@ -14,3 +14,4 @@ export {AssistantEntry} from './AssistantEntry';
 export {AssistantList} from './AssistantList';
 export {AssistantInput} from './AssistantInput';
 export {AssistantSuggestions} from './AssistantSuggestions';
+export {CustomSelect} from './CustomSelect';

@@ -4,9 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+body #vexa-content-div {
+    position: fixed;
+    width: 400px;
+    height: 100vh;
+    top: 0;
     font-family: 'Inter', sans-serif;
     overflow: hidden;
+    
     @apply bg-slate-950;
     // scrollbar-gutter: stable;
 

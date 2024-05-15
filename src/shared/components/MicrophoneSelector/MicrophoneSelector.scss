@@ -33,4 +33,14 @@
     margin: 0 8px;
     color: #94969C;
   }
+
+  .CustomSelect {
+    .custom--dropdown-container {
+      @apply border-[#333741] #{!important};
+
+      .dropdown-menu {
+        @apply bg-[#0C111D] border-[#1F242F] #{!important};
+      }
+    }
+  }
 }

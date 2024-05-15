@@ -6,8 +6,10 @@ import checkIcon from "data-base64:~assets/images/svg/check.svg";
 import './MicrophoneSelector.scss';
 import { MicrophoneLevelIndicator } from '../MicrophoneLevelIndicator';
 import { useAudioCapture } from '~shared/hooks/use-audiocapture';
-import { useStorage } from '@plasmohq/storage/hook';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
+import { CustomSelect, type Option } from '../CustomSelect';
+// import Select from 'react-select'
+
 export interface MicrophoneSelectorProps { }
 
 export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
@@ -22,7 +24,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   };
 
   useEffect(() => {
-    setMicrophones(audioCapture.state.availableAudioInputs?.map(device => ({...device, value: device.label})));
+    setMicrophones(audioCapture.state.availableAudioInputs?.map(device => ({ ...device, value: device.label })));
   }, [audioCapture.availableAudioInputs]);
 
   const customContentRenderer = ({ props, state, methods }: SelectRenderer<any>) => {
@@ -67,42 +69,53 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     audioCapture.requestMicrophones();
   }
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
+  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownRef]);
+  const options: Option[] = microphones.map(microphone => ({ ...microphone, value: microphone.deviceId }));
+  const handleChange = (option: Option) => {
+    setSelectedOption(option);
+  };
 
   return <div className="MicrophoneSelector flex flex-col w-full">
     <label htmlFor="micSelect" className='text-white mb-2 flex text-sm font-medium'>Select Microphone</label>
     <div ref={dropdownRef}>
-      <Select name='micSelect' style={
-        {
-          width: '100%',
-          borderRadius: '8px',
-          borderColor: '#333741',
-          fontSize: '0.875rem',
-        }
-      }
-        className='w-full text-white rounded-lg px-[14px] py-[10px] !border-[#333741] !min-h-11'
-        options={microphones}
-        onChange={onMicrophoneSelected}
-        values={selectedMicrophone ? [selectedMicrophone] : []}
-        contentRenderer={customContentRenderer}
-        itemRenderer={customOptionRenderer}
+      <CustomSelect
+        placeholder={<CustomPlaceholder />}
+        selectedComponent={CustomSelected}
+        options={options}
+        isMulti={false}
         keepOpen={isOpen}
-        onDropdownOpen={onDropdownOpenHandler}
-        onDropdownClose={() => setIsOpen(false)}
+        isSearchable={false}
+        onChange={handleChange}
+        align="left"
+        noOptionsComponent={CustomNoOption}
+        optionComponent={CustomOption}
       />
     </div>
-
   </div>
 
 }
+
+const CustomNoOption: React.FC = () => (
+  <div className={`flex gap-2 items-center bg-[#0C111D] py-2 px-2 m-1 text-[#F5F5F6] rounded-lg`}>
+    <p className='min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full mx-auto'>No microphones found</p>
+  </div>
+);
+
+const CustomPlaceholder: React.FC = () => (
+  <div className='flex gap-2 text-[#94969C] items-center w-full overflow-hidden'>
+    <img alt='' className='w-5' src={microphoneOffIcon} />
+    <p className='min-h-6'>No microphone</p>
+  </div>
+);
+
+const CustomSelected: React.FC<{ value: any }> = ({ value }) => (
+  <div className='bg-gray-900'>{value}</div>
+);
+
+const CustomOption: React.FC<{ option: Option; selected: boolean; onClick: () => void }> = ({ option, selected, onClick }) => (
+  <div onClick={onClick} className={`flex gap-2 items-center ${selected ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
+    <p className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full' title={option.label}>{option.label}</p>
+    {selected && <img alt='' className='w-6' src={checkIcon} />}
+  </div>
+);

@@ -44,14 +44,21 @@ async function createOffscreenDocument() {
     return offscreenDocument;
 }
 
-
 MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
+
 const extensionInstallHandler = async () => {
     console.log('Extension install complete');
 };
 
+const pipeOffscreenToTab = (evtData) => {
+    const tab: chrome.tabs.Tab = evtData.tab;
+    delete evtData.tab;
+    messageSender.sendTabMessage(tab, evtData);
+}
+MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TO_TAB_MESSAGE, pipeOffscreenToTab);
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
+MessageListenerService.registerMessageListener(MessageType.GET_MY_TAB, async (message, sender, sendResponse) => sendResponse({ tab: sender.tab }));
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
 MessageListenerService.registerMessageListener(MessageType.ON_APP_OPEN, () => {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });

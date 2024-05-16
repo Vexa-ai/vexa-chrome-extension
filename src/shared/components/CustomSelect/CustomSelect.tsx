@@ -14,6 +14,7 @@ export interface CustomSelectProps {
   isMulti: boolean;
   isSearchable: boolean;
   keepOpen?: boolean;
+  onOpen?: (value: Option | Option[]) => void;
   onChange: (value: Option | Option[]) => void;
   align: 'left' | 'right';
   optionComponent: React.ComponentType<{ option: Option; selected: boolean; onClick: () => void }>;
@@ -28,6 +29,7 @@ export function CustomSelect({
   noOptionsComponent: NoOptionsComponent,
   keepOpen = false,
   onChange,
+  onOpen,
   align,
   optionComponent: OptionComponent = ({ option, selected, onClick }) => <span onClick={onClick} className={selected && 'custom--dropdown-container'}>{option.label}</span>,
 }: CustomSelectProps) {
@@ -40,8 +42,11 @@ export function CustomSelect({
 
   useEffect(() => {
     setSearchValue("");
-    if (showMenu && searchRef.current) {
-      searchRef.current.focus();
+    if (showMenu) {
+      onOpen?.(selectedValues);
+      if (searchRef.current) {
+        searchRef.current.focus();
+      }
     }
   }, [showMenu]);
 
@@ -154,17 +159,17 @@ export function CustomSelect({
                 />
               </div>
             )}
-            {getOptions().length > 0 
+            {getOptions().length > 0
               ? (
-                  getOptions().map(option => (
-                    <OptionComponent
-                      key={option.value}
-                      option={option}
-                      selected={isSelected(option)}
-                      onClick={() => onItemClick(option)}
-                    />
-                  ))
-               ) : renderNoOptions()
+                getOptions().map((option, key) => (
+                  <OptionComponent
+                    key={key}
+                    option={option}
+                    selected={isSelected(option)}
+                    onClick={() => onItemClick(option)}
+                  />
+                ))
+              ) : renderNoOptions()
             }
           </div>
         )}

@@ -3,8 +3,8 @@ import { MessageListenerService, MessageType } from "~lib/services/message-liste
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
-MessageListenerService.initializeListenerService();
 
+MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
 let recorder: MediaRecorder = null;
 let streamsToClose: MediaStream[] = [];
@@ -28,7 +28,6 @@ async function getMicDeviceIdByLabel(micLabel, tab?) {
   }
 }
 
-
 let micCheckStopper = () => {
 };
 
@@ -39,7 +38,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
       video: false,
     });
     navigator.mediaDevices.enumerateDevices().then(devices => {
-      messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices } })
+      messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MEDIA_DEVICES, data: { devices } })
     }).catch(error => console.error('Error getting available microphones:', error));
   } catch (error) {
     if (error.message === 'Permission dismissed') {
@@ -47,7 +46,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
     }
     console.log('Failed to get media permissions', error);
     // sendResponse([]);
-    messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices: [] } })
+    messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MEDIA_DEVICES, data: { devices: [] } })
   }
 });
 
@@ -80,7 +79,7 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
   
     const _interval = setInterval(() => {
       const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-      messageSender.sendSidebarMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
+      messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
     }, 150);
   
     micCheckStopper = async () => {
@@ -164,7 +163,7 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
             }
             return;
           }
-          pollTranscript(meetingId, token, timestamp);
+          pollTranscript(meetingId, token, timestamp, tabId);
         }, error => {
           debugger;
         });
@@ -198,7 +197,7 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
   return false;
 }
 
-async function pollTranscript(meetingId: string, token: string, timestamp = new Date()) {
+async function pollTranscript(meetingId: string, token: string, timestamp = new Date(), tabId: chrome.tabs.Tab['id']) {
   timestamp.setMinutes(timestamp.getMinutes() - 5);
   setTimeout(() => {
     fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}`, {
@@ -211,13 +210,16 @@ async function pollTranscript(meetingId: string, token: string, timestamp = new 
         return;
       }
       const transcripts = await res.json();
-      messageSender.sendSidebarMessage({ 
-        type: MessageType.TRANSCRIPTION_RESULT, 
-        data: transcripts,
-      });
+      const tabs = await chrome.tabs.query({ active: true });
+      const targetTab = tabs.find(tab => tabId === tabId);
+      if (targetTab) {
+        messageSender.sendOffscreenToTabMessage(targetTab, {
+          type: MessageType.TRANSCRIPTION_RESULT,
+          data: transcripts,
+        });
+      }
     }, error => {
       console.log(error);
-      debugger;
     });
   }, 1500);
   

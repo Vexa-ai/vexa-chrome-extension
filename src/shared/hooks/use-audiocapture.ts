@@ -44,6 +44,24 @@ export const useAudioCapture = (): AudioCapture => {
     const [recordStartTime, setRecordStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
     const messageSender = new MessageSenderService();
 
+    const requestMicrophonesInContent = async () => {
+        try {
+            await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: false,
+            });
+            navigator.mediaDevices.enumerateDevices().then(async devices => {
+              setDevices(devices);
+            }).catch(error => console.error('Error getting available microphones:', error));
+          } catch (error) {
+            if (error.message === 'Permission dismissed') {
+              messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS })
+            }
+            console.log('Failed to get media permissions', error);
+            setDevices([]);
+          }
+    }
+
 
     const startAudioCapture = (label?: string) => {
         messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_START_RECORDING, data: { micLabel: label || selectedMicrophone?.label }});
@@ -61,7 +79,8 @@ export const useAudioCapture = (): AudioCapture => {
     }
 
     const requestMicrophones = () => {
-            messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_MEDIA_DEVICES });
+        // messageSender.sendOffscreenMessage({ type: MessageType.REQUEST_MEDIA_DEVICES });
+        requestMicrophonesInContent();
     };
 
     const stopAudioCapture = () => {
@@ -72,6 +91,20 @@ export const useAudioCapture = (): AudioCapture => {
     const pauseAudioCapture = () => {
         setIsCapturing(false);
     };
+
+    const setDevices = (devices: MediaDeviceInfo[]) => {
+        if (!devices) return;
+        const microphones = devices.filter(device => device.kind === 'audioinput');
+        const speakers = devices.filter(device => device.kind === 'audiooutput');
+        setAvailableMicrophones(microphones);
+        setAvailableSpeakers(speakers);
+        setState({
+            ...stateRef.current,
+            availableAudioOutputs: speakers,
+            availableAudioInputs: microphones,
+        });
+        return devices;
+    }
 
     MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_STARTED);
     MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, async () => {
@@ -98,19 +131,7 @@ export const useAudioCapture = (): AudioCapture => {
 
     MessageListenerService.unRegisterMessageListener(MessageType.MEDIA_DEVICES);
     MessageListenerService.registerMessageListener(MessageType.MEDIA_DEVICES, (evtData) => {
-        const devices = evtData.data?.devices;
-        if (!devices) return;
-        const microphones = devices.filter(device => device.kind === 'audioinput');
-        const speakers = devices.filter(device => device.kind === 'audiooutput');
-        setAvailableMicrophones(microphones);
-        setAvailableSpeakers(speakers);
-        setState({
-            ...stateRef.current,
-            availableAudioOutputs: speakers,
-            availableAudioInputs: microphones,
-            // selectedAudioInput: selectedAudioInput,
-        });
-        return devices;
+        return setDevices(evtData.data.devices);
     });
 
     useEffect(() => {

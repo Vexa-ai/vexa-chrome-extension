@@ -62,6 +62,6 @@ export function AssistantList({ }: AssistantListProps) {
         </div>
       ))}
     </div> : null}
-    <AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute w-full bottom-3' />
+    <AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute bottom-3' />
   </div>;
 }

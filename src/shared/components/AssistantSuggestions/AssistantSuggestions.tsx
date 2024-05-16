@@ -48,7 +48,7 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     suggestionsRef.current!.scrollLeft = scrollLeft - walk;
   };
 
-  return <div className='AssistantSuggestions flex w-full overflow-x-auto' ref={suggestionsRef}
+  return <div className='AssistantSuggestions flex w-full overflow-x-hidden' ref={suggestionsRef}
     onMouseDown={handleMouseDown}
     onMouseUp={handleMouseUp}
     onMouseLeave={handleMouseUp}
@@ -57,7 +57,7 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     onTouchEnd={handleTouchEnd}
     onTouchMove={handleTouchMove}>
     <div className='flex gap-2 min-w-[180%] overflow-x-auto mb-2'>
-      {suggestions.map((suggestion, key) => <div onClick={() => selectSuggestion(key)} className={`suggestion select-none p-1 w-[66.66%] border border-[#333741] rounded font-medium text-[#F5F5F6] ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`} key={key}>
+      {suggestions.map((suggestion, key) => <div onClick={() => selectSuggestion(key)} className={`suggestion select-none p-1 w-[66.66%] border border-[#333741] rounded font-medium text-[#F5F5F6] ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'} ${key == suggestions.length ? 'mr-7' : ''}`} key={key}>
         {suggestion}
       </div>)}
     </div>

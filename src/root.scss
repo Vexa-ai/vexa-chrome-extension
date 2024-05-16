@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+#plasmo-shadow-container {
+    & > div {
+        left: unset !important;
+        right: 0 !important;
+    }
+}
+
 body #vexa-content-div {
     position: fixed;
     width: 400px;

@@ -9,6 +9,8 @@ import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocap
 import { MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
+import { createRoot } from "react-dom/client";
+
 const messageSender = new MessageSenderService();
 
 const Vexa = () => {

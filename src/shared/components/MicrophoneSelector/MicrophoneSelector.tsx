@@ -16,7 +16,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const [microphones, setMicrophones] = useState<Array<MediaDeviceInfo & Option>>([]);
   const audioCapture = useAudioCapture();
 
   const onMicrophoneSelected = async (value: MediaDeviceInfo[]) => {
@@ -24,7 +24,9 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   };
 
   useEffect(() => {
-    setMicrophones(audioCapture.state.availableAudioInputs?.map(device => ({ ...device, value: device.label })));
+    setMicrophones(audioCapture.state.availableAudioInputs?.map(device => {
+      return { ...device, label: device.label, value: device.deviceId }
+    }));
   }, [audioCapture.availableAudioInputs]);
 
   const customContentRenderer = ({ props, state, methods }: SelectRenderer<any>) => {
@@ -57,13 +59,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     );
   };
 
-  const customOptionRenderer = ({ item, props, state, methods }: SelectItemRenderer<any>) => (
-    <div onClick={() => methods.addItem(item)} className={`flex gap-2 items-center ${selectedMicrophone?.deviceId === item.deviceId ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
-      <p className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full' title={item.label}>{item.label}</p>
-      {selectedMicrophone?.deviceId === item.deviceId && <img alt='' className='w-6' src={checkIcon} />}
-    </div>
-  );
-
   const onDropdownOpenHandler = () => {
     setIsOpen(true);
     audioCapture.requestMicrophones();
@@ -71,7 +66,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
 
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
 
-  const options: Option[] = microphones.map(microphone => ({ ...microphone, value: microphone.deviceId }));
+  // const options: Option[] = microphones.map(microphone => ({ ...microphone, value: microphone.deviceId }));
   const handleChange = (option: Option) => {
     setSelectedOption(option);
   };
@@ -82,10 +77,11 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
       <CustomSelect
         placeholder={<CustomPlaceholder />}
         selectedComponent={CustomSelected}
-        options={options}
+        options={microphones}
         isMulti={false}
         keepOpen={isOpen}
         isSearchable={false}
+        onOpen={onDropdownOpenHandler}
         onChange={handleChange}
         align="left"
         noOptionsComponent={CustomNoOption}
@@ -93,7 +89,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
       />
     </div>
   </div>
-
 }
 
 const CustomNoOption: React.FC = () => (
@@ -113,9 +108,11 @@ const CustomSelected: React.FC<{ value: any }> = ({ value }) => (
   <div className='bg-gray-900'>{value}</div>
 );
 
-const CustomOption: React.FC<{ option: Option; selected: boolean; onClick: () => void }> = ({ option, selected, onClick }) => (
-  <div onClick={onClick} className={`flex gap-2 items-center ${selected ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
+const CustomOption: React.FC<{ option: Option; selected: boolean; onClick: () => void }> = ({ option, selected, onClick }) => {
+  console.log({option, selected});
+  debugger;
+  return <div onClick={onClick} className={`flex gap-2 items-center ${selected ? 'bg-[#1F242F]' : 'bg-slate-950'} py-2 px-2 m-1 hover:bg-[#1F242F] text-[#F5F5F6] rounded-lg`}>
     <p className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full' title={option.label}>{option.label}</p>
     {selected && <img alt='' className='w-6' src={checkIcon} />}
   </div>
-);
+};

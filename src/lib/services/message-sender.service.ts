@@ -15,7 +15,6 @@ export class MessageSenderService {
 
     // Sends message to popup or background page
     async sendOffscreenToTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any}) {
-        debugger;
         const response = await chrome.runtime.sendMessage({ target: 'background', ...payload, tab });
         return response;
     }

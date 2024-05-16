@@ -8,7 +8,7 @@ export interface Option {
 
 export interface CustomSelectProps {
   placeholder: React.ReactNode;
-  selectedComponent: React.ComponentType<{ value: any }>;
+  selectedComponent: React.ComponentType<{ value: any, label: string }>;
   noOptionsComponent?: React.ComponentType;
   options: Option[];
   isMulti: boolean;
@@ -56,16 +56,17 @@ export function CustomSelect({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      console.log('Outside clicked');
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowMenu(false);
+        setShowMenu(keepOpen || false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
-  }, [dropdownRef]);
+  }, []);
 
   const handleInputClick = () => {
     if (keepOpen) {
@@ -95,7 +96,7 @@ export function CustomSelect({
         newValue = [...selectedValues, option];
       }
     } else {
-      newValue = option;
+      newValue = [option];
     }
     setSelectedValues(newValue);
     onChange(newValue);
@@ -103,7 +104,10 @@ export function CustomSelect({
   };
 
   const isSelected = (option: Option) => {
-    return selectedValues.some(o => o.value === option.value);
+    // if (isMulti) {
+      return selectedValues.some(o => o.value === option.value);
+    // }
+    // return selectedValues === option;
   };
 
   const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,18 +131,18 @@ export function CustomSelect({
   };
 
   const renderPlaceholder = () => {
-    return <div className={`dropdown-selected-value ${!selectedValues ? 'placeholder' : ''}`}>
-      {selectedValues.length ? <SelectedComponent value={selectedValues[0].value} /> : placeholder}
+    return <div className={`dropdown-selected-value overflow-hidden ${!selectedValues ? 'placeholder' : ''}`}>
+      {selectedValues.length ? <SelectedComponent value={selectedValues[0].value} label={selectedValues[0].label} /> : placeholder}
     </div>;
   };
 
   return (
     <div className="CustomSelect">
-      <div className="custom--dropdown-container !w-full">
+      <div className="custom--dropdown-container">
         <div
           ref={inputRef}
           onClick={handleInputClick}
-          className="dropdown-input"
+          className="dropdown-input overflow-hidden"
         >
           {renderPlaceholder()}
           <div className="dropdown-tools">

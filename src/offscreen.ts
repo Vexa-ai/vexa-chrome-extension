@@ -150,7 +150,7 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         const timestamp = new Date();
-        fetch(`${domain}/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${i++}`, {
+        fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${i++}`, {
           method: 'PUT',
           body: event.data,
           headers: {

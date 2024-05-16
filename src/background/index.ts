@@ -3,15 +3,15 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-chrome.runtime.onConnect.addListener(port => {
-    if (port.name === 'mySidepanel') {
-        port.onDisconnect.addListener(() => {
-            chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-            console.log('Side panel closed!');
-        });
-    }
-});
+// chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+// chrome.runtime.onConnect.addListener(port => {
+//     if (port.name === 'mySidepanel') {
+//         port.onDisconnect.addListener(() => {
+//             chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+//             console.log('Side panel closed!');
+//         });
+//     }
+// });
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
@@ -80,12 +80,16 @@ MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message) => {
     const { tabId } = message.data;
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, tabId);
+    StorageService.set(StoreKeys.CAPTURING_STATE, true);
+    StorageService.set(StoreKeys.RECORD_START_TIME, new Date().getTime());
 });
 MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (message) => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
+    StorageService.set(StoreKeys.CAPTURING_STATE, false);
+    StorageService.set(StoreKeys.RECORD_START_TIME, 0);
 });
 MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
@@ -190,8 +194,8 @@ chrome.runtime.onInstalled.addListener(async () => {
         if (authData.__vexa_domain && authData.__vexa_token) {
             await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
         }
-        // chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
-        // chrome.runtime.openOptionsPage(); //TODO: Uncomment when done
+        chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
+        chrome.runtime.openOptionsPage(); //TODO: Uncomment when done
     }, 500);
 
 });

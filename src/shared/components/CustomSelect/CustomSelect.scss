@@ -5,9 +5,9 @@
         position: relative;
         border-radius: 6px;
         cursor: pointer;
-        width: -webkit-max-content;
-        width: -moz-max-content;
-        width: max-content;
+        width: -webkit-fill-available !important;
+        width: -moz-fill-available !important;
+        width: fill-available !important;
     }
 
     .custom--dropdown-container .dropdown-input {

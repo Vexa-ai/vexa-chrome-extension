@@ -40,7 +40,7 @@ export const useAudioCapture = (): AudioCapture => {
     const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
     const [availableSpeakers, setAvailableSpeakers] = useState<MediaDeviceInfo[]>([]);
     const [selectedMicrophone, setSelectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
-    const [isCapturingStore, setIsCapturingStoreState] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+    const [__, setIsCapturingStoreState] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
     const [recordStartTime, setRecordStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
     const messageSender = new MessageSenderService();
 
@@ -109,6 +109,7 @@ export const useAudioCapture = (): AudioCapture => {
     MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_STARTED);
     MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, async () => {
         console.log('setting record start time', recordStartTime);
+        debugger
         setIsCapturing(true);
         await setIsCapturingStoreState(true);
         await setRecordStartTime(new Date().getTime());
@@ -120,6 +121,7 @@ export const useAudioCapture = (): AudioCapture => {
     MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_END);
     MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, async () => {
         console.log('setting record end time');
+        debugger;
         setIsCapturing(false);
         await setIsCapturingStoreState(false);
         await setRecordStartTime(0);

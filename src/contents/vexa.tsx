@@ -1,7 +1,7 @@
 import rootCssText from "data-text:~root.scss";
 import customSelectCss from 'data-text:../shared/components/CustomSelect/CustomSelect.scss';
 import microphoneSelectCss from 'data-text:../shared/components/MicrophoneSelector/MicrophoneSelector.scss';
-import './vexa.scss';
+import vexaCss from 'data-text:./vexa.scss';
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoRender } from "plasmo";
 import React, { useEffect } from "react";
 import { MainContentView, MicrophoneOptions, VexaToolbar } from "~shared/components";
@@ -23,7 +23,7 @@ const Vexa = () => {
     }, []);
 
     return (
-        <div className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto">
+        <div className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
             <AudioCaptureContext.Provider value={audioCapture}>
                 <VexaToolbar />
                 {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
@@ -38,6 +38,7 @@ export const getStyle = () => {
         ${rootCssText}
         ${customSelectCss}
         ${microphoneSelectCss}
+        ${vexaCss}
     `
     return style
 }
@@ -82,9 +83,8 @@ export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
 // }
 
 export const config: PlasmoCSConfig = {
-    matches: ['*://*.meet.google.com/*'],
-    css: ["./vexa.scss"],
-    // world: 'MAIN',
+    matches: ['*://meet.google.com/*'],
+    // css: ["./vexa.scss"],
 };
 
 export default Vexa;

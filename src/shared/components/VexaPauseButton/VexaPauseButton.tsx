@@ -29,11 +29,9 @@ export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
   const audioCapture = useAudioCapture();
 
   useEffect(() => {
-    console.log({ storedStartTime, timeElapsed });
     if (storedStartTime) {
       const elapsedTime = new Date().getTime() - storedStartTime;
       setTimeElapsed(() => elapsedTime);
-      console.log('setting start time');
       const startTimeDate = new Date(storedStartTime);
       const currentTime = new Date();
 

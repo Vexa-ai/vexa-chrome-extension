@@ -11,9 +11,7 @@ const messageSender = new MessageSenderService();
 const dataCollectFn = async () => {
     const authData = JSON.parse(JSON.stringify(localStorage));
     await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
-    const savedAuthData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
-    console.log({authData, savedAuthData});
-    console.log('collected');
+    await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
     messageSender.sendBackgroundMessage( { type: MessageType.AUTH_SAVED});
 }
 

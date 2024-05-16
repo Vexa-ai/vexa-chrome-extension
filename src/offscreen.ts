@@ -52,7 +52,6 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
 
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
   try {
-    console.log('Starting mic stream');
     const micLabel: string = evtData.data.micLabel;
     micCheckStopper(); // Stop previous checker
     const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
@@ -62,7 +61,6 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
     });
   
     audioContext = new AudioContext();
-    console.log("Creating processor", VOLUME_PROCESSOR_PATH);
     await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH); // Load the audio worklet processor
     const microphone = audioContext.createMediaStreamSource(stream);
     const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
@@ -83,7 +81,6 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
     }, 150);
   
     micCheckStopper = async () => {
-      console.log("Kill checker");
       if (audioContext) {
         await audioContext.close(); // Close any existing audio context
       }
@@ -121,8 +118,6 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
   try {
     deviceId = await getMicDeviceIdByLabel(micLabel);
   } catch (e) {
-    console.log("Get mic", e);
-
     throw e;
   }
 
@@ -171,7 +166,6 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
     };
 
     recorder.onerror = (error) => {
-      console.log("Error", error);
       messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } })
     };
 
@@ -184,13 +178,10 @@ async function startRecording(micLabel, streamId, connectionId, meetingId, token
     }
 
     recorder.start(3000);
-    // window.location.hash = 'recording';
-    console.log('Updating state')
     messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED, data: { tabId } })
 
     return true;
   } catch (error) {
-    console.log(error)
     await stopRecording();
   }
 
@@ -218,7 +209,6 @@ async function pollTranscript(meetingId: string, token: string, timestamp = new 
         },
       });
     }, error => {
-      console.log(error);
     });
   }, 1500);
   
@@ -239,7 +229,6 @@ async function stopRecording() {
 
     return true;
   } catch (e) {
-    console.log(e)
     messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } })
   }
   return false;

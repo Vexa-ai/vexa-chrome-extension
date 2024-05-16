@@ -197,9 +197,7 @@ export class ApiService {
         ApiService.loggedInUser = await StorageService.get<AuthorizationData>(StoreKeys.USER, null);
         if(logoutIfNoUser && !ApiService.loggedInUser) {
             StorageService.clear(true);
-            chrome.tabs.create({ url: this.loginURL }, function (tab) {
-                console.log('Login tab created');
-            });
+            chrome.tabs.create({ url: this.loginURL });
             return;
         }
         return ApiService.loggedInUser;

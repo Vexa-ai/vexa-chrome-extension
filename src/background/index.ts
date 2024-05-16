@@ -78,7 +78,6 @@ MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
     });
 });
 MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTION_RESULT, async (message) => {
-    console.log('offscreen transcription result received');
     const { tabId, transcripts } = message.data;
     const tabs = await chrome.tabs.query({ active: true });
       const targetTab = tabs.find(tab => tabId === tabId);
@@ -135,7 +134,6 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             return;
         }
         const responseJson = await res.json();
-        console.log('Response', responseJson);
         messageSender.sendTabMessage(sender.tab, {
             type: MessageType.ASSISTANT_PROMPT_RESULT,
             data: responseJson?.messages || [],
@@ -160,7 +158,6 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                 __vexa_token: "",
                 __vexa_domain: ""
             });
-            console.log({ streamId });
             try {
                 if (chrome.runtime.lastError) {
                     console.error(chrome.runtime.lastError.message);
@@ -184,21 +181,21 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     tabId: tab.id,
                     meetingId: 'meeting1', //TODO: Replace with generated or persisted value
                 }
-            }).then(result => {
-                console.log('persisting record starting details')
-                chrome.storage.session.set({
-                    '_dl_recording': result ? 1 : 0,
-                    '_dl_recording_started': (new Date()).getTime(),
-                    '_dl_recording_ms_before_pause': 0,
-                    '_dl_recording_paused': 0,
-                });
             });
+            // .then(result => {
+            //     console.log('persisting record starting details')
+            //     chrome.storage.session.set({
+            //         '_dl_recording': result ? 1 : 0,
+            //         '_dl_recording_started': (new Date()).getTime(),
+            //         '_dl_recording_ms_before_pause': 0,
+            //         '_dl_recording_paused': 0,
+            //     });
+            // });
         });
     });
 });
 
 chrome.runtime.onInstalled.addListener(async () => {
-    console.log('Vexa install');
     setTimeout(async () => {
         await messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {

@@ -56,7 +56,6 @@ export function CustomSelect({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      console.log('Outside clicked');
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowMenu(keepOpen || false);
       }
@@ -100,7 +99,6 @@ export function CustomSelect({
     }
     setSelectedValues(newValue);
     onChange(newValue);
-    console.log(newValue);
   };
 
   const isSelected = (option: Option) => {

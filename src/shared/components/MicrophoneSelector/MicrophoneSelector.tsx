@@ -70,7 +70,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   const handleChange = (option: Option) => {
     setSelectedOption(option);
     const selectedMicrophone = microphones.find(microphone => microphone.deviceId === option.value);
-    console.log(selectedMicrophone);
     if (selectedMicrophone) {
       onMicrophoneSelected(selectedMicrophone);
     }

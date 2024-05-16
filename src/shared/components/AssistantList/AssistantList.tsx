@@ -27,7 +27,6 @@ export function AssistantList({ }: AssistantListProps) {
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
   MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_RESULT, (message) => {
     const response: AssistantEntryData[] = message.data;
-      console.log(response);
       setResponses(response);
       setClearField(true);
   });
@@ -35,7 +34,6 @@ export function AssistantList({ }: AssistantListProps) {
   const onPrompted = async (prompt: string) => {
     try {
       const requestResult = await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt } });
-      console.log(requestResult);
       return true;
     } catch (error) {
       return false;

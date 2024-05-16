@@ -77,6 +77,21 @@ MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
 
     });
 });
+MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTION_RESULT, async (message) => {
+    console.log('offscreen transcription result received');
+    const { tabId, transcripts } = message.data;
+    const tabs = await chrome.tabs.query({ active: true });
+      const targetTab = tabs.find(tab => tabId === tabId);
+      if (targetTab) {
+        messageSender.sendTabMessage(targetTab, {
+          type: MessageType.TRANSCRIPTION_RESULT,
+          data: {
+            transcripts,
+            tabId,
+          },
+        });
+      }
+});
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message) => {
     const { tabId } = message.data;
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, tabId);
@@ -115,13 +130,13 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
     }).then(async res => {
         if (!(res.status < 401)) {
             if (res.status === 401) {
-                messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+                messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
             }
             return;
         }
         const responseJson = await res.json();
         console.log('Response', responseJson);
-        messageSender.sendBackgroundMessage({
+        messageSender.sendTabMessage(sender.tab, {
             type: MessageType.ASSISTANT_PROMPT_RESULT,
             data: responseJson?.messages || [],
         });

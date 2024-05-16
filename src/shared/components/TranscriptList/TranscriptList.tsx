@@ -14,7 +14,7 @@ export function TranscriptList({ }: TranscriptListProps) {
 
   MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
   MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
-    const transcription: { speaker: string; content: string }[] = message.data;
+    const transcription: { speaker: string; content: string }[] = message.data?.transcripts || [];
     setTranscripts([...transcripts, ...transcription]);
   });
 

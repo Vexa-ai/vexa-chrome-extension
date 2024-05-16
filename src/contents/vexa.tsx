@@ -88,13 +88,3 @@ export const config: PlasmoCSConfig = {
 };
 
 export default Vexa;
-
-/**
- * Using overlay anchor doesn't get google meet to block, but doesn't load dropdown
- * styling
- * 
- * https://react-select.com/home
- * https://www.radix-ui.com/primitives/docs/components/dropdown-menu
- * https://react-component.github.io/dropdown/
- * 
- */

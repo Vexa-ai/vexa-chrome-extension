@@ -210,14 +210,13 @@ async function pollTranscript(meetingId: string, token: string, timestamp = new 
         return;
       }
       const transcripts = await res.json();
-      const tabs = await chrome.tabs.query({ active: true });
-      const targetTab = tabs.find(tab => tabId === tabId);
-      if (targetTab) {
-        messageSender.sendOffscreenToTabMessage(targetTab, {
-          type: MessageType.TRANSCRIPTION_RESULT,
-          data: transcripts,
-        });
-      }
+      messageSender.sendBackgroundMessage({
+        type: MessageType.OFFSCREEN_TRANSCRIPTION_RESULT,
+        data: {
+          transcripts,
+          tabId,
+        },
+      });
     }, error => {
       console.log(error);
     });

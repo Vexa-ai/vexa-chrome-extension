@@ -24,9 +24,10 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   };
 
   useEffect(() => {
-    setMicrophones(audioCapture.state.availableAudioInputs?.map(device => {
+    const microphoneWithLabels = audioCapture.state.availableAudioInputs?.map(device => {
       return { ...device, label: device.label, value: device.deviceId }
-    }));
+    });
+    setMicrophones(microphoneWithLabels);
   }, [audioCapture.availableAudioInputs]);
 
   // const customContentRenderer = ({ props, state, methods }: SelectRenderer<any>) => {
@@ -71,6 +72,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     setSelectedOption(option);
     const selectedMicrophone = microphones.find(microphone => microphone.deviceId === option.value);
     if (selectedMicrophone) {
+      audioCapture.setSelectedAudioInputDevice(selectedMicrophone);
       onMicrophoneSelected(selectedMicrophone);
     }
     
@@ -84,10 +86,12 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
         selectedComponent={CustomSelected}
         options={microphones}
         isMulti={false}
-        keepOpen={true}
+        keepOpen={isOpen}
+        selectedValue={selectedMicrophone}
         isSearchable={false}
         onOpen={onDropdownOpenHandler}
         onChange={handleChange}
+        onBlur={() => {console.log('blurred'); setIsOpen(false)}}
         align="left"
         noOptionsComponent={CustomNoOption}
         optionComponent={CustomOption}

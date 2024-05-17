@@ -11,11 +11,13 @@ export interface CustomSelectProps {
   selectedComponent: React.ComponentType<{ value: any, label: string }>;
   noOptionsComponent?: React.ComponentType;
   options: Option[];
+  selectedValue?: Option;
   isMulti: boolean;
   isSearchable: boolean;
   keepOpen?: boolean;
   onOpen?: (value: Option | Option[]) => void;
   onChange: (value: Option | Option[]) => void;
+  onBlur?: () => void;
   align: 'left' | 'right';
   optionComponent: React.ComponentType<{ option: Option; selected: boolean; onClick: () => void }>;
 }
@@ -28,8 +30,10 @@ export function CustomSelect({
   isSearchable,
   noOptionsComponent: NoOptionsComponent,
   keepOpen = false,
+  selectedValue: initialValue,
   onChange,
   onOpen,
+  onBlur,
   align,
   optionComponent: OptionComponent = ({ option, selected, onClick }) => <span onClick={onClick} className={selected && 'custom--dropdown-container'}>{option.label}</span>,
 }: CustomSelectProps) {
@@ -55,17 +59,21 @@ export function CustomSelect({
   }, [keepOpen]);
 
   useEffect(() => {
+    setSelectedValues(initialValue ? [initialValue]: []);
+  }, [initialValue]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowMenu(keepOpen || false);
+        setShowMenu(!showMenu);
+        onBlur?.();
       }
     }
-
     document.addEventListener("click", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, []);
+  }, [dropdownRef.current]);
 
   const handleInputClick = () => {
     if (keepOpen) {
@@ -102,10 +110,7 @@ export function CustomSelect({
   };
 
   const isSelected = (option: Option) => {
-    // if (isMulti) {
-      return selectedValues.some(o => o.value === option.value);
-    // }
-    // return selectedValues === option;
+    return selectedValues.some(o => o.value === option.value);
   };
 
   const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +134,8 @@ export function CustomSelect({
   };
 
   const renderPlaceholder = () => {
-    return <div className={`dropdown-selected-value overflow-hidden ${!selectedValues ? 'placeholder' : ''}`}>
+    console.log({ selectedValues });
+    return <div className={`dropdown-selected-value w-full overflow-hidden ${!selectedValues ? 'placeholder' : ''}`}>
       {selectedValues.length ? <SelectedComponent value={selectedValues[0].value} label={selectedValues[0].label} /> : placeholder}
     </div>;
   };

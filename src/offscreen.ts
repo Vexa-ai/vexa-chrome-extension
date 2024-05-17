@@ -45,7 +45,6 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
       messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS })
     }
     console.log('Failed to get media permissions', error);
-    // sendResponse([]);
     messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MEDIA_DEVICES, data: { devices: [] } })
   }
 });
@@ -77,7 +76,8 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
   
     const _interval = setInterval(() => {
       const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-      messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
+      console.log({ level, pointer });
+      messageSender.sendBackgroundMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer, tab: sender.tab } })
     }, 150);
   
     micCheckStopper = async () => {

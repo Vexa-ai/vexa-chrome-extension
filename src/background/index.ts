@@ -96,6 +96,7 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED,
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, tabId);
     StorageService.set(StoreKeys.CAPTURING_STATE, true);
     StorageService.set(StoreKeys.RECORD_START_TIME, new Date().getTime());
+    // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
 });
 MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
@@ -104,9 +105,16 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (me
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
     StorageService.set(StoreKeys.CAPTURING_STATE, false);
     StorageService.set(StoreKeys.RECORD_START_TIME, 0);
+    // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
 });
 MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+});
+
+MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
+    const { level, pointer, tab } = message.data;
+    console.log({ level, pointer, tab });
+    // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level, pointer });
 });
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {

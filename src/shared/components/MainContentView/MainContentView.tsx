@@ -11,7 +11,7 @@ export interface MainContentViewProps {
 
 export function MainContentView({}: MainContentViewProps) {
   return (
-    <div className='MainContentView flex flex-grow overflow-y-auto h-auto'>
+    <div className='MainContentView flex flex-grow overflow-hidden h-auto'>
       <Tabs className='text-gray-300 w-full flex flex-col flex-1'>
         <TabList className='flex text-gray-300 top-0 sticky w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm'>
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Transcript</Tab>
@@ -19,7 +19,7 @@ export function MainContentView({}: MainContentViewProps) {
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>
         </TabList>
 
-        <TabPanel className='h-[-webkit-fill-available] flex w-full'>
+        <TabPanel className='h-[-webkit-fill-available] mt-10 flex w-full'>
           <TranscriptList />
         </TabPanel>
 
@@ -27,7 +27,7 @@ export function MainContentView({}: MainContentViewProps) {
           Notes here
         </TabPanel>
 
-        <TabPanel className='h-[-webkit-fill-available] flex w-full'>
+        <TabPanel className='h-[-webkit-fill-available] mt-10 flex w-full'>
           <AssistantList />
         </TabPanel>
       </Tabs>

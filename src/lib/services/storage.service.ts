@@ -72,7 +72,7 @@ export class StorageService {
      * @param key 
      * @param onInit — If it is a function, the returned value will be rendered and persisted. If it is a static value, it will only be rendered, not persisted
      */
-    static useHookStorage<T>(key: StoreKeys, onInit?: any) {
+    static useHookStorage<T>(key: StoreKeys, onInit?: T) {
         return useStorage<T>(key, onInit)
     }
 }
@@ -85,6 +85,7 @@ export enum StoreKeys {
     CAPTURING_STATE = "CAPTURING_STATE",
     CAPTURED_TAB_ID = "CAPTURED_TAB_ID",
     AUTHORIZATION_DATA = "AUTHORIZATION_DATA",
+    MIC_LEVEL_STATE = "MIC_LEVEL_STATE",
 }
 
 export interface AuthorizationData {

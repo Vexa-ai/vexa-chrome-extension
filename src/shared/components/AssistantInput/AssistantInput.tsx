@@ -44,7 +44,7 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
 
   return <div className={`AssistantInput mt-auto ${className}`}>
     <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/>
-    <form ref={formRef} onSubmit={handlePromptSubmit} className="flex gap-1">
+    <form autoComplete="off" ref={formRef} onSubmit={handlePromptSubmit} className="flex gap-1">
       <input ref={promptInputRef} type="text" placeholder='Start typing...' className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2" name='assistant-input' />
       <button ref={submitBtnRef} disabled={!!promptInputRef.current?.value?.trim()} type='submit'>
         <img src={vexaLogoIcon} alt="" />

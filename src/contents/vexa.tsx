@@ -1,6 +1,8 @@
 import rootCssText from "data-text:~root.scss";
 import customSelectCss from 'data-text:../shared/components/CustomSelect/CustomSelect.scss';
 import microphoneSelectCss from 'data-text:../shared/components/MicrophoneSelector/MicrophoneSelector.scss';
+import transcriptListCss from 'data-text:../shared/components/TranscriptList/TranscriptList.scss';
+import mainContentViewCss from 'data-text:../shared/components/MainContentView/MainContentView.scss';
 import vexaCss from 'data-text:./vexa.scss';
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoRender } from "plasmo";
 import React, { useEffect } from "react";
@@ -17,13 +19,13 @@ const Vexa = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
 
-    useEffect(() => {
-        chrome.runtime.connect({ name: 'mySidepanel' });
-        messageSender.sendBackgroundMessage({ type: MessageType.ON_APP_OPEN });
-    }, []);
+    // useEffect(() => {
+    //     chrome.runtime.connect({ name: 'mySidepanel' });
+    //     messageSender.sendBackgroundMessage({ type: MessageType.ON_APP_OPEN });
+    // }, []);
 
     return (
-        <div className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
+        <div id="vexa-content-div" className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
             <AudioCaptureContext.Provider value={audioCapture}>
                 <VexaToolbar />
                 {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
@@ -39,6 +41,8 @@ export const getStyle = () => {
         ${customSelectCss}
         ${microphoneSelectCss}
         ${vexaCss}
+        ${transcriptListCss}
+        ${mainContentViewCss}
     `
     return style
 }
@@ -84,7 +88,7 @@ export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
 
 export const config: PlasmoCSConfig = {
     matches: ['*://meet.google.com/*'],
-    // css: ["./vexa.scss"],
+    css: ["./vexa.scss", "../assets/fonts/Inter/inter.face.scss"],
 };
 
 export default Vexa;

@@ -52,7 +52,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
   try {
     const micLabel: string = evtData.data.micLabel;
-    micCheckStopper(); // Stop previous checker
+    micCheckStopper();
     const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
   
     const stream = await navigator.mediaDevices.getUserMedia({

@@ -13,7 +13,7 @@ import { CustomSelect, type Option } from '../CustomSelect';
 export interface MicrophoneSelectorProps { }
 
 export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
-  const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
+  const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo & Option>(StoreKeys.SELECTED_MICROPHONE);
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [microphones, setMicrophones] = useState<Array<MediaDeviceInfo & Option>>([]);
@@ -27,47 +27,15 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     const microphoneWithLabels = audioCapture.state.availableAudioInputs?.map(device => {
       return { ...device, label: device.label, value: device.deviceId }
     });
-    setMicrophones(microphoneWithLabels);
+    setMicrophones([...microphoneWithLabels, ...microphoneWithLabels, ...microphoneWithLabels]);
   }, [audioCapture.availableAudioInputs]);
-
-  // const customContentRenderer = ({ props, state, methods }: SelectRenderer<any>) => {
-  //   return false ? (
-  //     <div>Loading...</div>
-  //   ) : (
-  //     <div>
-  //       <div className='flex gap-2 text-[#94969C] items-center w-full overflow-hidden'>
-  //         {
-  //           state.values.length === 0
-  //             ? (
-  //               <>
-  //                 <img alt='' className='w-5' src={microphoneOffIcon} />
-  //                 <p className='min-h-6'>No microphone</p>
-  //               </>
-
-  //             )
-  //             : (
-  //               <div className='flex w-full gap-1 overflow-hidden'>
-  //                 <img alt='' className='w-5' src={microphoneIcon} />
-  //                 <p className='text-[#F5F5F6] min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis overflow-hidden' title={state.values[0].label}>{state.values[0].label}</p>
-  //                 <MicrophoneLevelIndicator />
-  //               </div>
-
-  //             )
-  //         }
-  //       </div>
-
-  //     </div>
-  //   );
-  // };
 
   const onDropdownOpenHandler = () => {
     setIsOpen(true);
     audioCapture.requestMicrophones();
   }
 
-  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
-
-  // const options: Option[] = microphones.map(microphone => ({ ...microphone, value: microphone.deviceId }));
+  const [___, setSelectedOption] = useState<Option | null>(null);
   const handleChange = (option: Option) => {
     setSelectedOption(option);
     const selectedMicrophone = microphones.find(microphone => microphone.deviceId === option.value);

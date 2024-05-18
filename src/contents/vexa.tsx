@@ -12,6 +12,7 @@ import { MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 import { createRoot } from "react-dom/client";
+import Draggable from "react-draggable";
 
 const messageSender = new MessageSenderService();
 
@@ -19,18 +20,16 @@ const Vexa = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
 
-    // useEffect(() => {
-    //     chrome.runtime.connect({ name: 'mySidepanel' });
-    //     messageSender.sendBackgroundMessage({ type: MessageType.ON_APP_OPEN });
-    // }, []);
-
     return (
-        <div id="vexa-content-div" className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
-            <AudioCaptureContext.Provider value={audioCapture}>
-                <VexaToolbar />
-                {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
-            </AudioCaptureContext.Provider>
-        </div>
+        <Draggable>
+            <div id="vexa-content-div" className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
+                <AudioCaptureContext.Provider value={audioCapture}>
+                    <VexaToolbar />
+                    {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
+                </AudioCaptureContext.Provider>
+            </div>
+        </Draggable>
+
     )
 };
 
@@ -47,44 +46,8 @@ export const getStyle = () => {
     return style
 }
 
-// export const getInlineAnchor: PlasmoGetInlineAnchor = async () =>
-//     document.querySelector("body").querySelector('div');
-
 export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
     document.querySelector("body").querySelector('div');
-
-// export const getRootContainer = () =>
-//     new Promise((resolve) => {
-//         const checkInterval = setInterval(() => {
-//             const rootContainer = document.querySelector("body"); // .querySelector('div')
-//             if (rootContainer) {
-//                 clearInterval(checkInterval)
-//                 resolve(rootContainer)
-//             }
-//         }, 137)
-//     })
-
-// export const render: PlasmoRender<HTMLDivElement> = async ({
-//     anchor, // the observed anchor, OR document.body.
-//     createRootContainer // This creates the default root container
-// }) => {
-//     const rootContainer = await createRootContainer();
-//     document.body.click();
-//     setTimeout(() => {
-//         const root = createRoot(rootContainer) // Any root
-//         root.render(
-//             <div id="vexa-content-div" style={{
-//                 position: 'fixed',
-//                 width: '400px',
-//                 height: '100vh',
-//                 top: 0,
-//             }}>
-//                 <Vexa />
-//             </div>
-//         )
-//     }, 25000);
-
-// }
 
 export const config: PlasmoCSConfig = {
     matches: ['*://meet.google.com/*'],

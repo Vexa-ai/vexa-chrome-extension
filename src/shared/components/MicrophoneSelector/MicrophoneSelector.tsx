@@ -27,7 +27,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     const microphoneWithLabels = audioCapture.state.availableAudioInputs?.map(device => {
       return { ...device, label: device.label, value: device.deviceId }
     });
-    setMicrophones([...microphoneWithLabels, ...microphoneWithLabels, ...microphoneWithLabels]);
+    setMicrophones(microphoneWithLabels);
   }, [audioCapture.availableAudioInputs]);
 
   const onDropdownOpenHandler = () => {

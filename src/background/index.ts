@@ -3,15 +3,9 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 
-// chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-// chrome.runtime.onConnect.addListener(port => {
-//     if (port.name === 'mySidepanel') {
-//         port.onDisconnect.addListener(() => {
-//             chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-//             console.log('Side panel closed!');
-//         });
-//     }
-// });
+chrome.action.onClicked.addListener(() => {
+    StorageService.set(StoreKeys.WINDOW_STATE, false);
+});
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);

@@ -11,7 +11,6 @@ import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocap
 import { MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
-import { createRoot } from "react-dom/client";
 import Draggable from "react-draggable";
 
 const messageSender = new MessageSenderService();
@@ -19,39 +18,29 @@ const messageSender = new MessageSenderService();
 const Vexa = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+    const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
 
     return (
-        <Draggable>
-            <div id="vexa-content-div" className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
-                <AudioCaptureContext.Provider value={audioCapture}>
-                    <VexaToolbar />
-                    {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
-                </AudioCaptureContext.Provider>
-            </div>
-        </Draggable>
+        <>
+            {
+                isMaximized && (<Draggable>
+                    <div id="vexa-content-div" className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
+                        <AudioCaptureContext.Provider value={audioCapture}>
+                            <VexaToolbar />
+                            {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
+                        </AudioCaptureContext.Provider>
+                    </div>
+                </Draggable>)
+            }
+        </>
+
 
     )
 };
 
-export const getStyle = () => {
-    const style = document.createElement("style")
-    style.textContent = `
-        ${rootCssText}
-        ${customSelectCss}
-        ${microphoneSelectCss}
-        ${vexaCss}
-        ${transcriptListCss}
-        ${mainContentViewCss}
-    `
-    return style
-}
-
-export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
-    document.querySelector("body").querySelector('div');
-
 export const config: PlasmoCSConfig = {
-    matches: ['*://meet.google.com/*'],
-    css: ["./vexa.scss", "../assets/fonts/Inter/inter.face.scss"],
+    matches: ['https://example.com/*'], // This prevents duplicate UI renders by only rendering the UI directly on example.com. Removing config doesn't work. Needs further experimentation to determine why.
+    css: ["./no-vexa.scss"],
 };
 
 export default Vexa;

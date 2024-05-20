@@ -86,6 +86,7 @@ export enum StoreKeys {
     CAPTURED_TAB_ID = "CAPTURED_TAB_ID",
     AUTHORIZATION_DATA = "AUTHORIZATION_DATA",
     MIC_LEVEL_STATE = "MIC_LEVEL_STATE",
+    WINDOW_STATE = "WINDOW_STATE",
 }
 
 export interface AuthorizationData {

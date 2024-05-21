@@ -8,13 +8,13 @@ export interface TranscriptListProps { }
 
 export function TranscriptList({ }: TranscriptListProps) {
 
-  const [transcripts, setTranscripts] = useState<{ speaker: string; content: string }[]>([]);
+  const [transcripts, setTranscripts] = useState<{ speaker: string; content: string; timestamp: string; }[]>([]);
   const transcriptListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
 
   MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
   MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
-    const transcription: { speaker: string; content: string }[] = message.data?.transcripts || [];
+    const transcription: { speaker: string; content: string; timestamp: string }[] = message.data?.transcripts || [];
     setTranscripts([...transcripts, ...transcription]);
   });
 
@@ -35,7 +35,7 @@ export function TranscriptList({ }: TranscriptListProps) {
       <div className="flex-grow overflow-y-auto">
         {transcripts.map((transcript, index) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
-            <TranscriptEntry text={transcript.content} speaker={transcript.speaker} />
+            <TranscriptEntry timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
           </div>
         ))}
       </div>

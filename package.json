@@ -49,6 +49,7 @@
   "manifest": {
     "permissions": [
       "offscreen",
+      "tabs",
       "tabCapture",
       "activeTab",
       "scripting"

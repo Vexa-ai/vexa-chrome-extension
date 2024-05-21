@@ -4,10 +4,10 @@ const OptionsIndex = () => {
 
     const getMediaPermissions = async () => {
         try {
-            await navigator.mediaDevices.getUserMedia({
-              audio: true,
-              video: false,
-            });
+          // await navigator.mediaDevices.getDisplayMedia({
+          //   audio: true,
+          //   video: true,
+          // });
             navigator.mediaDevices.enumerateDevices().then(devices => {
             }).catch(error => console.error('Error getting available microphones:', error));
           } catch (error) {

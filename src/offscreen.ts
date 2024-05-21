@@ -32,21 +32,7 @@ let micCheckStopper = () => {
 };
 
 MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES, async (evtData, sender, sendResponse) => {
-  try {
-    await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    navigator.mediaDevices.enumerateDevices().then(devices => {
-      messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MEDIA_DEVICES, data: { devices } })
-    }).catch(error => console.error('Error getting available microphones:', error));
-  } catch (error) {
-    if (error.message === 'Permission dismissed') {
-      messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS })
-    }
-    console.log('Failed to get media permissions', error);
-    messageSender.sendOffscreenToTabMessage(sender.tab, { type: MessageType.MEDIA_DEVICES, data: { devices: [] } })
-  }
+
 });
 
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
@@ -76,7 +62,7 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
   
     const _interval = setInterval(() => {
       const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-      console.log({ level, pointer });
+      // console.log({ level, pointer });
       messageSender.sendBackgroundMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer, tab: sender.tab } })
     }, 150);
   
@@ -102,90 +88,49 @@ MessageListenerService.registerMessageListener(MessageType.RESUME_RECORDING, asy
   sendResponse(unpauseRecording());
 });
 
-MessageListenerService.registerMessageListener(MessageType.START_RECORDING, async (message, sender, sendResponse) => {
-  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.meetingId, message.data.token, message.data.domain, message.data.tabId));
-});
-
 MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender, sendResponse) => {
   stopRecording();
 });
 
-let timestamp;
-let counter;
+MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
+  const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex } = message.data
+  const chunkBlob = base64ToBlob(base64String, chunkType);
+  console.log(chunkBlob);
+  debugger;
+  sendDataChunk(chunkBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
+});
 
-async function startRecording(micLabel, streamId, connectionId, meetingId, token, domain, tabId) {
-  let deviceId;
-  try {
-    deviceId = await getMicDeviceIdByLabel(micLabel);
-  } catch (e) {
-    throw e;
+function base64ToBlob(base64, type) {
+  const binary = atob(base64);
+  const array = [];
+  for (let i = 0; i < binary.length; i++) {
+      array.push(binary.charCodeAt(i));
   }
+  return new Blob([new Uint8Array(array)], { type });
+}
 
-  if (!streamId || recorder?.state === 'recording') {
-    return;
-  }
-
-  try {
-    let isStopped = false;
-
-    timestamp = Math.floor((new Date()).getTime() / 1000);
-    counter = 1;
-
-    let combinedStream = await getCombinedStream(deviceId, streamId);
-    if (!combinedStream) {
-      return;
-    }
-
-    recorder = new MediaRecorder(combinedStream, {
-      mimeType: 'audio/webm;codecs=opus',
-    });
-
-
-    let i = 0;
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        const timestamp = new Date();
-        fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${i++}`, {
-          method: 'PUT',
-          body: event.data,
-          headers: {
+async function sendDataChunk(data: Blob, connectionId: string, domain: string, token: string, url: string, meetingId: string, tab: chrome.tabs.Tab, countIndex: number) {
+  if (data.size > 0) {
+    const timestamp = new Date();
+    debugger
+    fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`, {
+        method: 'PUT',
+        body: data,
+        headers: {
             'Content-Type': 'application/octet-stream'
-          }
-        }).then(response => {
-          if(!(response.status < 401)) {
+        }
+    }).then(response => {
+        if (!(response.status < 401)) {
             if (response.status === 401) {
-              messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+                messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
             }
             return;
-          }
-          pollTranscript(meetingId, token, timestamp, tabId);
-        }, error => {
-          debugger;
-        });
-      }
-    };
-
-    recorder.onerror = (error) => {
-      messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } })
-    };
-
-    recorder.onstop = () => {
-      recorder = null;
-      window.location.hash = '';
-      isStopped = true;
-      messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' }  })
-
-    }
-
-    recorder.start(3000);
-    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED, data: { tabId } })
-
-    return true;
-  } catch (error) {
-    await stopRecording();
-  }
-
-  return false;
+        }
+        pollTranscript(meetingId, token, timestamp, tab.id);
+    }, error => {
+        debugger;
+    });
+}
 }
 
 async function pollTranscript(meetingId: string, token: string, timestamp = new Date(), tabId: chrome.tabs.Tab['id']) {
@@ -246,52 +191,4 @@ async function unpauseRecording() {
   return true;
 }
 
-
-const getCombinedStream = async (deviceId, streamId) => {
-  // Capturing microphone and tab audio
-  const microphone = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
-  });
-
-  const streamOriginal = await navigator.mediaDevices.getUserMedia({
-    audio: {mandatory: {chromeMediaSource: "tab", chromeMediaSourceId: streamId}},
-  } as any);
-
-  streamsToClose = [microphone, streamOriginal];
-
-  // Making original sound available in the tab
-  const context = new AudioContext();
-  const stream = context.createMediaStreamSource(streamOriginal);
-  stream.connect(context.destination);
-
-
-  // Merging stream together
-  const audioContext = new AudioContext();
-  const audioSources = [];
-
-  const gainNode = audioContext.createGain();
-  gainNode.connect(audioContext.destination);
-  gainNode.gain.value = 0; // don't hear self
-
-  let audioTracksLength = 0;
-  [microphone, streamOriginal].forEach(function (stream) {
-    if (!stream.getTracks().filter(function (t) {
-      return t.kind === 'audio';
-    }).length) {
-      return;
-    }
-
-    audioTracksLength++;
-
-    let audioSource = audioContext.createMediaStreamSource(stream);
-    audioSource.connect(gainNode);
-    audioSources.push(audioSource);
-  });
-
-  const audioDestination = audioContext.createMediaStreamDestination();
-  audioSources.forEach(function (audioSource) {
-    audioSource.connect(audioDestination);
-  });
-  return audioDestination.stream;
-};
 

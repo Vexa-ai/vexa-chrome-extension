@@ -85,12 +85,11 @@ MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTI
         });
       }
 });
-MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message) => {
-    const { tabId } = message.data;
-    StorageService.set(StoreKeys.CAPTURED_TAB_ID, tabId);
+MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message, sender) => {
+    StorageService.set(StoreKeys.CAPTURED_TAB_ID, sender.tab.id);
     StorageService.set(StoreKeys.CAPTURING_STATE, true);
     StorageService.set(StoreKeys.RECORD_START_TIME, new Date().getTime());
-    // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
+    StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
 });
 MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (message) => {
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
@@ -107,7 +106,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDIN
 
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
     const { level, pointer, tab } = message.data;
-    console.log({ level, pointer, tab });
+    // console.log({ level, pointer, tab });
     // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level, pointer });
 });
 
@@ -153,9 +152,11 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
         if (!tab) {
             return;
         }
+        debugger;
         chrome.tabCapture.getMediaStreamId({
             targetTabId: tab.id
         }, async (streamId) => {
+            debugger
             const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
                 __vexa_token: "",
                 __vexa_domain: ""

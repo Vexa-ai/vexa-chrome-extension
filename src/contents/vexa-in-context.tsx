@@ -28,6 +28,8 @@ const VexaInMeetContext = () => {
   );
 };
 
+export default () => <></>;
+
 const injectUI = () => {
   const container = document.createElement("div");
   document.body.appendChild(container);

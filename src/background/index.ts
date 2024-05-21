@@ -123,7 +123,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         },
         body: JSON.stringify({
             content: prompt,
-            meeting_id: 'meeting1',
+            meeting_id: sender.tab.url,
             context_id: '1',
             user_id: 'user_1'
         })
@@ -146,7 +146,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
     });
 });
 
-MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDING, (message) => {
+MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDING, (message, sender) => {
     chrome.tabs.query({ lastFocusedWindow: true, active: true, currentWindow: true }, async tabs => {
         const tab = tabs[0];
         if (!tab) {
@@ -182,7 +182,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     token: authData.__vexa_token,
                     url: authData.__vexa_domain,
                     tabId: tab.id,
-                    meetingId: 'meeting1', //TODO: Replace with generated or persisted value
+                    meetingId: sender.tab.url,
                 }
             });
             // .then(result => {

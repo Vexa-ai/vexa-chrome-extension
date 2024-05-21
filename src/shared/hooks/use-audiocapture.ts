@@ -75,7 +75,7 @@ export const useAudioCapture = (): AudioCapture => {
         const domain = process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL;
         const token = authData.__vexa_token;
         const url = authData.__vexa_domain;
-        const meetingId = 'meeting1';
+        const meetingId = location.href;
         startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url)
     }
 

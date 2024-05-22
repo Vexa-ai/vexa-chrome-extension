@@ -3,10 +3,6 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 
-chrome.action.onClicked.addListener(() => {
-    StorageService.set(StoreKeys.WINDOW_STATE, false);
-});
-
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
     if (capturingTabId && capturingTabId === tabId) {
@@ -185,15 +181,6 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     meetingId: sender.tab.url,
                 }
             });
-            // .then(result => {
-            //     console.log('persisting record starting details')
-            //     chrome.storage.session.set({
-            //         '_dl_recording': result ? 1 : 0,
-            //         '_dl_recording_started': (new Date()).getTime(),
-            //         '_dl_recording_ms_before_pause': 0,
-            //         '_dl_recording_paused': 0,
-            //     });
-            // });
         });
     });
 });

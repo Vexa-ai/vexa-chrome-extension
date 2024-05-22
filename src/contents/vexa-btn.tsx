@@ -10,11 +10,12 @@ import { createRoot } from "react-dom/client";
 
 const VexaBtn = () => {
     const [isMaximized, setIsMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
+    const googleMeetUrlPattern = /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
 
     return (
         <>
             {
-                !isMaximized && (<Draggable>
+                googleMeetUrlPattern.test(location.href) && !isMaximized && (<Draggable>
                     <button style={{
                         top: 'calc(50vh - 29px) !important',
                         right: '20px !important',

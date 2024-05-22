@@ -13,10 +13,11 @@ import Vexa from "./vexa";
 
 const VexaInMeetContext = () => {
   const isMeetUrl = location.href.includes('meet.google.com');
+  const googleMeetUrlPattern = /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
 
   return (
     <>
-      {isMeetUrl && (
+      {(googleMeetUrlPattern.test(location.href) && isMeetUrl) && (
         <div id="vexa-content-ui" style={{
           position: 'fixed',
           zIndex: 99999999

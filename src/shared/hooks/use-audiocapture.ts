@@ -1,11 +1,15 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useRef, useState } from 'react';
 import useStateRef from 'react-usestateref';
 import { MessageSenderService } from '~lib/services/message-sender.service';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { StorageService, StoreKeys, type AuthorizationData } from '~lib/services/storage.service';
+import { getIdFromUrl } from '~shared/helpers/meeting.helper';
 
 export type AudioCaptureState = boolean;
 MessageListenerService.initializeListenerService();
+
+let globalMediaRecorder: MediaRecorder;
+let globalStreamsToClose: MediaStream[] = [];
 
 const initialState: Partial<AudioCapture> = {
     isCapturing: false,
@@ -43,24 +47,20 @@ export const useAudioCapture = (): AudioCapture => {
     const [___, setRecordStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
     const messageSender = new MessageSenderService();
     const [authData] = StorageService.useHookStorage<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
-    const [recorder, setRecorder] = useState<MediaRecorder>(null);
-    const [streamsToClose, setStreamsToClose] = useState<MediaStream[]>([]);
-    const [timestamp, setTimestamp] = useState<number>();
-    const [counter, setCounter] = useState<number>();
+    const recorderRef = useRef<MediaRecorder | null>(null);
 
     const requestMicrophonesInContent = async () => {
         try {
-            navigator.mediaDevices.enumerateDevices().then(async devices => {
-                setDevices(devices);
-            }).catch(error => console.error('Error getting available microphones:', error));
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            setDevices(devices);
         } catch (error) {
             if (error.message === 'Permission dismissed') {
-                messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS })
+                messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS });
             }
             console.log('Failed to get media permissions', error);
             setDevices([]);
         }
-    }
+    };
 
     async function getConnectionId() {
         const uuid = String(self.crypto.randomUUID());
@@ -69,15 +69,16 @@ export const useAudioCapture = (): AudioCapture => {
         return uuid;
     }
 
-
     const startAudioCapture = async () => {
         const connectionId = await getConnectionId();
         const domain = process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL;
         const token = authData.__vexa_token;
         const url = authData.__vexa_domain;
-        const meetingId = location.href;
-        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url)
-    }
+        const meetingId = getIdFromUrl(location.href);
+        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url);
+        // recorderRef.current = recorderInstance;
+        // globalMediaRecorder = recorderInstance;
+    };
 
     const setSelectedAudioInputDevice = async (device: MediaDeviceInfo) => {
         setSelectedAudioInput(device);
@@ -86,18 +87,16 @@ export const useAudioCapture = (): AudioCapture => {
             ...stateRef.current,
             selectedAudioInput: device,
         });
-        // messageSender.sendSidebarMessage({ type: MessageType.ON_MICROPHONE_SELECTED, data: { device } });
-        messageSender.sendBackgroundMessage({ type: MessageType.START_MIC_LEVEL_STREAMING, data: { micLabel: device.label || selectedMicrophone?.label } })
-    }
+        messageSender.sendBackgroundMessage({ type: MessageType.START_MIC_LEVEL_STREAMING, data: { micLabel: device.label || selectedMicrophone?.label } });
+    };
 
     const requestMicrophones = async () => {
-        console.log('Requesting microphones')
         await requestMicrophonesInContent();
         messageSender.sendOffscreenMessage({ type: MessageType.REQUEST_MEDIA_DEVICES });
-        // 
     };
 
     const stopAudioCapture = () => {
+        stopRecording();
         messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
     };
 
@@ -117,21 +116,20 @@ export const useAudioCapture = (): AudioCapture => {
             availableAudioInputs: microphones,
         });
         return devices;
-    }
+    };
 
     async function startRecording(micLabel, connectionId, meetingId, token, domain, url) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            let isStopped = false;
-
             const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, preferCurrentTab: true } as any);
             const audioTracks = displayStream.getAudioTracks();
             if (audioTracks.length > 0) {
                 stream.addTrack(audioTracks[0]);
             }
 
+            globalStreamsToClose = [stream, displayStream];
             const thisRecorder = new MediaRecorder(stream);
-
+            console.log({ thisRecorder });
             let countIndex = 0;
             thisRecorder.ondataavailable = async (event) => {
                 const blob = await event.data;
@@ -152,21 +150,16 @@ export const useAudioCapture = (): AudioCapture => {
             };
 
             thisRecorder.onerror = (error) => {
-                debugger
-                console.error(error)
-                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } })
+                console.error(error);
+                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } });
             };
 
             thisRecorder.onstop = () => {
-                // debugger;
-                // setRecorder(null);
-                // window.location.hash = '';
-                // isStopped = true;
-                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
-
-            }
+                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
+            };
 
             thisRecorder.start(3000);
+            recorderRef.current = thisRecorder;
             setIsCapturing(true);
             await setIsCapturingStoreState(true);
             await setRecordStartTime(new Date().getTime());
@@ -174,9 +167,8 @@ export const useAudioCapture = (): AudioCapture => {
                 ...stateRef.current,
                 isCapturing: true,
             });
-            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED })
+            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED });
 
-            // return true;
         } catch (error) {
             await stopRecording();
         }
@@ -187,8 +179,7 @@ export const useAudioCapture = (): AudioCapture => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 if (typeof reader.result === 'string') {
-                    resolve(reader.result.split(',')[1]); // Only get the base64 part
-                } else {
+                    resolve(reader.result.split(',')[1]);
                     reject(new Error("FileReader result is not a string"));
                 }
             };
@@ -199,54 +190,51 @@ export const useAudioCapture = (): AudioCapture => {
 
     async function stopRecording() {
         try {
-            if (["recording", "paused"].includes(recorder?.state)) {
-                recorder.stop(); // WS disconnect after recorder stop
+            const recorder = globalMediaRecorder;
+            debugger;
+            if (recorder && ["recording", "paused"].includes(recorder.state)) {
+                recorder.stop();
                 recorder.stream.getTracks().forEach(t => t.stop());
 
-                streamsToClose.forEach(stream => {
+                globalStreamsToClose.forEach(stream => {
                     stream.getTracks().forEach(track => track.stop());
-                })
+                });
             }
-            window.location.hash = '';
-            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
+
+            globalStreamsToClose?.forEach(stream => {
+                stream.getTracks().forEach(track => track.stop());
+            });
+
+            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
 
             return true;
         } catch (e) {
-            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } })
+            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } });
         }
         return false;
     }
 
     const getCombinedStream = async (deviceId) => {
-        // Capturing microphone and tab audio
-        // debugger;
-        // const microphone = await navigator.mediaDevices.getUserMedia({
-        //   audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
-        // });
-
         const streamOriginal = await navigator.mediaDevices.getDisplayMedia({
             audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined, mandatory: { chromeMediaSource: "tab" } },
             video: true,
         } as any);
-        debugger;
-        setStreamsToClose([/*microphone, */ streamOriginal]);
 
-        // Making original sound available in the tab
+        globalStreamsToClose = [streamOriginal];
+
         const context = new AudioContext();
         const stream = context.createMediaStreamSource(streamOriginal);
         stream.connect(context.destination);
 
-
-        // Merging stream together
         const audioContext = new AudioContext();
         const audioSources = [];
 
         const gainNode = audioContext.createGain();
         gainNode.connect(audioContext.destination);
-        gainNode.gain.value = 0; // don't hear self
+        gainNode.gain.value = 0;
 
         let audioTracksLength = 0;
-        [/*microphone, */ streamOriginal].forEach(function (stream) {
+        [streamOriginal].forEach(function (stream) {
             if (!stream.getTracks().filter(function (t) {
                 return t.kind === 'audio';
             }).length) {

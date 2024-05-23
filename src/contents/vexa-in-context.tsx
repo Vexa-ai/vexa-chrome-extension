@@ -17,7 +17,8 @@ const VexaInMeetContext = () => {
 
   return (
     <>
-      {(googleMeetUrlPattern.test(location.href) && isMeetUrl) && (
+      {/* {(googleMeetUrlPattern.test(location.href) && isMeetUrl) && ( */}
+      {isMeetUrl && (
         <div id="vexa-content-ui" style={{
           position: 'fixed',
           zIndex: 99999999

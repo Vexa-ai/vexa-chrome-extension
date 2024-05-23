@@ -16,7 +16,7 @@ export function MicrophoneLevelIndicator({}: MicrophoneLevelIndicatorProps) {
     // MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (evtData) => {
     //   // setMicLevel(micLevelState?.level || 0);
     // });
-    console.log(micLevelState);
+    // console.log(micLevelState);
   }, [micLevelState]);
   
   return <div className='MicrophoneLevelIndicator flex flex-col-reverse h-6 w-1 rounded-xl bg-[#161B26] mx-2'>

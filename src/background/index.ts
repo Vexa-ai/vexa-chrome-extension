@@ -2,6 +2,7 @@ import { MessageListenerService, MessageType } from "~lib/services/message-liste
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
+import { getIdFromUrl } from "~shared/helpers/meeting.helper";
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
@@ -46,6 +47,13 @@ const pipeOffscreenToTab = (evtData) => {
     delete evtData.tab;
     messageSender.sendTabMessage(tab, evtData);
 }
+
+const resetRecordingState = () => {
+    StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
+    StorageService.set(StoreKeys.CAPTURING_STATE, false);
+    StorageService.set(StoreKeys.RECORD_START_TIME, 0);
+}
+
 MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TO_TAB_MESSAGE, pipeOffscreenToTab);
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
 MessageListenerService.registerMessageListener(MessageType.GET_MY_TAB, async (message, sender, sendResponse) => sendResponse({ tab: sender.tab }));
@@ -91,9 +99,7 @@ MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (m
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (message) => {
-    StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
-    StorageService.set(StoreKeys.CAPTURING_STATE, false);
-    StorageService.set(StoreKeys.RECORD_START_TIME, 0);
+    resetRecordingState();
     // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
 });
 MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
@@ -119,7 +125,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         },
         body: JSON.stringify({
             content: prompt,
-            meeting_id: sender.tab.url,
+            meeting_id: getIdFromUrl(sender.tab.url),
             context_id: '1',
             user_id: 'user_1'
         })
@@ -202,3 +208,4 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 });
 createOffscreenDocument();
+resetRecordingState();

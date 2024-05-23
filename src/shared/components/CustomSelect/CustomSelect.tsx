@@ -134,7 +134,6 @@ export function CustomSelect({
   };
 
   const renderPlaceholder = () => {
-    console.log({ selectedValues });
     return <div className={`dropdown-selected-value w-full overflow-hidden ${!selectedValues ? 'placeholder' : ''}`}>
       {selectedValues.length ? <SelectedComponent value={selectedValues[0].value} label={selectedValues[0].label} /> : placeholder}
     </div>;

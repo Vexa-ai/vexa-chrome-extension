@@ -97,7 +97,6 @@ export const useAudioCapture = (): AudioCapture => {
 
     const stopAudioCapture = () => {
         stopRecording();
-        messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
     };
 
     const pauseAudioCapture = () => {
@@ -123,13 +122,27 @@ export const useAudioCapture = (): AudioCapture => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, preferCurrentTab: true } as any);
             const audioTracks = displayStream.getAudioTracks();
+            const videoTracks = displayStream.getVideoTracks();
+            [...videoTracks, ...audioTracks]?.forEach(track => {
+                track.onended = () => {
+                    stopRecording();
+                }
+            });
+
             if (audioTracks.length > 0) {
                 stream.addTrack(audioTracks[0]);
             }
 
+            displayStream.addEventListener('removetrack', () => {
+                stopRecording();
+            });
+
+            stream.addEventListener('removetrack', () => {
+                stopRecording();
+            });
+
             globalStreamsToClose = [stream, displayStream];
             const thisRecorder = new MediaRecorder(stream);
-            console.log({ thisRecorder });
             let countIndex = 0;
             thisRecorder.ondataavailable = async (event) => {
                 const blob = await event.data;
@@ -149,13 +162,13 @@ export const useAudioCapture = (): AudioCapture => {
                 });
             };
 
-            thisRecorder.onerror = (error) => {
+            thisRecorder.onerror = async (error) => {
                 console.error(error);
-                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } });
+                await stopRecording();
             };
 
-            thisRecorder.onstop = () => {
-                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
+            thisRecorder.onstop = async () => {
+                await stopRecording();
             };
 
             thisRecorder.start(3000);
@@ -204,11 +217,12 @@ export const useAudioCapture = (): AudioCapture => {
             globalStreamsToClose?.forEach(stream => {
                 stream.getTracks().forEach(track => track.stop());
             });
-
+            messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
             messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
 
             return true;
         } catch (e) {
+            messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
             messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } });
         }
         return false;

@@ -127,7 +127,6 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             content: prompt,
             meeting_id: getIdFromUrl(sender.tab.url),
             context_id: '1',
-            user_id: 'user_1'
         })
     }).then(async res => {
         if (!(res.status < 401)) {

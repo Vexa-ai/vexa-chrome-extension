@@ -7,15 +7,16 @@ import vexaBtnCss from 'data-text:./vexa-btn.scss';
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 import { VexaIcon } from "~shared/components/VexaLogo/VexaIcon";
 import { createRoot } from "react-dom/client";
+import { getIdFromUrl } from "~shared/helpers/meeting.helper";
 
 const VexaBtn = () => {
     const [isMaximized, setIsMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
-    const googleMeetUrlPattern = /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
+    const isValidContext = getIdFromUrl(location.href);
 
     return (
         <>
             {
-                googleMeetUrlPattern.test(location.href) && !isMaximized && (<Draggable>
+                isValidContext && !isMaximized && (<Draggable>
                     <button style={{
                         top: 'calc(50vh - 29px) !important',
                         right: '20px !important',
@@ -32,8 +33,7 @@ const VexaBtn = () => {
 export default VexaBtn;
 
 export const config: PlasmoCSConfig = {
-    matches: ['*://meet.google.com/*'],
-    // css: ['./vexa-btn.scss']
+    matches: ['*://meet.google.com/*', '*://www.youtube.com/watch?*'],
 };
 
 const injectUI = () => {

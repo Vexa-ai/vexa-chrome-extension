@@ -142,7 +142,6 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         });
     }, err => {
         console.error(err);
-        debugger;
         sendResponse(null);
     });
 });
@@ -153,11 +152,9 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
         if (!tab) {
             return;
         }
-        debugger;
         chrome.tabCapture.getMediaStreamId({
             targetTabId: tab.id
         }, async (streamId) => {
-            debugger
             const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
                 __vexa_token: "",
                 __vexa_domain: ""

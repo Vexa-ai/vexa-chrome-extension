@@ -204,7 +204,6 @@ export const useAudioCapture = (): AudioCapture => {
     async function stopRecording() {
         try {
             const recorder = globalMediaRecorder;
-            debugger;
             if (recorder && ["recording", "paused"].includes(recorder.state)) {
                 recorder.stop();
                 recorder.stream.getTracks().forEach(t => t.stop());

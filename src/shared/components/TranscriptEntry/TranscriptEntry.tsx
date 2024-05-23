@@ -13,7 +13,6 @@ function formatDateString(timestamp: string): string {
     return '';
   }
   const date = new Date(timestamp);
-  debugger;
   const hours = date.getUTCHours();
   const minutes = date.getUTCMinutes();
   const seconds = date.getUTCSeconds();

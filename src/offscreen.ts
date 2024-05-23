@@ -96,7 +96,6 @@ MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIV
   const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex } = message.data
   const chunkBlob = base64ToBlob(base64String, chunkType);
   console.log(chunkBlob);
-  debugger;
   sendDataChunk(chunkBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
 });
 
@@ -112,7 +111,6 @@ function base64ToBlob(base64, type) {
 async function sendDataChunk(data: Blob, connectionId: string, domain: string, token: string, url: string, meetingId: string, tab: chrome.tabs.Tab, countIndex: number) {
   if (data.size > 0) {
     const timestamp = new Date();
-    debugger
     fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`, {
         method: 'PUT',
         body: data,
@@ -128,7 +126,7 @@ async function sendDataChunk(data: Blob, connectionId: string, domain: string, t
         }
         pollTranscript(meetingId, token, timestamp, tab.id);
     }, error => {
-        debugger;
+        console.error('An error occured', error);
     });
 }
 }

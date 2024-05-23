@@ -8,7 +8,6 @@ import { MicrophoneLevelIndicator } from '../MicrophoneLevelIndicator';
 import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
 import { CustomSelect, type Option } from '../CustomSelect';
-// import Select from 'react-select'
 
 export interface MicrophoneSelectorProps { }
 

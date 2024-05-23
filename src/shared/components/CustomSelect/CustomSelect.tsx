@@ -55,6 +55,7 @@ export function CustomSelect({
   }, [showMenu]);
 
   useEffect(() => {
+    console.log({keepOpen, showMenu});
     setShowMenu(keepOpen);
   }, [keepOpen]);
 

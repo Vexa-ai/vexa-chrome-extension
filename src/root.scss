@@ -9,6 +9,44 @@
     }
 }
 
+#vexa-content-ui {
+ &.youtube {
+    font-size: 1.44rem;
+
+    // :root {
+        --base-font-size: 16px; /* Default base font size */
+        --base-spacing: 1rem; /* Default base spacing */
+    //   }
+
+    .text-base {
+        font-size: 1.5rem !important;
+        line-height: 2rem !important;
+    }
+
+    .h-9 {
+        height: 35.9896px !important;
+    }
+
+    .VexaToolbar {
+        font-size: 14.4px !important;
+    }
+
+    .VexaPauseButton > div{
+        padding: 8px !important;
+        height: auto !important;
+
+        button {
+            @apply p-2 #{!important};
+        }
+    }
+
+    .VexaMinimizeButton img {
+        height: 20px;
+        width: 20px;
+    }
+ }
+}
+
 #vexa-content-div {
     position: fixed;
     width: 400px;

@@ -10,16 +10,15 @@ import vexaCss from 'data-text:./vexa.scss';
 import vexaBtnCss from 'data-text:./vexa-btn.scss';
 import { createRoot } from "react-dom/client";
 import Vexa from "./vexa";
+import { getPlatform, isRecordablePlatform } from "~shared/helpers/is-recordable-platform.helper";
 
 const VexaInMeetContext = () => {
-  const isMeetUrl = location.href.includes('meet.google.com');
-  const googleMeetUrlPattern = /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
-
+  const isValidContext = isRecordablePlatform();
+  const platform =  getPlatform();
   return (
     <>
-      {/* {(googleMeetUrlPattern.test(location.href) && isMeetUrl) && ( */}
-      {isMeetUrl && (
-        <div id="vexa-content-ui" style={{
+      {isValidContext && (
+        <div id="vexa-content-ui" className={platform} style={{
           position: 'fixed',
           zIndex: 99999999
         }}>
@@ -62,6 +61,6 @@ export const getStyle = () => {
 
 
 export const config: PlasmoCSConfig = {
-  matches: ['*://meet.google.com/*'],
+  matches: ['*://meet.google.com/*', '*://www.youtube.com/watch?*'],
   css: ["./vexa.scss", "../assets/fonts/Inter/inter.face.scss"],
 };

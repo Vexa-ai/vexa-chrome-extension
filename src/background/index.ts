@@ -4,6 +4,19 @@ import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 import { getIdFromUrl } from "~shared/helpers/meeting.helper";
 
+let previousUrl = null;
+
+chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
+    if (previousUrl && previousUrl !== details.url) {
+        const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
+        if (regexPattern.test(details.url)) {
+            chrome.tabs.reload(details.tabId);
+        }
+    }
+
+    previousUrl = details.url;
+});
+
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
     if (capturingTabId && capturingTabId === tabId) {
@@ -78,16 +91,16 @@ MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
 MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTION_RESULT, async (message) => {
     const { tabId, transcripts } = message.data;
     const tabs = await chrome.tabs.query({ active: true });
-      const targetTab = tabs.find(tab => tabId === tabId);
-      if (targetTab) {
+    const targetTab = tabs.find(tab => tabId === tabId);
+    if (targetTab) {
         messageSender.sendTabMessage(targetTab, {
-          type: MessageType.TRANSCRIPTION_RESULT,
-          data: {
-            transcripts,
-            tabId,
-          },
+            type: MessageType.TRANSCRIPTION_RESULT,
+            data: {
+                transcripts,
+                tabId,
+            },
         });
-      }
+    }
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message, sender) => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, sender.tab.id);

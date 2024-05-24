@@ -52,7 +52,8 @@
       "tabs",
       "tabCapture",
       "activeTab",
-      "scripting"
+      "scripting",
+      "webNavigation"
     ],
     "host_permissions": [
       "https://*/*"

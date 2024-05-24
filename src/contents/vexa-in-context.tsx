@@ -13,11 +13,12 @@ import Vexa from "./vexa";
 import { getPlatform, isRecordablePlatform } from "~shared/helpers/is-recordable-platform.helper";
 
 const VexaInMeetContext = () => {
-  const isValidContext = isRecordablePlatform();
+  // const isValidContext = isRecordablePlatform();
   const platform =  getPlatform();
   return (
     <>
-      {isValidContext && (
+      {/* {isValidContext && ( */}
+      {(
         <div id="vexa-content-ui" className={platform} style={{
           position: 'fixed',
           zIndex: 99999999

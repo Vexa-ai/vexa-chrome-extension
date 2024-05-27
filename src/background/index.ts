@@ -113,10 +113,6 @@ MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (m
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (message) => {
     resetRecordingState();
-    // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
-});
-MessageListenerService.registerMessageListener(MessageType.REQUEST_STOP_RECORDING, (message) => {
-    messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
 });
 
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {

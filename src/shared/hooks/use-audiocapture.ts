@@ -43,7 +43,7 @@ export const useAudioCapture = (): AudioCapture => {
     const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
     const [availableSpeakers, setAvailableSpeakers] = useState<MediaDeviceInfo[]>([]);
     const [selectedMicrophone, setSelectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo>(StoreKeys.SELECTED_MICROPHONE);
-    const [__, setIsCapturingStoreState] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+    const [capturingState, setIsCapturingStoreState] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
     const [___, setRecordStartTime] = StorageService.useHookStorage<number>(StoreKeys.RECORD_START_TIME);
     const messageSender = new MessageSenderService();
     const [authData] = StorageService.useHookStorage<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
@@ -77,7 +77,7 @@ export const useAudioCapture = (): AudioCapture => {
         const meetingId = getIdFromUrl(location.href);
         startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url);
         // recorderRef.current = recorderInstance;
-        // globalMediaRecorder = recorderInstance;
+        globalMediaRecorder = recorderRef.current;
     };
 
     const setSelectedAudioInputDevice = async (device: MediaDeviceInfo) => {
@@ -119,39 +119,54 @@ export const useAudioCapture = (): AudioCapture => {
 
     async function startRecording(micLabel, connectionId, meetingId, token, domain, url) {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Capture microphone audio
+            const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Capture display (screen/tab) with system audio
             const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, preferCurrentTab: true } as any);
-            const audioTracks = displayStream.getAudioTracks();
+            const displayAudioTracks = displayStream.getAudioTracks();
+            const micAudioTracks = micStream.getAudioTracks();
+            const combinedStream = new MediaStream();
+            displayAudioTracks.forEach(track => combinedStream.addTrack(track));
+            micAudioTracks.forEach(track => combinedStream.addTrack(track));
             const videoTracks = displayStream.getVideoTracks();
-            [...videoTracks, ...audioTracks]?.forEach(track => {
+            videoTracks.forEach(track => combinedStream.addTrack(track));
+            [...videoTracks, ...displayAudioTracks, ...micAudioTracks].forEach(track => {
                 track.onended = () => {
                     stopRecording();
                 }
             });
 
-            if (audioTracks.length > 0) {
-                stream.addTrack(audioTracks[0]);
-            }
-
             displayStream.addEventListener('removetrack', () => {
                 stopRecording();
             });
 
-            stream.addEventListener('removetrack', () => {
+            micStream.addEventListener('removetrack', () => {
                 stopRecording();
             });
 
-            globalStreamsToClose = [stream, displayStream];
-            const thisRecorder = new MediaRecorder(stream);
+            globalStreamsToClose = [micStream, displayStream];
+
+            // Initialize MediaRecorder with the combined stream
+            debugger;
+            const thisRecorder = new MediaRecorder(combinedStream);
             let countIndex = 0;
+
             thisRecorder.ondataavailable = async (event) => {
                 const blob = await event.data;
                 const chunk = await blobToBase64(blob);
+                const bufferChunk = await blob.arrayBuffer();
+                const decoder = new TextDecoder();
+                const bufferString = decoder.decode(bufferChunk);
+                const bufferChunkData = bufferChunk;
                 console.log(event.data);
                 messageSender.sendOffscreenMessage({
-                    type: MessageType.ON_MEDIA_CHUNK_RECEIVED, data: {
+                    type: MessageType.ON_MEDIA_CHUNK_RECEIVED,
+                    data: {
                         chunk,
                         chunkType: blob.type,
+                        bufferChunkData,
+                        bufferString,
                         connectionId,
                         domain,
                         token,
@@ -173,6 +188,7 @@ export const useAudioCapture = (): AudioCapture => {
 
             thisRecorder.start(3000);
             recorderRef.current = thisRecorder;
+            globalMediaRecorder = thisRecorder;
             setIsCapturing(true);
             await setIsCapturingStoreState(true);
             await setRecordStartTime(new Date().getTime());
@@ -187,16 +203,38 @@ export const useAudioCapture = (): AudioCapture => {
         }
     }
 
+    function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (reader.result instanceof ArrayBuffer) {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error("FileReader result is not an ArrayBuffer"));
+                }
+            };
+            reader.onerror = () => {
+                reject(new Error("FileReader failed to read blob"));
+            };
+            reader.readAsArrayBuffer(blob);
+        });
+    }
+
+
     function blobToBase64(blob) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 if (typeof reader.result === 'string') {
-                    resolve(reader.result.split(',')[1]);
+                    const base64String = reader.result.split(',')[1];
+                    resolve(base64String);
+                } else {
                     reject(new Error("FileReader result is not a string"));
                 }
             };
-            reader.onerror = reject;
+            reader.onerror = () => {
+                reject(new Error("FileReader failed to read blob"));
+            };
             reader.readAsDataURL(blob);
         });
     }
@@ -204,6 +242,7 @@ export const useAudioCapture = (): AudioCapture => {
     async function stopRecording() {
         try {
             const recorder = globalMediaRecorder;
+            debugger;
             if (recorder && ["recording", "paused"].includes(recorder.state)) {
                 recorder.stop();
                 recorder.stream.getTracks().forEach(t => t.stop());
@@ -211,17 +250,15 @@ export const useAudioCapture = (): AudioCapture => {
                 globalStreamsToClose.forEach(stream => {
                     stream.getTracks().forEach(track => track.stop());
                 });
+
+
+                globalStreamsToClose?.forEach(stream => {
+                    stream.getTracks().forEach(track => track.stop());
+                });
+                messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
             }
-
-            globalStreamsToClose?.forEach(stream => {
-                stream.getTracks().forEach(track => track.stop());
-            });
-            messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
-            messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
-
             return true;
         } catch (e) {
-            messageSender.sendBackgroundMessage({ type: MessageType.REQUEST_STOP_RECORDING });
             messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } });
         }
         return false;
@@ -288,6 +325,13 @@ export const useAudioCapture = (): AudioCapture => {
     useEffect(() => {
         requestMicrophones();
     }, []);
+
+    useEffect(() => {
+        if(typeof capturingState === 'boolean' && !capturingState) {
+            console.log('Stopping')
+            stopAudioCapture();
+        }
+    }, [capturingState]);
 
     useEffect(() => {
         setState(prevState => ({

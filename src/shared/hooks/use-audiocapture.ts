@@ -120,35 +120,8 @@ export const useAudioCapture = (): AudioCapture => {
 
     async function startRecording(micLabel, connectionId, meetingId, token, domain, url, isDebug = false) {
         try {
-            // Capture microphone audio
-            const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            // Capture display (screen/tab) with system audio
-            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, preferCurrentTab: true } as any);
-            const displayAudioTracks = displayStream.getAudioTracks();
-            const micAudioTracks = micStream.getAudioTracks();
-            const combinedStream = new MediaStream();
-            displayAudioTracks.forEach(track => combinedStream.addTrack(track));
-            micAudioTracks.forEach(track => combinedStream.addTrack(track));
-            // const videoTracks = displayStream.getVideoTracks();
-            // videoTracks.forEach(track => combinedStream.addTrack(track));
-            [...displayAudioTracks, ...micAudioTracks].forEach(track => {
-                track.onended = () => {
-                    stopRecording();
-                }
-            });
-
-            displayStream.addEventListener('removetrack', () => {
-                stopRecording();
-            });
-
-            micStream.addEventListener('removetrack', () => {
-                stopRecording();
-            });
-
-            globalStreamsToClose = [micStream, displayStream];
-
-            // Initialize MediaRecorder with the combined stream
+            const deviceId = await getMicDeviceIdByLabel(micLabel);
+            const combinedStream = await getCombinedStream(deviceId, ); // new MediaStream();
             const thisRecorder = new MediaRecorder(combinedStream);
             let countIndex = 0;
 
@@ -220,23 +193,19 @@ export const useAudioCapture = (): AudioCapture => {
         }
     }
 
-    function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                if (reader.result instanceof ArrayBuffer) {
-                    resolve(reader.result);
-                } else {
-                    reject(new Error("FileReader result is not an ArrayBuffer"));
-                }
-            };
-            reader.onerror = () => {
-                reject(new Error("FileReader failed to read blob"));
-            };
-            reader.readAsArrayBuffer(blob);
-        });
-    }
+    async function getMicDeviceIdByLabel(micLabel) {
+        try {
+            await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false,
+            });
+            const devices = await navigator.mediaDevices.enumerateDevices();
 
+            return devices.find(d => "audioinput" === d.kind && d.label === micLabel)?.deviceId;
+        } catch (e) {
+            console.error('unable to enumerate devices', e);
+        }
+    }
 
     function blobToBase64(blob) {
         return new Promise((resolve, reject) => {
@@ -282,16 +251,27 @@ export const useAudioCapture = (): AudioCapture => {
     }
 
     const getCombinedStream = async (deviceId) => {
-        const streamOriginal = await navigator.mediaDevices.getDisplayMedia({
-            audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined, mandatory: { chromeMediaSource: "tab" } },
-            video: true,
-        } as any);
+        const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: true }, preferCurrentTab: true } as any);
+        const microphoneStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
+        });
 
-        globalStreamsToClose = [streamOriginal];
+        globalStreamsToClose = [deviceStream, microphoneStream];
+        const deviceAudoTracks = deviceStream.getAudioTracks();
+        const micAudioTracks = microphoneStream.getAudioTracks();
 
-        const context = new AudioContext();
-        const stream = context.createMediaStreamSource(streamOriginal);
-        stream.connect(context.destination);
+        [...deviceAudoTracks, ...micAudioTracks].forEach(track => {
+            track.onended = () => {
+                stopRecording();
+            }
+        });
+        deviceStream.addEventListener('removetrack', () => {
+            stopRecording();
+        });
+
+        microphoneStream.addEventListener('removetrack', () => {
+            stopRecording();
+        });
 
         const audioContext = new AudioContext();
         const audioSources = [];
@@ -301,7 +281,7 @@ export const useAudioCapture = (): AudioCapture => {
         gainNode.gain.value = 0;
 
         let audioTracksLength = 0;
-        [streamOriginal].forEach(function (stream) {
+        [deviceStream, microphoneStream].forEach(function (stream) {
             if (!stream.getTracks().filter(function (t) {
                 return t.kind === 'audio';
             }).length) {

@@ -92,27 +92,27 @@ MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async
   stopRecording();
 });
 
-MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
-  const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex, bufferChunkData, bufferString } = message.data
-  const chunkBuffer = new Uint8Array(bufferChunkData).buffer;
-  const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
-  const decoder = new TextEncoder();
-  const encodedBufferUint8 = decoder.encode(bufferString);
-  const encodedBuffer = new Blob([encodedBufferUint8], { type: chunkType });
-
-  console.log(encodedBuffer);
-  // debugger;
-  sendDataChunk(encodedBuffer, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
-});
-
-function base64ToBlob(base64, type) {
-  const binary = atob(base64);
-  const array = [];
-  for (let i = 0; i < binary.length; i++) {
-    array.push(binary.charCodeAt(i));
+function base64ToArrayBuffer(base64) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  return new Blob([new Uint8Array(array)], { type });
+  return bytes.buffer;
 }
+
+MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
+  const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex } = message.data;
+  try {
+    const chunkBuffer = base64ToArrayBuffer(base64String);
+    const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
+    sendDataChunk(chunkBufferBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
+
+  } catch (error) {
+    console.error('Error decoding audio chunk:', error);
+  }
+});
 
 function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
   return new Blob([arrayBuffer], { type: mimeType });

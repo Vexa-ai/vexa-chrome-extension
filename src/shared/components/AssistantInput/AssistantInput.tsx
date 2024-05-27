@@ -27,7 +27,10 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
       return;
     }
     const promptText = promptInputRef.current.value;
-    onEnter(promptText);
+    const canClearField = await onEnter(promptText);
+    if (canClearField) {
+      promptInputRef.current.value = '';
+    }
   };
 
   const handleSuggestionSelection = (index: number) => {

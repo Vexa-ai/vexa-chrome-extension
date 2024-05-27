@@ -62,7 +62,6 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
 
     const _interval = setInterval(() => {
       const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-      // console.log({ level, pointer });
       messageSender.sendBackgroundMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer, tab: sender.tab } })
     }, 150);
 
@@ -103,14 +102,28 @@ function base64ToArrayBuffer(base64) {
 }
 
 MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
-  const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex } = message.data;
+  const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug } = message.data;
   try {
-    const chunkBuffer = base64ToArrayBuffer(base64String);
-    const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
-    sendDataChunk(chunkBufferBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
+      const chunkBuffer = base64ToArrayBuffer(base64String);
+      const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
 
+      if (isDebug) {
+          // Play audio
+          const audioUrl = URL.createObjectURL(chunkBufferBlob);
+          const audio = new Audio(audioUrl);
+          audio.play().then(() => {
+              sendResponse({ status: 'playing' });
+          }).catch(error => {
+              console.error('Error playing audio:', error);
+              sendResponse({ status: 'error', error });
+          });
+      } else {
+          // Send data chunk
+          sendDataChunk(chunkBufferBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
+      }
   } catch (error) {
-    console.error('Error decoding audio chunk:', error);
+      console.error('Error decoding audio chunk:', error);
+      sendResponse({ status: 'error', error });
   }
 });
 

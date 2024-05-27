@@ -5,14 +5,21 @@ import { AssistantEntry } from '../AssistantEntry';
 import { AssistantInput } from '../AssistantInput';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { MessageSenderService } from '~lib/services/message-sender.service';
+import { getIdFromUrl } from '~shared/helpers/meeting.helper';
 
 export interface AssistantEntryData {
-  content: string;
-  context_id: string;
-  role: string;
-  timestamp: string;
-  user_id: string;
+  current_chain: number;
+  user_message?: AssistantMessageUnit;
+  assistant_message?: AssistantMessageUnit;
 };
+
+export interface AssistantMessageUnit {
+  user_id: string;
+  meeting_id: string;
+  text: string;
+  role: 'user' | 'assistant';
+  timestamp: string;
+}
 
 export interface AssistantListProps { }
 
@@ -26,14 +33,27 @@ export function AssistantList({ }: AssistantListProps) {
 
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
   MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_RESULT, (message) => {
-    const response: AssistantEntryData[] = message.data;
-      setResponses(response);
-      setClearField(true);
+    const response: AssistantEntryData = message.data;
+    const newResponses = [...responses];
+    newResponses[newResponses.length > 0 ? newResponses.length - 1 : 0] = response;
+    setResponses(newResponses);
+    setClearField(true);
   });
 
   const onPrompted = async (prompt: string) => {
     try {
-      const requestResult = await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt } });
+      const unRepliedMessageUnit: AssistantEntryData = {
+        current_chain: 1,
+        user_message: {
+          user_id: '',
+          text: prompt,
+          meeting_id: getIdFromUrl(location.href),
+          role: 'user',
+          timestamp: new Date().toISOString(),
+        }
+      };
+      setResponses([...responses, unRepliedMessageUnit]);
+      await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt } });
       return true;
     } catch (error) {
       return false;
@@ -56,7 +76,8 @@ export function AssistantList({ }: AssistantListProps) {
     {responses.length ? <div className="flex-grow overflow-y-auto">
       {responses.map((entry, index) => (
         <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>
-          <AssistantEntry entryData={entry} />
+          {entry.user_message && <AssistantEntry entryData={entry.user_message} />}
+          {entry.assistant_message && <AssistantEntry entryData={entry.assistant_message} />}
         </div>
       ))}
     </div> : null}

@@ -128,18 +128,16 @@ export const useAudioCapture = (): AudioCapture => {
             thisRecorder.ondataavailable = async (event: BlobEvent) => {
                 try {
                     if (event.data.size > 0) {
-                        if (isDebug) {
-                            downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
-                            return;
-                        }
+                        // if (isDebug) {
+                        //     downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
+                        //     return;
+                        // }
 
                         const blob = event.data;
                         const chunk = await blobToBase64(blob);
                         const bufferChunk = await blob.arrayBuffer();
                         const bufferString = new TextDecoder().decode(bufferChunk);
                         const bufferChunkData = bufferChunk;
-
-                        console.log(event.data, bufferChunk, bufferString, bufferChunkData);
 
                         messageSender.sendOffscreenMessage({
                             type: MessageType.ON_MEDIA_CHUNK_RECEIVED,
@@ -153,6 +151,7 @@ export const useAudioCapture = (): AudioCapture => {
                                 token,
                                 url,
                                 meetingId,
+                                isDebug,
                                 countIndex: countIndex++,
                             }
                         });
@@ -228,7 +227,6 @@ export const useAudioCapture = (): AudioCapture => {
     async function stopRecording() {
         try {
             const recorder = globalMediaRecorder;
-            debugger;
             if (recorder && ["recording", "paused"].includes(recorder.state)) {
                 recorder.stop();
                 recorder.stream.getTracks().forEach(t => t.stop());

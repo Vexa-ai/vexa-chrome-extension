@@ -20,7 +20,6 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
 chrome.webNavigation.onCompleted.addListener(details => {
     const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
     const meetRegex = /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
-    debugger;
     if (previousUrl && previousUrl !== details.url) {
         if (youtubeRegexPattern.test(details.url) || meetRegex.test(details.url)) {
             resetRecordingState();
@@ -141,8 +140,8 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         __vexa_token: "",
         __vexa_domain: ""
     });
-    const { prompt, meetingId } = message.data;
-    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/copilot?token=${authData.__vexa_token}`, {
+    const { prompt } = message.data;
+    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/assistant/copilot?token=${authData.__vexa_token}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -150,7 +149,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         body: JSON.stringify({
             content: prompt,
             meeting_id: getIdFromUrl(sender.tab.url),
-            context_id: '1',
+            chain: 0,
         })
     }).then(async res => {
         if (!(res.status < 401)) {
@@ -162,7 +161,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         const responseJson = await res.json();
         messageSender.sendTabMessage(sender.tab, {
             type: MessageType.ASSISTANT_PROMPT_RESULT,
-            data: responseJson?.messages || [],
+            data: responseJson || [],
         });
     }, err => {
         console.error(err);

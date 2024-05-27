@@ -1,10 +1,10 @@
 import React from 'react';
 
 import './AssistantEntry.scss';
-import type { AssistantEntryData } from '../AssistantList';
+import type { AssistantMessageUnit } from '../AssistantList';
 
 export interface AssistantEntryProps {
-  entryData: AssistantEntryData;
+  entryData: AssistantMessageUnit;
 }
 
 export function AssistantEntry({ entryData }: AssistantEntryProps) {
@@ -15,7 +15,7 @@ export function AssistantEntry({ entryData }: AssistantEntryProps) {
           <p className='flex gap-2 mb-1'>
             <span className="font-semibold text-white">{entryData.role}</span>
           </p>
-          <p>{entryData.content}</p>
+          <p>{entryData.text}</p>
         </div>
       ) : null}
     </div>

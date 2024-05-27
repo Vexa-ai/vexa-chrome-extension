@@ -15,7 +15,11 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   const audioCapture = useAudioCapture();
   const [selectedMicrophone] = StorageService.useHookStorage(StoreKeys.SELECTED_MICROPHONE);
   const meetingId = getIdFromUrl(location.href);
-  const startCapture = () => {
+  const startCapture = (evt) => {
+    if (evt.ctrlKey && evt.shiftKey) {
+      console.debug('Debug recording started');
+      return audioCapture.startAudioCapture(true);
+    }
     audioCapture.startAudioCapture();
   }
 
@@ -27,6 +31,6 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
       <img alt='' className='w-5 h-5' src={playIcon} />
       <span>Start recording</span>
     </button>
-    
+
   </div>;
 }

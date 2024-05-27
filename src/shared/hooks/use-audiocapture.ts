@@ -4,6 +4,7 @@ import { MessageSenderService } from '~lib/services/message-sender.service';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { StorageService, StoreKeys, type AuthorizationData } from '~lib/services/storage.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
+import { downloadFileInContent } from '~shared/helpers/is-recordable-platform.helper';
 
 export type AudioCaptureState = boolean;
 MessageListenerService.initializeListenerService();
@@ -23,7 +24,7 @@ export interface AudioCapture {
     isCapturing: boolean;
     state: typeof initialState;
     selectedAudioInput?: MediaDeviceInfo;
-    startAudioCapture: () => void;
+    startAudioCapture: (isDebug?: boolean) => void;
     stopAudioCapture: () => void;
     captureTime: number;
     pauseAudioCapture: () => void;
@@ -62,21 +63,21 @@ export const useAudioCapture = (): AudioCapture => {
         }
     };
 
-    async function getConnectionId() {
+    const getConnectionId = async () => {
         const uuid = String(self.crypto.randomUUID());
         await chrome.storage.local.set({ _dl_connection_id: uuid, _dl_connection_session: 0 });
 
         return uuid;
     }
 
-    const startAudioCapture = async () => {
+    const startAudioCapture = async (isDebug = false) => {
         const connectionId = await getConnectionId();
         const domain = process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL;
         const token = authData.__vexa_token;
         const url = authData.__vexa_domain;
         const meetingId = getIdFromUrl(location.href);
-        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url);
-        // recorderRef.current = recorderInstance;
+
+        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url, isDebug);
         globalMediaRecorder = recorderRef.current;
     };
 
@@ -117,7 +118,7 @@ export const useAudioCapture = (): AudioCapture => {
         return devices;
     };
 
-    async function startRecording(micLabel, connectionId, meetingId, token, domain, url) {
+    async function startRecording(micLabel, connectionId, meetingId, token, domain, url, isDebug = false) {
         try {
             // Capture microphone audio
             const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -129,9 +130,9 @@ export const useAudioCapture = (): AudioCapture => {
             const combinedStream = new MediaStream();
             displayAudioTracks.forEach(track => combinedStream.addTrack(track));
             micAudioTracks.forEach(track => combinedStream.addTrack(track));
-            const videoTracks = displayStream.getVideoTracks();
-            videoTracks.forEach(track => combinedStream.addTrack(track));
-            [...videoTracks, ...displayAudioTracks, ...micAudioTracks].forEach(track => {
+            // const videoTracks = displayStream.getVideoTracks();
+            // videoTracks.forEach(track => combinedStream.addTrack(track));
+            [...displayAudioTracks, ...micAudioTracks].forEach(track => {
                 track.onended = () => {
                     stopRecording();
                 }
@@ -148,33 +149,44 @@ export const useAudioCapture = (): AudioCapture => {
             globalStreamsToClose = [micStream, displayStream];
 
             // Initialize MediaRecorder with the combined stream
-            debugger;
             const thisRecorder = new MediaRecorder(combinedStream);
             let countIndex = 0;
 
-            thisRecorder.ondataavailable = async (event) => {
-                const blob = await event.data;
-                const chunk = await blobToBase64(blob);
-                const bufferChunk = await blob.arrayBuffer();
-                const decoder = new TextDecoder();
-                const bufferString = decoder.decode(bufferChunk);
-                const bufferChunkData = bufferChunk;
-                console.log(event.data);
-                messageSender.sendOffscreenMessage({
-                    type: MessageType.ON_MEDIA_CHUNK_RECEIVED,
-                    data: {
-                        chunk,
-                        chunkType: blob.type,
-                        bufferChunkData,
-                        bufferString,
-                        connectionId,
-                        domain,
-                        token,
-                        url,
-                        meetingId,
-                        countIndex: countIndex++,
+            thisRecorder.ondataavailable = async (event: BlobEvent) => {
+                try {
+                    if (event.data.size > 0) {
+                        if (isDebug) {
+                            downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
+                            return;
+                        }
+
+                        const blob = event.data;
+                        const chunk = await blobToBase64(blob);
+                        const bufferChunk = await blob.arrayBuffer();
+                        const bufferString = new TextDecoder().decode(bufferChunk);
+                        const bufferChunkData = bufferChunk;
+
+                        console.log(event.data, bufferChunk, bufferString, bufferChunkData);
+
+                        messageSender.sendOffscreenMessage({
+                            type: MessageType.ON_MEDIA_CHUNK_RECEIVED,
+                            data: {
+                                chunk,
+                                chunkType: blob.type,
+                                bufferChunkData,
+                                bufferString,
+                                connectionId,
+                                domain,
+                                token,
+                                url,
+                                meetingId,
+                                countIndex: countIndex++,
+                            }
+                        });
                     }
-                });
+                } catch (error) {
+                    console.error('Error processing data available event:', error);
+                }
             };
 
             thisRecorder.onerror = async (error) => {
@@ -186,7 +198,12 @@ export const useAudioCapture = (): AudioCapture => {
                 await stopRecording();
             };
 
-            thisRecorder.start(3000);
+            if (isDebug) {
+                thisRecorder.start();
+            } else {
+                thisRecorder.start(3000);
+            }
+
             recorderRef.current = thisRecorder;
             globalMediaRecorder = thisRecorder;
             setIsCapturing(true);
@@ -327,7 +344,7 @@ export const useAudioCapture = (): AudioCapture => {
     }, []);
 
     useEffect(() => {
-        if(typeof capturingState === 'boolean' && !capturingState) {
+        if (typeof capturingState === 'boolean' && !capturingState) {
             console.log('Stopping')
             stopAudioCapture();
         }

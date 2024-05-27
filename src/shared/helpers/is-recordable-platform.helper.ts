@@ -4,6 +4,14 @@ export const isRecordablePlatform = () => {
 
 }
 
+export const downloadFileInContent = (name, blob) => {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
 export const getPlatform = (): Platform => {
 
     const meetRegex = /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;

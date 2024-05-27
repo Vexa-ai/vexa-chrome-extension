@@ -12,7 +12,7 @@ import { CustomSelect, type Option } from '../CustomSelect';
 export interface MicrophoneSelectorProps { }
 
 export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
-  const [selectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo & Option>(StoreKeys.SELECTED_MICROPHONE);
+  const [selectedMicrophone, setSelectedMicrophone] = StorageService.useHookStorage<MediaDeviceInfo & Option>(StoreKeys.SELECTED_MICROPHONE);
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [microphones, setMicrophones] = useState<Array<MediaDeviceInfo & Option>>([]);
@@ -34,13 +34,13 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     audioCapture.requestMicrophones();
   }
 
-  const [___, setSelectedOption] = useState<Option | null>(null);
   const handleChange = (option: Option) => {
-    setSelectedOption(option);
-    const selectedMicrophone = microphones.find(microphone => microphone.deviceId === option.value);
-    if (selectedMicrophone) {
-      audioCapture.setSelectedAudioInputDevice(selectedMicrophone);
-      onMicrophoneSelected(selectedMicrophone);
+    const selectedMic = microphones.find(microphone => microphone.value === option[0].value);
+    if (selectedMic) {
+      console.log(selectedMic)
+      audioCapture.setSelectedAudioInputDevice(selectedMic);
+      onMicrophoneSelected(selectedMic);
+      setSelectedMicrophone(selectedMic);
     }
     
   };

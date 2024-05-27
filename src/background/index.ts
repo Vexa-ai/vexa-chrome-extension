@@ -17,6 +17,22 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
     previousUrl = details.url;
 });
 
+chrome.webNavigation.onCompleted.addListener(details => {
+    const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
+    const meetRegex = /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
+    debugger;
+    if (previousUrl && previousUrl !== details.url) {
+        if (youtubeRegexPattern.test(details.url) || meetRegex.test(details.url)) {
+            resetRecordingState();
+        }
+    }
+
+    if (details.url.includes('meet.google.com') || youtubeRegexPattern.test(details.url)) {
+        resetRecordingState();
+    }
+    previousUrl = details.url;
+});
+
 chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
     if (capturingTabId && capturingTabId === tabId) {
@@ -117,8 +133,7 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (me
 
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
     const { level, pointer, tab } = message.data;
-    // console.log({ level, pointer, tab });
-    // StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level, pointer });
+    messageSender.sendTabMessage(tab, { type: MessageType.MICROPHONE_LEVEL_STATUS, data:  { level, pointer }})
 });
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {

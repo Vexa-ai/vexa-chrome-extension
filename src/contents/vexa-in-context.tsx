@@ -53,8 +53,8 @@ export const getStyle = () => {
     ${customSelectCss}
     ${microphoneSelectCss}
     ${vexaCss}
-    ${transcriptListCss}
     ${mainContentViewCss}
+    ${transcriptListCss}
     ${vexaBtnCss}
   `;
   return style

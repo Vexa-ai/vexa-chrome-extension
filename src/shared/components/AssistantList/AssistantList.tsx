@@ -21,9 +21,12 @@ export interface AssistantMessageUnit {
   timestamp: string;
 }
 
-export interface AssistantListProps { }
+export interface AssistantListProps {
+  assistantList?: AssistantEntryData[];
+  updatedAssistantList?: (assistantList: AssistantEntryData[]) => void;
+}
 
-export function AssistantList({ }: AssistantListProps) {
+export function AssistantList({ assistantList = [], updatedAssistantList = (assistantList) => { console.log({assistantList}) } }: AssistantListProps) {
 
   const [responses, setResponses] = useState<AssistantEntryData[]>([]);
   const [clearField, setClearField] = useState<boolean>(false);
@@ -64,15 +67,17 @@ export function AssistantList({ }: AssistantListProps) {
     if (lastEntryRef.current) {
       lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+    updatedAssistantList(responses)
   }, [responses]);
 
   useEffect(() => {
+    setResponses(assistantList);
     return () => {
       MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
     }
   }, [])
 
-  return <div ref={assistantListRef} className='AssistantList flex flex-col mb-[100px] max-h-full w-full overflow-hidden'>
+  return <div ref={assistantListRef} className='AssistantList flex flex-col mb-[120px] max-h-full w-full overflow-hidden'>
     {responses.length ? <div className="flex-grow overflow-y-auto">
       {responses.map((entry, index) => (
         <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>

@@ -37,13 +37,25 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   const handleChange = (option: Option) => {
     const selectedMic = microphones.find(microphone => microphone.value === option[0].value);
     if (selectedMic) {
-      console.log(selectedMic)
       audioCapture.setSelectedAudioInputDevice(selectedMic);
       onMicrophoneSelected(selectedMic);
       setSelectedMicrophone(selectedMic);
+      setIsOpen(false);
     }
     
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      } 
+    }
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [dropdownRef.current]);
 
   return <div className="MicrophoneSelector flex flex-col w-full">
     <label htmlFor="micSelect" className='text-white mb-2 flex text-sm font-medium'>Select Microphone</label>
@@ -58,7 +70,7 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
         isSearchable={false}
         onOpen={onDropdownOpenHandler}
         onChange={handleChange}
-        onBlur={() => {/*console.log('blurred');*/ setIsOpen(false)}}
+        // onBlur={() => {console.log('blurred'); setIsOpen(false)}}
         align="left"
         noOptionsComponent={CustomNoOption}
         optionComponent={CustomOption}

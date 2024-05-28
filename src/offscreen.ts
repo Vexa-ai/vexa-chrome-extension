@@ -8,6 +8,8 @@ MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
 let recorder: MediaRecorder = null;
 let streamsToClose: MediaStream[] = [];
+let lastValidTranscriptTimestamp = new Date();
+let isDebugMode = false;
 
 let audioContext: AudioContext;
 
@@ -104,26 +106,26 @@ function base64ToArrayBuffer(base64) {
 MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
   const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug } = message.data;
   try {
-      const chunkBuffer = base64ToArrayBuffer(base64String);
-      const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
-
-      if (isDebug) {
-          // Play audio
-          const audioUrl = URL.createObjectURL(chunkBufferBlob);
-          const audio = new Audio(audioUrl);
-          audio.play().then(() => {
-              sendResponse({ status: 'playing' });
-          }).catch(error => {
-              console.error('Error playing audio:', error);
-              sendResponse({ status: 'error', error });
-          });
-      } else {
-          // Send data chunk
-          sendDataChunk(chunkBufferBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
-      }
+    const chunkBuffer = base64ToArrayBuffer(base64String);
+    const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
+    isDebugMode = isDebug;
+    if (isDebugMode) {
+      // Play audio
+      const audioUrl = URL.createObjectURL(chunkBufferBlob);
+      const audio = new Audio(audioUrl);
+      audio.play().then(() => {
+        sendResponse({ status: 'playing' });
+      }).catch(error => {
+        console.error('Error playing audio:', error);
+        sendResponse({ status: 'error', error });
+      });
+    } else {
+      // Send data chunk
+      sendDataChunk(chunkBufferBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
+    }
   } catch (error) {
-      console.error('Error decoding audio chunk:', error);
-      sendResponse({ status: 'error', error });
+    console.error('Error decoding audio chunk:', error);
+    sendResponse({ status: 'error', error });
   }
 });
 
@@ -155,9 +157,9 @@ async function sendDataChunk(data: Blob, connectionId: string, domain: string, t
 }
 
 async function pollTranscript(meetingId: string, token: string, timestamp = new Date(), tabId: chrome.tabs.Tab['id']) {
-  timestamp.setMinutes(timestamp.getMinutes() - 5);
+  timestamp.setMinutes(timestamp.getMinutes() - 1);
   setTimeout(() => {
-    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}`, {
+    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}&last_msg_timestamp=${lastValidTranscriptTimestamp.toISOString()}`, {
       method: 'GET',
     }).then(async res => {
       if (!(res.status < 401)) {
@@ -167,6 +169,12 @@ async function pollTranscript(meetingId: string, token: string, timestamp = new 
         return;
       }
       const transcripts = await res.json();
+      console.log({ transcripts });
+      if (transcripts && transcripts.length) {
+        const dateBackBy1Minute = new Date(transcripts[transcripts.length - 1].timestamp);
+        dateBackBy1Minute.setMinutes(dateBackBy1Minute.getMinutes() - 5);
+        lastValidTranscriptTimestamp = dateBackBy1Minute;
+      }
       messageSender.sendBackgroundMessage({
         type: MessageType.OFFSCREEN_TRANSCRIPTION_RESULT,
         data: {
@@ -181,6 +189,7 @@ async function pollTranscript(meetingId: string, token: string, timestamp = new 
 }
 
 async function stopRecording() {
+  isDebugMode = false;
   messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
   return true;
 }

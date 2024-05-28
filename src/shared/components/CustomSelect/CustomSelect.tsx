@@ -63,25 +63,28 @@ export function CustomSelect({
     setSelectedValues(initialValue ? [initialValue]: []);
   }, [initialValue]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowMenu(!showMenu);
-        onBlur?.();
-      }
-    }
-    document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [dropdownRef.current]);
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+  //       setShowMenu(false);
+  //       onBlur?.(); //Disable blur state callback
+  //     } 
+  //     // else {
+  //     //   setShowMenu(true);
+  //     // }
+  //   }
+  //   document.addEventListener("click", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutside);
+  //   };
+  // }, [dropdownRef.current]);
 
   const handleInputClick = () => {
-    if (keepOpen) {
+    // if (keepOpen) {
       setShowMenu(true);
       return;
-    }
-    setShowMenu(!showMenu);
+    // }
+    // setShowMenu(!showMenu);
   };
 
   const removeOption = (option: Option) => {

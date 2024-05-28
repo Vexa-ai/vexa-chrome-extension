@@ -17,7 +17,7 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   const meetingId = getIdFromUrl(location.href);
   const startCapture = (evt) => {
     if (evt.ctrlKey && evt.shiftKey) {
-      console.debug('Debug recording started');
+      console.debug('%c Debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
       return audioCapture.startAudioCapture(true);
     }
     audioCapture.startAudioCapture();

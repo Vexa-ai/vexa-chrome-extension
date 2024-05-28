@@ -2,4 +2,9 @@
   .react-tabs__tab--selected {
     @apply border-b-2 border-b-white font-medium text-white;
   }
+
+  .react-tabs__tab-panel--selected {
+    @apply h-[-webkit-fill-available];
+    @apply flex #{!important};
+  }
 }

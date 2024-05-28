@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import './MainContentView.scss';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { TranscriptList } from '../TranscriptList';
-import { AssistantList } from '../AssistantList';
+import { type AssistantEntryData, AssistantList } from '../AssistantList';
 
 export interface MainContentViewProps {
   prop?: string;
 }
 
 export function MainContentView({}: MainContentViewProps) {
+  const [assistantList, setAssistantList] = useState<AssistantEntryData[]>([]);
   return (
     <div className='MainContentView flex flex-grow overflow-hidden h-auto'>
       <Tabs className='text-gray-300 w-full flex flex-col flex-1'>
@@ -19,16 +20,16 @@ export function MainContentView({}: MainContentViewProps) {
           <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>
         </TabList>
 
-        <TabPanel className='h-[-webkit-fill-available] mt-10 flex w-full'>
+        <TabPanel className='w-full hidden react-tab-panel'>
           <TranscriptList />
         </TabPanel>
 
-        <TabPanel >
+        <TabPanel className='w-full hidden react-tab-panel'>
           Notes here
         </TabPanel>
 
-        <TabPanel className='h-[-webkit-fill-available] mt-10 flex w-full'>
-          <AssistantList />
+        <TabPanel className='w-full hidden react-tab-panel'>
+          <AssistantList assistantList={assistantList} updatedAssistantList={(list) => setAssistantList(list)} />
         </TabPanel>
       </Tabs>
     </div>

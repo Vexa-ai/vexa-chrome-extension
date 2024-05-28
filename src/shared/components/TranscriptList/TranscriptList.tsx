@@ -1,21 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import './TranscriptList.scss';
-import { TranscriptEntry } from '../TranscriptEntry';
+import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 
 export interface TranscriptListProps { }
 
 export function TranscriptList({ }: TranscriptListProps) {
 
-  const [transcripts, setTranscripts] = useState<{ speaker: string; content: string; timestamp: string; }[]>([]);
+  const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
   const transcriptListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
 
   MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
   MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
-    const transcription: { speaker: string; content: string; timestamp: string }[] = message.data?.transcripts || [];
-    setTranscripts([...transcripts, ...transcription]);
+    const transcription: TranscriptionEntryData[] = message.data?.transcripts || [];
+    if (transcription && transcription.length) {
+      const previousTranscripts = [...transcripts];
+      const cursorIndex = previousTranscripts.findLastIndex(prevTranscript => prevTranscript.timestamp === transcription[0].timestamp);
+      setTranscripts([...previousTranscripts.splice(0, cursorIndex), ...transcription]);
+    }
+
   });
 
   useEffect(() => {

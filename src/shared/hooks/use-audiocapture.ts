@@ -52,6 +52,10 @@ export const useAudioCapture = (): AudioCapture => {
 
     const requestMicrophonesInContent = async () => {
         try {
+            await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false,
+            });
             const devices = await navigator.mediaDevices.enumerateDevices();
             setDevices(devices);
         } catch (error) {
@@ -121,17 +125,17 @@ export const useAudioCapture = (): AudioCapture => {
     async function startRecording(micLabel, connectionId, meetingId, token, domain, url, isDebug = false) {
         try {
             const deviceId = await getMicDeviceIdByLabel(micLabel);
-            const combinedStream = await getCombinedStream(deviceId, ); // new MediaStream();
+            const combinedStream = await getCombinedStream(deviceId); // new MediaStream();
             const thisRecorder = new MediaRecorder(combinedStream);
             let countIndex = 0;
 
             thisRecorder.ondataavailable = async (event: BlobEvent) => {
                 try {
                     if (event.data.size > 0) {
-                        // if (isDebug) {
-                        //     downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
-                        //     return;
-                        // }
+                        if (isDebug) {
+                            downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
+                            return;
+                        }
 
                         const blob = event.data;
                         const chunk = await blobToBase64(blob);
@@ -249,7 +253,7 @@ export const useAudioCapture = (): AudioCapture => {
     }
 
     const getCombinedStream = async (deviceId) => {
-        const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: true }, preferCurrentTab: true } as any);
+        const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false }, preferCurrentTab: true } as any);
         const microphoneStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
         });
@@ -323,7 +327,6 @@ export const useAudioCapture = (): AudioCapture => {
 
     useEffect(() => {
         if (typeof capturingState === 'boolean' && !capturingState) {
-            console.log('Stopping')
             stopAudioCapture();
         }
     }, [capturingState]);

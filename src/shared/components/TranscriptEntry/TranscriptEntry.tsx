@@ -7,6 +7,13 @@ export interface TranscriptEntryProps {
   timestamp: string;
 }
 
+export interface TranscriptionEntryData {
+  content: string;
+  keywords: string[];
+  speaker: string;
+  timestamp: string;
+}
+
 // Function to format the timestamp
 function formatDateString(timestamp: string): string {
   if(!timestamp) {
@@ -23,7 +30,7 @@ function formatDateString(timestamp: string): string {
   const hundredths = Math.floor(date.getUTCMilliseconds() / 10);
   const formattedHundredths = String(hundredths).padStart(2, '0');
 
-  return `${hours}:${formattedMinutes}:${formattedHundredths}`;
+  return `${hours}:${formattedMinutes}:${formattedSeconds}`;
 }
 
 export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryProps) {

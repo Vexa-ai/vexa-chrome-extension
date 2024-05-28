@@ -23,7 +23,6 @@ const VexaBtn = () => {
         const { clientWidth, clientHeight } = document.documentElement;
         const { node } = data;
         const rect = node.getBoundingClientRect();
-        console.log(rect, {rect, clientWidth, clientHeight });
         if (rect.right < 0 || (rect.top > clientHeight || rect.bottom < 0) || rect.left > clientWidth) {
             setPosition(defaultPosition);
         }

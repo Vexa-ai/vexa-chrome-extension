@@ -16,3 +16,4 @@ export {AssistantInput} from './AssistantInput';
 export {AssistantSuggestions} from './AssistantSuggestions';
 export {CustomSelect} from './CustomSelect';
 export {VexaMinimizeButton} from './VexaMinimizeButton';
+export {VexaBuildInfo} from './VexaBuildInfo';

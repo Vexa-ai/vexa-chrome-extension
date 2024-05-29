@@ -222,7 +222,7 @@ chrome.runtime.onInstalled.addListener(async () => {
             await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
         }
         chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
-        chrome.runtime.openOptionsPage(); //TODO: Uncomment when done
+        chrome.runtime.openOptionsPage();
     }, 500);
 
 });

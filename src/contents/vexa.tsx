@@ -1,6 +1,6 @@
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoRender } from "plasmo";
 import React, { useEffect, useState } from "react";
-import { MainContentView, MicrophoneOptions, VexaToolbar } from "~shared/components";
+import { MainContentView, MicrophoneOptions, VexaBuildInfo, VexaToolbar } from "~shared/components";
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
@@ -56,10 +56,16 @@ const Vexa = () => {
                     onDrag={handleDrag}
                     onStop={handleStop}
                 >
-                    <div id="vexa-content-div" className="flex flex-col h-screen w-[400px] bg-slate-950 px-4 pt-4 pb-4 overflow-y-auto overflow-x-hidden">
+                    <div id="vexa-content-div" className="flex flex-col w-[400px] bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <VexaToolbar />
-                            {isCapturing ? <MainContentView /> : <MicrophoneOptions className="mt-3" />}
+                            {isCapturing
+                                ? <MainContentView />
+                                : <>
+                                    <MicrophoneOptions className="mt-3" />
+                                    <VexaBuildInfo className="mx-auto mt-3" />
+                                </>
+                            }
                         </AudioCaptureContext.Provider>
                     </div>
                 </Draggable>)

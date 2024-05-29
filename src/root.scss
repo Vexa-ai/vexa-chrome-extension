@@ -50,7 +50,7 @@
 #vexa-content-div {
     position: fixed;
     width: 400px;
-    height: 100vh;
+    height: calc(100vh - 32px) !important;
     top: 0;
     overflow: hidden;
     right: 0;

@@ -5,6 +5,7 @@ import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocap
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 import Draggable, { type DraggableData, type DraggableEvent } from "react-draggable";
+import {NotificationContainer, NotificationManager} from 'react-notifications';
 
 const messageSender = new MessageSenderService();
 
@@ -58,12 +59,13 @@ const Vexa = () => {
                 >
                     <div id="vexa-content-div" className="flex flex-col w-[400px] bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
                         <AudioCaptureContext.Provider value={audioCapture}>
+                            <NotificationContainer/>
                             <VexaToolbar />
                             {isCapturing
                                 ? <MainContentView />
                                 : <>
                                     <MicrophoneOptions className="mt-3" />
-                                    <VexaBuildInfo className="mx-auto mt-3" />
+                                    <VexaBuildInfo className="mx-auto mt-auto" />
                                 </>
                             }
                         </AudioCaptureContext.Provider>

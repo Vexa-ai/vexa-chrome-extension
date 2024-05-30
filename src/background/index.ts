@@ -3,6 +3,7 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import OFFSCREEN_DOCUMENT_PATH from 'url:~src/offscreen.html'
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 import { getIdFromUrl } from "~shared/helpers/meeting.helper";
+import { consoleDebug } from "~shared/helpers/utils.helper";
 
 let previousUrl = null;
 
@@ -133,6 +134,10 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (me
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
     const { level, pointer, tab } = message.data;
     messageSender.sendTabMessage(tab, { type: MessageType.MICROPHONE_LEVEL_STATUS, data:  { level, pointer }})
+});
+
+MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESSAGE, async (evt) => {
+    consoleDebug(evt.data.url);
 });
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {

@@ -5,6 +5,7 @@ import { MessageListenerService, MessageType } from '~lib/services/message-liste
 import { StorageService, StoreKeys, type AuthorizationData } from '~lib/services/storage.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
 import { downloadFileInContent } from '~shared/helpers/is-recordable-platform.helper';
+import { consoleDebug } from '~shared/helpers/utils.helper';
 
 export type AudioCaptureState = boolean;
 MessageListenerService.initializeListenerService();
@@ -83,6 +84,7 @@ export const useAudioCapture = (): AudioCapture => {
 
         startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url, isDebug);
         globalMediaRecorder = recorderRef.current;
+        consoleDebug('Recording started');
     };
 
     const setSelectedAudioInputDevice = async (device: MediaDeviceInfo) => {
@@ -132,10 +134,10 @@ export const useAudioCapture = (): AudioCapture => {
             thisRecorder.ondataavailable = async (event: BlobEvent) => {
                 try {
                     if (event.data.size > 0) {
-                        // if (isDebug) {
-                        //     downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
-                        //     return;
-                        // }
+                        if (isDebug) {
+                            downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
+                            return;
+                        }
 
                         const blob = event.data;
                         const chunk = await blobToBase64(blob);
@@ -194,10 +196,6 @@ export const useAudioCapture = (): AudioCapture => {
         } catch (error) {
             await stopRecording();
         }
-    }
-
-    async function pipeBlobToOffscreen() {
-
     }
 
     async function getMicDeviceIdByLabel(micLabel) {

@@ -8,31 +8,43 @@ export class MessageSenderService {
      * @param payload Data to send to tab
      * @returns Returns the result of the sendResponse in the receiving script
      */
-    async sendTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any}) {
-        const response = await chrome.tabs.sendMessage(tab.id, payload);
-        return response;
+    async sendTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any }) {
+        try {
+            const response = await chrome.tabs.sendMessage(tab.id, payload);
+            return response;
+        } catch (e) {}
+
     }
 
     // Sends message to popup or background page
-    async sendOffscreenToTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any}) {
-        const response = await chrome.runtime.sendMessage({ target: 'background', ...payload, tab });
-        return response;
+    async sendOffscreenToTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any }) {
+        try {
+            const response = await chrome.runtime.sendMessage({ target: 'background', ...payload, tab });
+            return response;
+        } catch (error) {}
+
     }
 
     // Sends message to popup or background page
-    async sendBackgroundMessage(payload: { type: MessageType, data?: any}) {
-        const response = await chrome.runtime.sendMessage({ target: 'background', ...payload });
-        return response;
+    async sendBackgroundMessage(payload: { type: MessageType, data?: any }) {
+        try {
+            const response = await chrome.runtime.sendMessage({ target: 'background', ...payload });
+            return response;
+        } catch (error) {}
+
     }
 
     // Sends message to offscreen page
-    async sendOffscreenMessage(payload: { type: MessageType, data?: any}) {
-        const response = await chrome.runtime.sendMessage({ target: 'offscreen', ...payload });
-        return response;
+    async sendOffscreenMessage(payload: { type: MessageType, data?: any }) {
+        try {
+            const response = await chrome.runtime.sendMessage({ target: 'offscreen', ...payload });
+            return response;
+        } catch (error) {}
+
     }
 
     // Sends message to popup from background page
-    sendPopupMessage(payload: { type: MessageType, data?: any}) {
+    sendPopupMessage(payload: { type: MessageType, data?: any }) {
         chrome.runtime.sendMessage({ target: 'popup', ...payload });
     }
 
@@ -41,9 +53,12 @@ export class MessageSenderService {
      * @param payload Data to send to tab
      * @returns Returns the result of the sendResponse in the receiving script
      */
-    async sendSidebarMessage(payload: { type: MessageType, data?: any}) {
-        const response = await chrome.runtime.sendMessage({ target: 'sidebar', ...payload });
-        return response;
+    async sendSidebarMessage(payload: { type: MessageType, data?: any }) {
+        try {
+            const response = await chrome.runtime.sendMessage({ target: 'sidebar', ...payload });
+            return response;
+        } catch (error) {}
+
     }
 
 } 

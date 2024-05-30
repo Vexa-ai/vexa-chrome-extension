@@ -1,7 +1,6 @@
-import { Storage } from "@plasmohq/storage";
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
-import { StorageService, StoreKeys } from "~lib/services/storage.service";
+
 const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
 
 export interface AudioChunkEntry {
@@ -34,17 +33,16 @@ let queueInterval = setInterval(() => {
     }
 
     currentChunkBeingSent = queue.pop();
-    
+
     const { chunkBufferBlob, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
-    // const chunkBuffer = base64ToArrayBuffer(base64String);
-    // const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
-    console.log(chunkBufferBlob);
-    if(chunkBufferBlob.size === 0) {
+    if (chunkBufferBlob.size === 0) {
       queue.pop();
       currentChunkBeingSent = null;
       return;
     }
-    fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`, {
+    const audioURL = `${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`;
+    messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: audioURL, destinationTabId: tab.id } });
+    fetch(audioURL, {
       method: 'PUT',
       body: chunkBufferBlob,
       headers: {
@@ -176,9 +174,7 @@ function base64ToArrayBuffer(base64) {
 MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
   const chunkBuffer = base64ToArrayBuffer(message.data.chunk);
   const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, message.data.chunkType);
-  console.log(chunkBufferBlob);
   if (isDebugMode) {
-    // Play audio
     const audioUrl = URL.createObjectURL(chunkBufferBlob);
     const audio = new Audio(audioUrl);
     audio.play().then(() => {
@@ -193,61 +189,18 @@ MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIV
   message.data['tab'] = sender.tab;
   message.data['chunkBufferBlob'] = chunkBufferBlob;
   queue.push(message.data);
-  return;
-  const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug } = message.data;
-  try {
-    const chunkBuffer = base64ToArrayBuffer(base64String);
-    const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
-    isDebugMode = isDebug;
-    if (isDebugMode) {
-      // Play audio
-      const audioUrl = URL.createObjectURL(chunkBufferBlob);
-      const audio = new Audio(audioUrl);
-      audio.play().then(() => {
-        sendResponse({ status: 'playing' });
-      }).catch(error => {
-        console.error('Error playing audio:', error);
-        sendResponse({ status: 'error', error });
-      });
-    } else {
-      // Send data chunk
-      sendDataChunk(chunkBufferBlob, connectionId, domain, token, url, meetingId, sender.tab, countIndex);
-    }
-  } catch (error) {
-    console.error('Error decoding audio chunk:', error);
-    sendResponse({ status: 'error', error });
-  }
 });
 
 function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
   return new Blob([arrayBuffer], { type: mimeType });
 }
 
-async function sendDataChunk(data: Blob, connectionId: string, domain: string, token: string, url: string, meetingId: string, tab: chrome.tabs.Tab, countIndex: number) {
-  if (data.size > 0) {
-    fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`, {
-      method: 'PUT',
-      body: data,
-      headers: {
-        'Content-Type': 'application/octet-stream'
-      }
-    }).then(response => {
-      if (!(response.status < 401)) {
-        if (response.status === 401) {
-          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
-        }
-        return;
-      }
-      pollTranscript(meetingId, token, tab.id);
-    }, error => {
-      console.error('An error occured', error);
-    });
-  }
-}
 
 async function pollTranscript(meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
-  setTimeout(() => {
-    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}&last_msg_timestamp=${lastValidTranscriptTimestamp.toISOString()}`, {
+  setTimeout(async () => {
+    const transcriptionURL = `${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}&last_msg_timestamp=${lastValidTranscriptTimestamp.toISOString()}`;
+    messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
+    fetch(transcriptionURL, {
       method: 'GET',
     }).then(async res => {
       if (!(res.status < 401)) {

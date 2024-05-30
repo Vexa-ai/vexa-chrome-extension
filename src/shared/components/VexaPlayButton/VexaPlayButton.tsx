@@ -6,6 +6,7 @@ import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 import { useStorage } from '@plasmohq/storage/hook';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
+import { consoleDebug } from '~shared/helpers/utils.helper';
 
 export interface VexaPlayButtonProps {
   [key: string]: any;
@@ -20,6 +21,7 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
       console.debug('%c Debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
       return audioCapture.startAudioCapture(true);
     }
+    consoleDebug('Recording started');
     audioCapture.startAudioCapture();
   }
 

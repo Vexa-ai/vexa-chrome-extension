@@ -70,7 +70,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
         isSearchable={false}
         onOpen={onDropdownOpenHandler}
         onChange={handleChange}
-        // onBlur={() => {console.log('blurred'); setIsOpen(false)}}
         align="left"
         noOptionsComponent={CustomNoOption}
         optionComponent={CustomOption}

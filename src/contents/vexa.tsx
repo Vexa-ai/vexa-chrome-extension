@@ -1,5 +1,5 @@
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoRender } from "plasmo";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MainContentView, MicrophoneOptions, VexaBuildInfo, VexaToolbar } from "~shared/components";
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
 import { MessageSenderService } from "~lib/services/message-sender.service";
@@ -13,6 +13,8 @@ const Vexa = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
     const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
+    const [isDraggableDisabled, setIsDraggableDisabled] = useState(true);
+    const vexaToolbarRef = useRef(null);
     const defaultPosition = { x: 0, y: 0 };
     const [position, setPosition] = useState(defaultPosition);
 
@@ -56,13 +58,14 @@ const Vexa = () => {
                     position={position}
                     onDrag={handleDrag}
                     onStop={handleStop}
+                    disabled={isDraggableDisabled}
                 >
                     <div id="vexa-content-div" className="flex flex-col w-[400px] bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <NotificationContainer/>
-                            <VexaToolbar />
+                            <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} ref={vexaToolbarRef} />
                             {isCapturing
-                                ? <MainContentView />
+                                ? <MainContentView onMouseOut={() => setIsDraggableDisabled(true)} />
                                 : <>
                                     <MicrophoneOptions className="mt-3" />
                                     <VexaBuildInfo className="mx-auto mt-auto" />

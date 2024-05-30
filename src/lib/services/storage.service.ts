@@ -89,6 +89,7 @@ export enum StoreKeys {
     WINDOW_STATE = "WINDOW_STATE",
     RECORDER_INSTANCE = "RECORDER_INSTANCE",
     RECORDER_STREAM_INSTANCE = "RECORDER_STREAM_INSTANCE",
+    DEBUG_MESSAGE = "DEBUG_MESSAGE",
 }
 
 export interface AuthorizationData {

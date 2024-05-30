@@ -55,7 +55,6 @@ export function CustomSelect({
   }, [showMenu]);
 
   useEffect(() => {
-    console.log({keepOpen, showMenu});
     setShowMenu(keepOpen);
   }, [keepOpen]);
 
@@ -63,28 +62,9 @@ export function CustomSelect({
     setSelectedValues(initialValue ? [initialValue]: []);
   }, [initialValue]);
 
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-  //       setShowMenu(false);
-  //       onBlur?.(); //Disable blur state callback
-  //     } 
-  //     // else {
-  //     //   setShowMenu(true);
-  //     // }
-  //   }
-  //   document.addEventListener("click", handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener("click", handleClickOutside);
-  //   };
-  // }, [dropdownRef.current]);
-
   const handleInputClick = () => {
-    // if (keepOpen) {
       setShowMenu(true);
       return;
-    // }
-    // setShowMenu(!showMenu);
   };
 
   const removeOption = (option: Option) => {

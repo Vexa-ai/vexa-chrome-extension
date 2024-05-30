@@ -6,13 +6,13 @@ import { VexaLogo } from '../VexaLogo';
 import { VexaMinimizeButton } from '../VexaMinimizeButton';
 
 export interface VexaToolbarProps {
-  ref?: MutableRefObject<any>;
+  toolbarRef?: MutableRefObject<any>;
   [key: string]: any;
 }
 
-export function VexaToolbar({ ref, ...rest }: VexaToolbarProps) {
+export function VexaToolbar({ toolbarRef, ...rest }: VexaToolbarProps) {
   
-  return <div ref={ref} {...rest} className='VexaToolbar flex flex-row w-full h-9 mb-3 cursor-move'>
+  return <div ref={toolbarRef} {...rest} className='VexaToolbar flex flex-row w-full h-9 mb-3 cursor-move'>
     <VexaLogo />
     <div className='ml-auto gap-2 flex'>
       <VexaMinimizeButton />

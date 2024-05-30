@@ -24,7 +24,7 @@ const Vexa = () => {
 
     const handleStop = (e: DraggableEvent, data: DraggableData) => {
         const { clientWidth, clientHeight } = document.documentElement;
-        const { node } = data;
+        const node = document.querySelector(".VexaToolbar");
         const rect = node.getBoundingClientRect();
         if (rect.right < 0 || (rect.top > clientHeight || rect.bottom < 0) || rect.left > clientWidth) {
             setPosition(defaultPosition);
@@ -35,7 +35,7 @@ const Vexa = () => {
         const handleResize = () => {
             if (isMaximized) {
                 const { clientWidth, clientHeight } = document.documentElement;
-                const node = document.getElementById("vexa-content-div");
+                const node = document.querySelector(".VexaToolbar");
                 if (node) {
                     const rect = node.getBoundingClientRect();
                     if (rect.right < 0 || (rect.top > clientHeight || rect.bottom < 0) || rect.left > clientWidth) {
@@ -63,7 +63,7 @@ const Vexa = () => {
                     <div id="vexa-content-div" className="flex flex-col w-[400px] bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <NotificationContainer/>
-                            <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} ref={vexaToolbarRef} />
+                            <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
                             {isCapturing
                                 ? <MainContentView onMouseOut={() => setIsDraggableDisabled(true)} />
                                 : <>

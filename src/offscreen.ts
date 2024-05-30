@@ -4,12 +4,82 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
 
+export interface AudioChunkEntry {
+  chunk: string;
+  chunkType: string;
+  bufferChunkData: ArrayBuffer;
+  bufferString: string;
+  connectionId: string;
+  domain: string;
+  token: string;
+  url: string;
+  meetingId: string;
+  isDebug: boolean;
+  countIndex: number;
+  tab: chrome.tabs.Tab;
+  chunkBufferBlob: Blob;
+}
+
+const queue: AudioChunkEntry[] = [];
+let messagesCounter = 1;
+let currentChunkBeingSent: AudioChunkEntry = null;
+let queueInterval = setInterval(() => {
+  if (currentChunkBeingSent) {
+    return;
+  }
+
+  function sentNextChunk() {
+    if (queue.length === 0) {
+      return;
+    }
+
+    currentChunkBeingSent = queue.pop();
+    
+    const { chunkBufferBlob, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
+    // const chunkBuffer = base64ToArrayBuffer(base64String);
+    // const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, chunkType);
+    console.log(chunkBufferBlob);
+    if(chunkBufferBlob.size === 0) {
+      queue.pop();
+      currentChunkBeingSent = null;
+      return;
+    }
+    fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`, {
+      method: 'PUT',
+      body: chunkBufferBlob,
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      }
+    }).then((res) => {
+
+      if (!(res.status < 400)) {
+        if (res.status === 401) {
+          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+        }
+        return;
+      }
+      currentChunkBeingSent = null;
+      messagesCounter++;
+
+      setTimeout(sentNextChunk, 0);
+      pollTranscript(meetingId, token, tab.id);
+    }).catch(() => {
+      queue.unshift(currentChunkBeingSent);
+      currentChunkBeingSent = null;
+    });
+  }
+  sentNextChunk();
+}, 1000);
+
+// let transcriptionInterval = 
+
 MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
 let recorder: MediaRecorder = null;
 let streamsToClose: MediaStream[] = [];
 let lastValidTranscriptTimestamp = new Date();
 let isDebugMode = false;
+const blobChunks: AudioChunkEntry[] = [];
 
 let audioContext: AudioContext;
 
@@ -104,6 +174,26 @@ function base64ToArrayBuffer(base64) {
 }
 
 MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
+  const chunkBuffer = base64ToArrayBuffer(message.data.chunk);
+  const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, message.data.chunkType);
+  console.log(chunkBufferBlob);
+  if (isDebugMode) {
+    // Play audio
+    const audioUrl = URL.createObjectURL(chunkBufferBlob);
+    const audio = new Audio(audioUrl);
+    audio.play().then(() => {
+      sendResponse({ status: 'playing' });
+    }).catch(error => {
+      console.error('Error playing audio:', error);
+      sendResponse({ status: 'error', error });
+    });
+    return;
+  }
+
+  message.data['tab'] = sender.tab;
+  message.data['chunkBufferBlob'] = chunkBufferBlob;
+  queue.push(message.data);
+  return;
   const { chunk: base64String, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug } = message.data;
   try {
     const chunkBuffer = base64ToArrayBuffer(base64String);
@@ -135,7 +225,6 @@ function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
 
 async function sendDataChunk(data: Blob, connectionId: string, domain: string, token: string, url: string, meetingId: string, tab: chrome.tabs.Tab, countIndex: number) {
   if (data.size > 0) {
-    const timestamp = new Date();
     fetch(`${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`, {
       method: 'PUT',
       body: data,
@@ -149,15 +238,14 @@ async function sendDataChunk(data: Blob, connectionId: string, domain: string, t
         }
         return;
       }
-      pollTranscript(meetingId, token, timestamp, tab.id);
+      pollTranscript(meetingId, token, tab.id);
     }, error => {
       console.error('An error occured', error);
     });
   }
 }
 
-async function pollTranscript(meetingId: string, token: string, timestamp = new Date(), tabId: chrome.tabs.Tab['id']) {
-  timestamp.setMinutes(timestamp.getMinutes() - 1);
+async function pollTranscript(meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
   setTimeout(() => {
     fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}&last_msg_timestamp=${lastValidTranscriptTimestamp.toISOString()}`, {
       method: 'GET',

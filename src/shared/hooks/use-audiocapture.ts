@@ -132,10 +132,10 @@ export const useAudioCapture = (): AudioCapture => {
             thisRecorder.ondataavailable = async (event: BlobEvent) => {
                 try {
                     if (event.data.size > 0) {
-                        if (isDebug) {
-                            downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
-                            return;
-                        }
+                        // if (isDebug) {
+                        //     downloadFileInContent(`vexa_${Date.now()}.webm`, event.data);
+                        //     return;
+                        // }
 
                         const blob = event.data;
                         const chunk = await blobToBase64(blob);
@@ -177,7 +177,7 @@ export const useAudioCapture = (): AudioCapture => {
             if (isDebug) {
                 thisRecorder.start();
             } else {
-                thisRecorder.start(3000);
+                thisRecorder.start(5000);
             }
 
             recorderRef.current = thisRecorder;
@@ -196,6 +196,10 @@ export const useAudioCapture = (): AudioCapture => {
         }
     }
 
+    async function pipeBlobToOffscreen() {
+
+    }
+
     async function getMicDeviceIdByLabel(micLabel) {
         try {
             await navigator.mediaDevices.getUserMedia({
@@ -210,7 +214,7 @@ export const useAudioCapture = (): AudioCapture => {
         }
     }
 
-    function blobToBase64(blob) {
+    function blobToBase64(blob): Promise<string> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {

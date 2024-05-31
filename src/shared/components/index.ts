@@ -17,3 +17,4 @@ export {AssistantSuggestions} from './AssistantSuggestions';
 export {CustomSelect} from './CustomSelect';
 export {VexaMinimizeButton} from './VexaMinimizeButton';
 export {VexaBuildInfo} from './VexaBuildInfo';
+export {TranscriptionCopyButton} from './TranscriptionCopyButton';

@@ -1,18 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import './MainContentView.scss';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { TranscriptList } from '../TranscriptList';
 import { type AssistantEntryData, AssistantList } from '../AssistantList';
 import type { TranscriptionEntryData } from '../TranscriptEntry';
+import { MessageType } from '~lib/services/message-listener.service';
+import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
 
 export interface MainContentViewProps {
   [key: string]: any;
 }
 
+let transcriptList = [];
+
 export function MainContentView({ ...rest }: MainContentViewProps) {
   const [assistantList, setAssistantList] = useState<AssistantEntryData[]>([]);
-  const [transcriptList, setTranscriptList] = useState<TranscriptionEntryData[]>([]);
+
+  const copyTranscriptions = () => {
+    const mergedTranscripts = transcriptList.map(transcript => transcript.content).join('\n');
+    console.log({transcriptList, mergedTranscripts});;
+    navigator.clipboard.writeText(mergedTranscripts);
+  }
+
+  const onListUpdated = (list: TranscriptionEntryData[]) => {
+    transcriptList = list;
+  }
+
+  useEffect(() => {
+    const transcriptionCleanupFn = onMessage(MessageType.COPY_TRANSCRIPTION, () => {
+      copyTranscriptions();
+      sendMessage(MessageType.COPY_TRANSCRIPTION_SUCCESS);
+    });
+
+    return transcriptionCleanupFn;
+  }, []);
 
   return (
     <div {...rest} className='MainContentView flex flex-grow overflow-hidden h-auto'>
@@ -24,7 +46,7 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
         </TabList>
 
         <TabPanel className='w-full hidden react-tab-panel'>
-          <TranscriptList transcriptList={transcriptList} updatedTranscriptList={(list) => setTranscriptList(list)} />
+          <TranscriptList transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
         </TabPanel>
 
         <TabPanel className='w-full hidden react-tab-panel'>

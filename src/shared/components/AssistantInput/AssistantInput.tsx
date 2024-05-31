@@ -16,9 +16,9 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
   const formRef = useRef<HTMLFormElement>(null);
 
   const [suggestions, setSuggestions] = useState<string[]>([
-    'First suggestion value',
-    'Second suggested value to show',
-    'Third suggested value to display'
+    'Write key points from Competitor Analysis Report ',
+    'Summarize what was discussed',
+    'List key issues discussed',
   ]);
 
   const handlePromptSubmit = async (evt) => {

@@ -4,9 +4,12 @@ import './TranscriptList.scss';
 import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 
-export interface TranscriptListProps { }
+export interface TranscriptListProps {
+  transcriptList?: TranscriptionEntryData[];
+  updatedTranscriptList?: (transcriptList: TranscriptionEntryData[]) => void;
+}
 
-export function TranscriptList({ }: TranscriptListProps) {
+export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({transcriptList}) } }: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
   const transcriptListRef = useRef<HTMLDivElement>(null);
@@ -27,9 +30,11 @@ export function TranscriptList({ }: TranscriptListProps) {
     if (lastEntryRef.current) {
       lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+    updatedTranscriptList(transcripts);
   }, [transcripts]);
 
   useEffect(() => {
+    setTranscripts(transcriptList);
     return () => {
       MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
     }

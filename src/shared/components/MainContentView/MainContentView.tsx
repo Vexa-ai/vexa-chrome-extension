@@ -4,6 +4,7 @@ import './MainContentView.scss';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { TranscriptList } from '../TranscriptList';
 import { type AssistantEntryData, AssistantList } from '../AssistantList';
+import type { TranscriptionEntryData } from '../TranscriptEntry';
 
 export interface MainContentViewProps {
   [key: string]: any;
@@ -11,6 +12,8 @@ export interface MainContentViewProps {
 
 export function MainContentView({ ...rest }: MainContentViewProps) {
   const [assistantList, setAssistantList] = useState<AssistantEntryData[]>([]);
+  const [transcriptList, setTranscriptList] = useState<TranscriptionEntryData[]>([]);
+
   return (
     <div {...rest} className='MainContentView flex flex-grow overflow-hidden h-auto'>
       <Tabs className='text-gray-300 w-full flex flex-col flex-1'>
@@ -21,7 +24,7 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
         </TabList>
 
         <TabPanel className='w-full hidden react-tab-panel'>
-          <TranscriptList />
+          <TranscriptList transcriptList={transcriptList} updatedTranscriptList={(list) => setTranscriptList(list)} />
         </TabPanel>
 
         <TabPanel className='w-full hidden react-tab-panel'>

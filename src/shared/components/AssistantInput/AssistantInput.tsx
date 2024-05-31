@@ -28,7 +28,7 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
     }
     const promptText = promptInputRef.current.value;
     const canClearField = await onEnter(promptText);
-    if (canClearField) {
+    if (canClearField && promptInputRef.current) {
       promptInputRef.current.value = '';
     }
   };

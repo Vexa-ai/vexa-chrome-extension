@@ -8,6 +8,6 @@ export interface VexaBuildInfoProps {
 
 export function VexaBuildInfo({className = ''}: VexaBuildInfoProps) {
   return <div className={`VexaBuildInfo text-gray-400 font-semibold text-center items-center flex ${className}`}>
-    5.02
+    5.03
   </div>;
 }

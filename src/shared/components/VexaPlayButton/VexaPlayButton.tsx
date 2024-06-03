@@ -21,6 +21,10 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
       console.debug('%c Debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
       return audioCapture.startAudioCapture(true);
     }
+    if (evt.ctrlKey && evt.altKey) {
+      console.debug('%c Video debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
+      return audioCapture.startAudioCapture(false, true);
+    }
     consoleDebug('Recording started');
     audioCapture.startAudioCapture();
   }

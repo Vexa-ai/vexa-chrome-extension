@@ -43,7 +43,6 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 async function getConnectionId() {
     const uuid = String(self.crypto.randomUUID());
     await chrome.storage.local.set({ _dl_connection_id: uuid, _dl_connection_session: 0 });
-
     return uuid;
 }
 
@@ -71,11 +70,11 @@ const extensionInstallHandler = async () => {
     console.log('Extension install complete');
 };
 
-const pipeOffscreenToTab = (evtData) => {
-    const tab: chrome.tabs.Tab = evtData.tab;
-    delete evtData.tab;
-    messageSender.sendTabMessage(tab, evtData);
-}
+// const pipeOffscreenToTab = (evtData) => {
+//     const tab: chrome.tabs.Tab = evtData.tab;
+//     delete evtData.tab;
+//     messageSender.sendTabMessage(tab, evtData);
+// }
 
 const resetRecordingState = () => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
@@ -83,9 +82,9 @@ const resetRecordingState = () => {
     StorageService.set(StoreKeys.RECORD_START_TIME, 0);
 }
 
-MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TO_TAB_MESSAGE, pipeOffscreenToTab);
+// MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TO_TAB_MESSAGE, pipeOffscreenToTab);
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
-MessageListenerService.registerMessageListener(MessageType.GET_MY_TAB, async (message, sender, sendResponse) => sendResponse({ tab: sender.tab }));
+// MessageListenerService.registerMessageListener(MessageType.GET_MY_TAB, async (message, sender, sendResponse) => sendResponse({ tab: sender.tab }));
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
 MessageListenerService.registerMessageListener(MessageType.ON_APP_OPEN, () => {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
@@ -94,9 +93,10 @@ MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
     chrome.tabs.query({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL }, async (tabs) => {
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
             __vexa_token: "",
-            __vexa_domain: ""
+            __vexa_main_domain: "",
+            __vexa_chrome_domain: "",
         });
-        if (authData.__vexa_domain && authData.__vexa_token) {
+        if (authData.__vexa_main_domain && authData.__vexa_token) {
             tabs.forEach(tab => {
                 chrome.tabs.remove(tab.id);
             });
@@ -106,8 +106,8 @@ MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
 });
 MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTION_RESULT, async (message) => {
     const { tabId, transcripts } = message.data;
-    const tabs = await chrome.tabs.query({ active: true });
-    const targetTab = tabs.find(tab => tabId === tabId);
+    const tabs = await chrome.tabs.query({});
+    const targetTab = tabs.find(tab => tab.id === tabId);
     if (targetTab) {
         messageSender.sendTabMessage(targetTab, {
             type: MessageType.TRANSCRIPTION_RESULT,
@@ -116,6 +116,7 @@ MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTI
                 tabId,
             },
         });
+        // return true;
     }
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message, sender) => {
@@ -133,7 +134,7 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (me
 
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
     const { level, pointer, tab } = message.data;
-    messageSender.sendTabMessage(tab, { type: MessageType.MICROPHONE_LEVEL_STATUS, data:  { level, pointer }})
+    messageSender.sendTabMessage(tab, { type: MessageType.MICROPHONE_LEVEL_STATUS, data: { level, pointer } })
 });
 
 MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESSAGE, async (evt) => {
@@ -143,10 +144,11 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
-        __vexa_domain: ""
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
     });
     const { prompt } = message.data;
-    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/assistant/copilot?token=${authData.__vexa_token}`, {
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/copilot?token=${authData.__vexa_token}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -185,7 +187,8 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
         }, async (streamId) => {
             const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
                 __vexa_token: "",
-                __vexa_domain: ""
+                __vexa_main_domain: "",
+                __vexa_chrome_domain: "",
             });
             try {
                 if (chrome.runtime.lastError) {
@@ -204,9 +207,9 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     micLabel: message.data.micLabel,
                     streamId,
                     connectionId: await getConnectionId(),
-                    domain: process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL,
+                    domain: authData.__vexa_chrome_domain,
                     token: authData.__vexa_token,
-                    url: authData.__vexa_domain,
+                    url: authData.__vexa_main_domain,
                     tabId: tab.id,
                     meetingId: sender.tab.url,
                 }
@@ -220,10 +223,11 @@ chrome.runtime.onInstalled.addListener(async () => {
         await messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
             __vexa_token: "",
-            __vexa_domain: ""
+            __vexa_main_domain: "",
+            __vexa_chrome_domain: "",
         });
         await StorageService.clear();
-        if (authData.__vexa_domain && authData.__vexa_token) {
+        if (authData.__vexa_main_domain && authData.__vexa_chrome_domain && authData.__vexa_token) {
             await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
         }
         chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });

@@ -50,6 +50,7 @@ export class MessageListenerService {
                     if(typeof registeredListeners?.[key]?.handler === 'function') {
                         registeredListeners[key].handler(request, sender, sendResponse); // TODO: Add optional sendresponse handling
                     }
+                    // return true;
                 }
             }
         });
@@ -87,8 +88,8 @@ export enum MessageType {
     ASSISTANT_PROMPT_RESULT = "ASSISTANT_PROMPT_RESULT",
     AUTH_SAVED = "AUTH_SAVED",
     USER_UNAUTHORIZED = "USER_UNAUTHORIZED",
-    OFFSCREEN_TO_TAB_MESSAGE = "OFFSCREEN_TO_TAB_MESSAGE",
-    GET_MY_TAB = "GET_MY_TAB",
+    // OFFSCREEN_TO_TAB_MESSAGE = "OFFSCREEN_TO_TAB_MESSAGE",
+    // GET_MY_TAB = "GET_MY_TAB",
     OFFSCREEN_TRANSCRIPTION_RESULT = "OFFSCREEN_TRANSCRIPTION_RESULT",
     ON_MEDIA_CHUNK_RECEIVED = "ON_MEDIA_CHUNK_RECEIVED",
     DEBUG_MESSAGE = "DEBUG_MESSAGE",

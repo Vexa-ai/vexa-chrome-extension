@@ -5,11 +5,12 @@ import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 
 export interface TranscriptListProps {
+  className?: string;
   transcriptList?: TranscriptionEntryData[];
   updatedTranscriptList?: (transcriptList: TranscriptionEntryData[]) => void;
 }
 
-export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({transcriptList}) } }: TranscriptListProps) {
+export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({transcriptList}) }, className = '' }: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
   const transcriptListRef = useRef<HTMLDivElement>(null);
@@ -41,7 +42,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
   }, []);
 
   return (
-    <div ref={transcriptListRef} className='TranscriptList flex flex-col max-h-full w-full overflow-hidden'>
+    <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
       <div className="flex-grow overflow-y-auto">
         {transcripts.map((transcript, index) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>

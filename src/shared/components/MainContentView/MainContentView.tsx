@@ -12,19 +12,22 @@ export interface MainContentViewProps {
   [key: string]: any;
 }
 
-let transcriptList = [];
+let transcriptList: TranscriptionEntryData[] = [];
 
 export function MainContentView({ ...rest }: MainContentViewProps) {
   const [assistantList, setAssistantList] = useState<AssistantEntryData[]>([]);
+  const [hasTranscripts, setHasTranscripts] = useState(false);
 
   const copyTranscriptions = () => {
-    const mergedTranscripts = transcriptList.map(transcript => transcript.content).join('\n');
-    console.log({transcriptList, mergedTranscripts});;
+    const mergedTranscripts = transcriptList.map(transcript => {
+      return `${transcript.speaker}: ${transcript.content}`;
+    }).join('\n');
     navigator.clipboard.writeText(mergedTranscripts);
   }
 
   const onListUpdated = (list: TranscriptionEntryData[]) => {
     transcriptList = list;
+    setHasTranscripts(!!transcriptList.length);
   }
 
   const onTabChanged = (activeTabIndex: number) => {
@@ -50,10 +53,10 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
         </TabList>
 
         <TabPanel className='w-full hidden react-tab-panel'>
-          <TranscriptList transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
+          <TranscriptList className={hasTranscripts ? '' : `mt-[50px]`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
         </TabPanel>
 
-        <TabPanel className='w-full hidden react-tab-panel'>
+        <TabPanel className={`w-full hidden react-tab-panel`}>
           Notes here
         </TabPanel>
 

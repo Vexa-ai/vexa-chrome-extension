@@ -10,36 +10,41 @@ export class MessageSenderService {
      */
     async sendTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any }) {
         try {
-            const response = await chrome.tabs.sendMessage(tab.id, payload);
-            return response;
-        } catch (e) {}
+            chrome.tabs.sendMessage(tab.id, payload);
+        } catch (error) {
+            console.error(error);
+        }
 
     }
 
     // Sends message to popup or background page
     async sendOffscreenToTabMessage(tab: chrome.tabs.Tab, payload: { type: MessageType, data?: any }) {
         try {
-            const response = await chrome.runtime.sendMessage({ target: 'background', ...payload, tab });
-            return response;
-        } catch (error) {}
+            chrome.runtime.sendMessage({ target: 'background', ...payload, tab });
+        } catch (error) {
+            console.error(error);
+        }
 
     }
 
     // Sends message to popup or background page
     async sendBackgroundMessage(payload: { type: MessageType, data?: any }) {
         try {
-            const response = await chrome.runtime.sendMessage({ target: 'background', ...payload });
-            return response;
-        } catch (error) {}
+            chrome.runtime.sendMessage({ target: 'background', ...payload });
+        } catch (error) {
+            console.error(error);
+        }
 
     }
 
     // Sends message to offscreen page
     async sendOffscreenMessage(payload: { type: MessageType, data?: any }) {
         try {
-            const response = await chrome.runtime.sendMessage({ target: 'offscreen', ...payload });
-            return response;
-        } catch (error) {}
+            chrome.runtime.sendMessage({ target: 'offscreen', ...payload });
+        
+        } catch (error) {
+            console.error(error);
+        }
 
     }
 
@@ -55,9 +60,10 @@ export class MessageSenderService {
      */
     async sendSidebarMessage(payload: { type: MessageType, data?: any }) {
         try {
-            const response = await chrome.runtime.sendMessage({ target: 'sidebar', ...payload });
-            return response;
-        } catch (error) {}
+            chrome.runtime.sendMessage({ target: 'sidebar', ...payload });
+        } catch (error) {
+            console.error(error);
+        }
 
     }
 

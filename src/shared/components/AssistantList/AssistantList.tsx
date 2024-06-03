@@ -22,11 +22,12 @@ export interface AssistantMessageUnit {
 }
 
 export interface AssistantListProps {
+  className?: string;
   assistantList?: AssistantEntryData[];
   updatedAssistantList?: (assistantList: AssistantEntryData[]) => void;
 }
 
-export function AssistantList({ assistantList = [], updatedAssistantList = (assistantList) => { console.log({assistantList}) } }: AssistantListProps) {
+export function AssistantList({ assistantList = [], className = '', updatedAssistantList = (assistantList) => { console.log({assistantList}) } }: AssistantListProps) {
 
   const [responses, setResponses] = useState<AssistantEntryData[]>([]);
   const [clearField, setClearField] = useState<boolean>(false);
@@ -77,7 +78,7 @@ export function AssistantList({ assistantList = [], updatedAssistantList = (assi
     }
   }, [])
 
-  return <div ref={assistantListRef} className='AssistantList flex flex-col mb-[120px] max-h-full w-full overflow-hidden'>
+  return <div ref={assistantListRef} className={`AssistantList flex flex-col mb-[120px] max-h-full w-full overflow-hidden ${className}`}>
     {responses.length ? <div className="flex-grow overflow-y-auto">
       {responses.map((entry, index) => (
         <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>

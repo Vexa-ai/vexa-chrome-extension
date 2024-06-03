@@ -94,5 +94,6 @@ export enum StoreKeys {
 
 export interface AuthorizationData {
     __vexa_token: string;
-    __vexa_domain: string;
+    __vexa_main_domain: string;
+    __vexa_chrome_domain: string;
   }

@@ -25,7 +25,7 @@ export interface AudioCapture {
     isCapturing: boolean;
     state: typeof initialState;
     selectedAudioInput?: MediaDeviceInfo;
-    startAudioCapture: (isDebug?: boolean) => void;
+    startAudioCapture: (isDebug?: boolean, isVideoDebug?: boolean) => void;
     stopAudioCapture: () => void;
     captureTime: number;
     pauseAudioCapture: () => void;
@@ -75,14 +75,14 @@ export const useAudioCapture = (): AudioCapture => {
         return uuid;
     }
 
-    const startAudioCapture = async (isDebug = false) => {
+    const startAudioCapture = async (isDebug = false, isVideoDebug = false) => {
         const connectionId = await getConnectionId();
-        const domain = process.env.PLASMO_PUBLIC_CHROME_AWAY_BASE_URL;
+        const domain = authData.__vexa_chrome_domain;
         const token = authData.__vexa_token;
-        const url = authData.__vexa_domain;
+        const url = authData.__vexa_main_domain;
         const meetingId = getIdFromUrl(location.href);
 
-        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url, isDebug);
+        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url, isDebug, isVideoDebug);
         globalMediaRecorder = recorderRef.current;
         consoleDebug('Recording started');
     };
@@ -99,7 +99,6 @@ export const useAudioCapture = (): AudioCapture => {
 
     const requestMicrophones = async () => {
         await requestMicrophonesInContent();
-        messageSender.sendOffscreenMessage({ type: MessageType.REQUEST_MEDIA_DEVICES });
     };
 
     const stopAudioCapture = () => {
@@ -124,10 +123,10 @@ export const useAudioCapture = (): AudioCapture => {
         return devices;
     };
 
-    async function startRecording(micLabel, connectionId, meetingId, token, domain, url, isDebug = false) {
+    async function startRecording(micLabel, connectionId, meetingId, token, domain, url, isDebug = false, isVideoDebug = false) {
         try {
             const deviceId = await getMicDeviceIdByLabel(micLabel);
-            const combinedStream = await getCombinedStream(deviceId); // new MediaStream();
+            const combinedStream = await getCombinedStream(deviceId, isVideoDebug);
             const thisRecorder = new MediaRecorder(combinedStream);
             let countIndex = 0;
 
@@ -247,15 +246,21 @@ export const useAudioCapture = (): AudioCapture => {
                 });
                 messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } });
             }
-            return true;
+            // return true;
         } catch (e) {
             messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } });
         }
-        return false;
+        // return false;
     }
 
-    const getCombinedStream = async (deviceId) => {
-        const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false }, preferCurrentTab: true } as any);
+    const getCombinedStream = async (deviceId, isVideoDebug = false) => {
+        let videoOptions = true;
+
+        if (isVideoDebug) {
+            videoOptions = JSON.parse(prompt("Video options", '{ "width": 1280, "height": 720, "frameRate": 5 }'));
+            console.log({videoOptions});
+        }
+        const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: videoOptions, audio: { echoCancellation: false }, preferCurrentTab: true } as any);
         const microphoneStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
         });

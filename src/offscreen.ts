@@ -102,9 +102,6 @@ async function getMicDeviceIdByLabel(micLabel, tab?) {
 let micCheckStopper = () => {
 };
 
-MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES, async (evtData, sender, sendResponse) => {
-
-});
 
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
   try {
@@ -137,7 +134,7 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
     }, 150);
 
     micCheckStopper = async () => {
-      if (audioContext) {
+      if (audioContext && audioContext.state !== 'closed') {
         await audioContext.close(); // Close any existing audio context
       }
       microphone.disconnect();

@@ -14,6 +14,7 @@
     "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.10.0",
     "@types/audioworklet": "^0.0.55",
+    "markdown-to-jsx": "^7.4.7",
     "plasmo": "0.86.1",
     "react": "18.2.0",
     "react-countup": "^6.5.3",

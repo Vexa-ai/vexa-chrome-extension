@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Select, { type SelectItemRenderer, type SelectRenderer } from "react-dropdown-select";
 import microphoneOffIcon from "data-base64:~assets/images/svg/microphone-off-02.svg";
 import microphoneIcon from "data-base64:~assets/images/svg/microphone-02.svg";
 import checkIcon from "data-base64:~assets/images/svg/check.svg";

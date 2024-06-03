@@ -3,6 +3,7 @@ import React from 'react';
 import './AssistantEntry.scss';
 import type { AssistantMessageUnit } from '../AssistantList';
 import { CopyButton } from '../CopyButton';
+import Markdown from 'markdown-to-jsx';
 
 export interface AssistantEntryProps {
   entryData: AssistantMessageUnit;
@@ -23,7 +24,7 @@ export function AssistantEntry({ entryData }: AssistantEntryProps) {
             <p className='flex gap-2 mb-1 break-words'>
               <span className="font-semibold text-white">{entryData.role}</span>
             </p>
-            <p className='break-words'>{entryData.text}</p>
+            <Markdown>{entryData.text}</Markdown>
             <span className='absolute right-[16px] top-[16px] group-hover:block hidden ease-in-out'><CopyButton onClick={copyText} /></span>
           </div>
 

@@ -75,7 +75,8 @@ MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
 let recorder: MediaRecorder = null;
 let streamsToClose: MediaStream[] = [];
-let lastValidTranscriptTimestamp = new Date();
+let lastValidTranscriptTimestamp = null;
+let lastMeetingId = '';
 let isDebugMode = false;
 const blobChunks: AudioChunkEntry[] = [];
 
@@ -197,8 +198,12 @@ function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
 
 
 async function pollTranscript(meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
+  if(meetingId !== lastMeetingId) {
+    lastMeetingId = meetingId;
+    lastValidTranscriptTimestamp = null;
+  }
   setTimeout(async () => {
-    const transcriptionURL = `${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}&last_msg_timestamp=${lastValidTranscriptTimestamp.toISOString()}`;
+    const transcriptionURL = `${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
     messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
     fetch(transcriptionURL, {
       method: 'GET',
@@ -212,9 +217,9 @@ async function pollTranscript(meetingId: string, token: string, tabId: chrome.ta
       const transcripts = await res.json();
       console.log({ transcripts });
       if (transcripts && transcripts.length) {
-        const dateBackBy1Minute = new Date(transcripts[transcripts.length - 1].timestamp);
-        dateBackBy1Minute.setMinutes(dateBackBy1Minute.getMinutes() - 5);
-        lastValidTranscriptTimestamp = dateBackBy1Minute;
+        const dateBackBy5Minute = new Date(transcripts[transcripts.length - 1].timestamp);
+        dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
+        lastValidTranscriptTimestamp = dateBackBy5Minute;
       }
       messageSender.sendBackgroundMessage({
         type: MessageType.OFFSCREEN_TRANSCRIPTION_RESULT,

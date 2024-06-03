@@ -17,18 +17,22 @@ export interface TranscriptionEntryData {
 
 // Function to format the timestamp
 function formatDateString(timestamp: string): string {
-  if(!timestamp) {
+  if (!timestamp) {
     return '';
   }
+  
   const date = new Date(timestamp);
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
-  const seconds = date.getUTCSeconds();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const seconds = date.getSeconds();
 
+  const formattedHours = String(hours).padStart(2, '0');
   const formattedMinutes = String(minutes).padStart(2, '0');
   const formattedSeconds = String(seconds).padStart(2, '0');
-  return `${hours}:${formattedMinutes}:${formattedSeconds}`;
+
+  return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 }
+
 
 export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryProps) {
   const formattedTimestamp = formatDateString(timestamp);
@@ -44,7 +48,7 @@ export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryPro
         <p className='flex gap-2 mb-1 break-words items-center'>
           <span className="font-semibold text-white">{speaker}</span><span className='items-center text-xs'>{formattedTimestamp}</span>
         </p>
-        <p>{text}</p>
+        <p className='break-words'>{text}</p>
       </div>
     </div>
   );

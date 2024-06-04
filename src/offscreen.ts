@@ -61,10 +61,11 @@ let queueInterval = setInterval(() => {
       currentChunkBeingSent = null;
       messagesCounter++;
 
-      setTimeout(sentNextChunk, 0);
+      setTimeout(sentNextChunk, 200);
       pollTranscript(main_domain, meetingId, token, tab.id);
     }).catch(() => {
       queue.unshift(currentChunkBeingSent);
+      queue.sort((a, b) => a.countIndex - b.countIndex).reverse();
       currentChunkBeingSent = null;
     });
   }
@@ -189,6 +190,8 @@ MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIV
   message.data['tab'] = sender.tab;
   message.data['chunkBufferBlob'] = chunkBufferBlob;
   queue.push(message.data);
+  queue.sort((a, b) => a.countIndex - b.countIndex).reverse();
+  console.log(queue.map(el => el.countIndex));
 });
 
 function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {

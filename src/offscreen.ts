@@ -33,12 +33,11 @@ let queueInterval = setInterval(() => {
       return;
     }
 
-    currentChunkBeingSent = queue.pop();
+    currentChunkBeingSent = queue.shift();
 
     if(!currentChunkBeingSent) return;
     const { chunkBufferBlob, chunkType, connectionId, chrome_domain, token, main_domain, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
     if (chunkBufferBlob.size === 0) {
-      queue.pop();
       currentChunkBeingSent = null;
       return;
     }
@@ -65,14 +64,11 @@ let queueInterval = setInterval(() => {
       pollTranscript(main_domain, meetingId, token, tab.id);
     }).catch(() => {
       queue.unshift(currentChunkBeingSent);
-      queue.sort((a, b) => a.countIndex - b.countIndex).reverse();
       currentChunkBeingSent = null;
     });
   }
   sentNextChunk();
 }, 1000);
-
-// let transcriptionInterval = 
 
 MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
@@ -190,7 +186,6 @@ MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIV
   message.data['tab'] = sender.tab;
   message.data['chunkBufferBlob'] = chunkBufferBlob;
   queue.push(message.data);
-  queue.sort((a, b) => a.countIndex - b.countIndex).reverse();
   console.log(queue.map(el => el.countIndex));
 });
 

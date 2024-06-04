@@ -17,16 +17,18 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   const [microphones, setMicrophones] = useState<Array<MediaDeviceInfo & Option>>([]);
   const audioCapture = useAudioCapture();
 
-  const onMicrophoneSelected = async (value: MediaDeviceInfo) => {
-    audioCapture.setSelectedAudioInputDevice(value);
-  };
-
   useEffect(() => {
     const microphoneWithLabels = audioCapture.state.availableAudioInputs?.map(device => {
       return { ...device, label: device.label, value: device.deviceId }
     });
     setMicrophones(microphoneWithLabels);
   }, [audioCapture.availableAudioInputs]);
+
+  useEffect(() => {
+    if (selectedMicrophone) {
+      audioCapture.setSelectedAudioInputDevice(selectedMicrophone);
+    }
+  }, [microphones]);
 
   const onDropdownOpenHandler = () => {
     setIsOpen(true);
@@ -37,7 +39,6 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
     const selectedMic = microphones.find(microphone => microphone.value === option[0].value);
     if (selectedMic) {
       audioCapture.setSelectedAudioInputDevice(selectedMic);
-      onMicrophoneSelected(selectedMic);
       setSelectedMicrophone(selectedMic);
       setIsOpen(false);
     }

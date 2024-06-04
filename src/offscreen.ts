@@ -9,7 +9,8 @@ export interface AudioChunkEntry {
   bufferChunkData: ArrayBuffer;
   bufferString: string;
   connectionId: string;
-  domain: string;
+  chrome_domain: string;
+  main_domain: string;
   token: string;
   url: string;
   meetingId: string;
@@ -34,13 +35,14 @@ let queueInterval = setInterval(() => {
 
     currentChunkBeingSent = queue.pop();
 
-    const { chunkBufferBlob, chunkType, connectionId, domain, token, url, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
+    if(!currentChunkBeingSent) return;
+    const { chunkBufferBlob, chunkType, connectionId, chrome_domain, token, main_domain, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
     if (chunkBufferBlob.size === 0) {
       queue.pop();
       currentChunkBeingSent = null;
       return;
     }
-    const audioURL = `${domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`;
+    const audioURL = `${chrome_domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`;
     messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: audioURL, destinationTabId: tab.id } });
     fetch(audioURL, {
       method: 'PUT',
@@ -60,7 +62,7 @@ let queueInterval = setInterval(() => {
       messagesCounter++;
 
       setTimeout(sentNextChunk, 0);
-      pollTranscript(meetingId, token, tab.id);
+      pollTranscript(main_domain, meetingId, token, tab.id);
     }).catch(() => {
       queue.unshift(currentChunkBeingSent);
       currentChunkBeingSent = null;
@@ -194,13 +196,13 @@ function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
 }
 
 
-async function pollTranscript(meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
+async function pollTranscript(main_domain: string, meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
   if(meetingId !== lastMeetingId) {
     lastMeetingId = meetingId;
     lastValidTranscriptTimestamp = null;
   }
   setTimeout(async () => {
-    const transcriptionURL = `${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
+    const transcriptionURL = `${main_domain}/api/v1/transcription?meeting_id=${meetingId}&token=${token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
     messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
     fetch(transcriptionURL, {
       method: 'GET',

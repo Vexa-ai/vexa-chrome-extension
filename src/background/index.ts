@@ -207,9 +207,9 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                     micLabel: message.data.micLabel,
                     streamId,
                     connectionId: await getConnectionId(),
-                    domain: authData.__vexa_chrome_domain,
+                    chrome_domain: authData.__vexa_chrome_domain,
                     token: authData.__vexa_token,
-                    url: authData.__vexa_main_domain,
+                    main_domain: authData.__vexa_main_domain,
                     tabId: tab.id,
                     meetingId: sender.tab.url,
                 }

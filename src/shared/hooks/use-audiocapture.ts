@@ -77,12 +77,12 @@ export const useAudioCapture = (): AudioCapture => {
 
     const startAudioCapture = async (isDebug = false, isVideoDebug = false) => {
         const connectionId = await getConnectionId();
-        const domain = authData.__vexa_chrome_domain;
+        const chrome_domain = authData.__vexa_chrome_domain;
         const token = authData.__vexa_token;
-        const url = authData.__vexa_main_domain;
+        const main_domain = authData.__vexa_main_domain;
         const meetingId = getIdFromUrl(location.href);
 
-        startRecording(selectedMicrophone.label, connectionId, meetingId, token, domain, url, isDebug, isVideoDebug);
+        startRecording(selectedMicrophone.label, connectionId, meetingId, token, chrome_domain, main_domain, isDebug, isVideoDebug);
         globalMediaRecorder = recorderRef.current;
         consoleDebug('Recording started');
     };
@@ -123,7 +123,7 @@ export const useAudioCapture = (): AudioCapture => {
         return devices;
     };
 
-    async function startRecording(micLabel, connectionId, meetingId, token, domain, url, isDebug = false, isVideoDebug = false) {
+    async function startRecording(micLabel, connectionId, meetingId, token, chrome_domain, main_domain, isDebug = false, isVideoDebug = false) {
         try {
             const deviceId = await getMicDeviceIdByLabel(micLabel);
             const combinedStream = await getCombinedStream(deviceId, isVideoDebug);
@@ -152,9 +152,9 @@ export const useAudioCapture = (): AudioCapture => {
                                 bufferChunkData,
                                 bufferString,
                                 connectionId,
-                                domain,
+                                chrome_domain,
                                 token,
-                                url,
+                                main_domain,
                                 meetingId,
                                 isDebug,
                                 countIndex: countIndex++,

@@ -13,7 +13,7 @@ export function AssistantEntry({ entryData }: AssistantEntryProps) {
 
   const copyText = () => {
     navigator.clipboard.writeText(entryData.text);
-  }
+  };
 
 
   return (

@@ -70,25 +70,14 @@ const extensionInstallHandler = async () => {
     console.log('Extension install complete');
 };
 
-// const pipeOffscreenToTab = (evtData) => {
-//     const tab: chrome.tabs.Tab = evtData.tab;
-//     delete evtData.tab;
-//     messageSender.sendTabMessage(tab, evtData);
-// }
-
 const resetRecordingState = () => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
     StorageService.set(StoreKeys.CAPTURING_STATE, false);
     StorageService.set(StoreKeys.RECORD_START_TIME, 0);
 }
 
-// MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TO_TAB_MESSAGE, pipeOffscreenToTab);
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
-// MessageListenerService.registerMessageListener(MessageType.GET_MY_TAB, async (message, sender, sendResponse) => sendResponse({ tab: sender.tab }));
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
-MessageListenerService.registerMessageListener(MessageType.ON_APP_OPEN, () => {
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
-});
 MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
     chrome.tabs.query({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL }, async (tabs) => {
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
@@ -116,7 +105,6 @@ MessageListenerService.registerMessageListener(MessageType.OFFSCREEN_TRANSCRIPTI
                 tabId,
             },
         });
-        // return true;
     }
 });
 MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED, (message, sender) => {

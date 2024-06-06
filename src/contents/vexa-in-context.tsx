@@ -13,26 +13,21 @@ import Vexa from "./vexa";
 import { getPlatform, isRecordablePlatform } from "~shared/helpers/is-recordable-platform.helper";
 
 const VexaInMeetContext = () => {
-  // const isValidContext = isRecordablePlatform();
-  const platform =  getPlatform();
+  const platform = getPlatform();
   return (
-    <>
-      {/* {isValidContext && ( */}
-      {(
-        <div id="vexa-content-ui" className={platform} style={{
-          position: 'fixed',
-          zIndex: 99999999
-        }}>
-          <Vexa />
-        </div>
-      )}
-    </>
+    <div id="vexa-content-ui" className={platform} style={{
+      position: 'fixed',
+      zIndex: 99999999
+    }}>
+      <Vexa />
+    </div>
   );
 };
 
 export default () => <></>;
 
-const injectUI = () => {
+const injectUI = async () => {
+  await new Promise(resolve => setTimeout(resolve, 500));
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);

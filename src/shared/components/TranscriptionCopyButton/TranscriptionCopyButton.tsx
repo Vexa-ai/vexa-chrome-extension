@@ -11,6 +11,7 @@ export interface TranscriptionCopyButtonProps {}
 export function TranscriptionCopyButton({ }: TranscriptionCopyButtonProps) {
   const [isCapturingStore] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
+  const [hasRecordingHistory, setHasRecordingHistory] = useState(false);
 
   const copyTranscription = () => {
     sendMessage(MessageType.COPY_TRANSCRIPTION);
@@ -20,13 +21,19 @@ export function TranscriptionCopyButton({ }: TranscriptionCopyButtonProps) {
     const tabChangeCleanup = onMessage<{activeTabIndex: number}>(MessageType.TAB_CHANGED, data => {
       setActiveTabIndex(data.activeTabIndex);
     });
+    const hasRecordingHistoryCleanup = onMessage<{hasRecordingHistory: boolean}>(MessageType.HAS_RECORDING_HISTORY, data => {
+      setHasRecordingHistory(data.hasRecordingHistory);
+    });
   
-    return tabChangeCleanup;
-  }, [])
+    return () => {
+      tabChangeCleanup();
+      hasRecordingHistoryCleanup();
+    }
+  }, []);
 
   return (
     <>
-      {(isCapturingStore && activeTabIndex === 0) && <div className='TranscriptionCopyButton'>
+      {((isCapturingStore || hasRecordingHistory) && activeTabIndex === 0) && <div className='TranscriptionCopyButton'>
         <CopyButton onClick={copyTranscription} />
       </div>}
     </>

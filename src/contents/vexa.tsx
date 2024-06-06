@@ -6,6 +6,8 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
 import Draggable, { type DraggableData, type DraggableEvent } from "react-draggable";
 import {NotificationContainer, NotificationManager} from 'react-notifications';
+import { sendMessage } from "~shared/helpers/in-content-messaging.helper";
+import { MessageType } from "~lib/services/message-listener.service";
 
 const messageSender = new MessageSenderService();
 
@@ -35,8 +37,9 @@ const Vexa = () => {
     useEffect(() => {
       if (isCapturing) {
         setHasRecorded(true);
+        sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory: true });
       }
-    }, [isCapturing])
+    }, [isCapturing]);
     
 
     useEffect(() => {

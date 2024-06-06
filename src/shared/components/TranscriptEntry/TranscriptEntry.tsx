@@ -20,7 +20,7 @@ function formatDateString(timestamp: string): string {
   if (!timestamp) {
     return '';
   }
-  
+
   const date = new Date(timestamp);
   const hours = date.getHours();
   const minutes = date.getMinutes();
@@ -44,11 +44,15 @@ export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryPro
   return (
     <div className='TranscriptEntry my-2'>
       <div className="flex flex-col p-3 text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] relative group">
-        <span className='absolute right-[16px] top-[16px] group-hover:block hidden ease-in-out'><CopyButton onClick={copyTranscript} /></span>
+        <span className="sticky top-2 z-10 group-hover:block hidden">
+          <span className='absolute top-0 right-0'>
+            <CopyButton onClick={copyTranscript} />
+          </span>
+        </span>
         <p className='flex gap-2 mb-1 break-words items-center'>
           <span className="font-semibold text-white">{speaker}</span><span className='items-center text-xs'>{formattedTimestamp}</span>
         </p>
-        <p className='break-words'>{text}</p>
+        <p className='break-words select-text'>{text}</p>
       </div>
     </div>
   );

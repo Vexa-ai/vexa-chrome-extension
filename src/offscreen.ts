@@ -35,7 +35,7 @@ let queueInterval = setInterval(() => {
 
     currentChunkBeingSent = queue.shift();
 
-    if(!currentChunkBeingSent) return;
+    if (!currentChunkBeingSent) return;
     const { chunkBufferBlob, chunkType, connectionId, chrome_domain, token, main_domain, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
     if (chunkBufferBlob.size === 0) {
       currentChunkBeingSent = null;
@@ -113,19 +113,29 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
     });
 
     audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH); // Load the audio worklet processor
+    await audioContext.resume();
+    await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH);
     const microphone = audioContext.createMediaStreamSource(stream);
-    const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
-    microphone.connect(volumeProcessorNode).connect(audioContext.destination);
+    // DOMException: Failed to construct 'AudioWorkletNode': AudioWorkletNode cannot be created: No execution context available.
+    let volumeProcessorNode: AudioWorkletNode;
+    try {
+      volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
+      microphone.connect(volumeProcessorNode).connect(audioContext.destination);
+    } catch (error) {
+
+    }
 
     const micLevelAccumulator = new Array(100);
     let pointer = 0;
     const ACC_CAPACITY = 50;
-    volumeProcessorNode.port.onmessage = (event) => {
-      // pointer = (pointer + 1) % 100;
-      micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
-      pointer++;
-    };
+
+    if (volumeProcessorNode) {
+      volumeProcessorNode.port.onmessage = (event) => {
+        micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
+        pointer++;
+      };
+    }
+
 
     const _interval = setInterval(() => {
       const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
@@ -134,10 +144,13 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
 
     micCheckStopper = async () => {
       if (audioContext && audioContext.state !== 'closed') {
-        await audioContext.close(); // Close any existing audio context
+        await audioContext.close();
       }
       microphone.disconnect();
-      volumeProcessorNode.disconnect();
+      if (volumeProcessorNode) {
+        volumeProcessorNode.disconnect();
+      }
+
       clearInterval(_interval);
     };
   } catch (err) {
@@ -195,7 +208,7 @@ function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
 
 
 async function pollTranscript(main_domain: string, meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
-  if(meetingId !== lastMeetingId) {
+  if (meetingId !== lastMeetingId) {
     lastMeetingId = meetingId;
     lastValidTranscriptTimestamp = null;
   }

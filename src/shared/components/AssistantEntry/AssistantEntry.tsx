@@ -19,13 +19,19 @@ export function AssistantEntry({ entryData }: AssistantEntryProps) {
   return (
     <div className='AssistantEntry my-3'>
       {entryData ? (
-        <div className="flex flex-col text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] group">
+        <div className="flex flex-col text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] relative group">
           <div className="relative p-3">
+            <span className="sticky top-2 z-10 group-hover:block hidden">
+              <span className='absolute top-0 right-0'>
+                <CopyButton onClick={copyText} />
+              </span>
+            </span>
             <p className='flex gap-2 mb-1 break-words'>
               <span className="font-semibold text-white">{entryData.role}</span>
             </p>
             <Markdown>{entryData.text}</Markdown>
-            <span className='absolute right-[16px] top-[16px] group-hover:block hidden ease-in-out'><CopyButton onClick={copyText} /></span>
+
+            {/* <span className='absolute right-[16px] top-[16px] group-hover:block hidden ease-in-out'><CopyButton onClick={copyText} /></span> */}
           </div>
 
         </div>

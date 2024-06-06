@@ -49,7 +49,7 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
         <div className='fixed left-0 top-[65px] w-full px-4'>
           <TabList className='flex text-gray-300 z-10 w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm'>
             <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Transcript</Tab>
-            <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Notes</Tab>
+            {/* <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Notes</Tab> */}
             <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>
           </TabList>
         </div>
@@ -58,9 +58,9 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
           <TranscriptList className={hasTranscripts ? '' : `mt-[50px]`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
         </TabPanel>
 
-        <TabPanel className={`w-full hidden react-tab-panel`}>
+        {/* <TabPanel className={`w-full hidden react-tab-panel`}>
           Notes here
-        </TabPanel>
+        </TabPanel> */}
 
         <TabPanel className='w-full hidden react-tab-panel'>
           <AssistantList assistantList={assistantList} updatedAssistantList={(list) => setAssistantList(list)} />

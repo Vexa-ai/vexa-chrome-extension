@@ -1,7 +1,7 @@
 {
   "name": "vexa",
   "displayName": "Vexa",
-  "version": "6.01",
+  "version": "6.02",
   "description": "Vexa - AI video call recording and summary",
   "author": "Vexa",
   "scripts": {
@@ -22,6 +22,7 @@
     "react-dom": "18.2.0",
     "react-draggable": "^4.4.6",
     "react-dropdown-select": "^4.11.2",
+    "react-loader-spinner": "^6.1.6",
     "react-notifications": "^1.7.4",
     "react-tabs": "^6.0.2",
     "react-timer-hook": "^3.0.7",

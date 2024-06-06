@@ -27,11 +27,10 @@ export function AssistantEntry({ entryData }: AssistantEntryProps) {
               </span>
             </span>
             <p className='flex gap-2 mb-1 break-words'>
-              <span className="font-semibold text-white">{entryData.role}</span>
+              <span className="font-semibold text-white select-text">{entryData.role}</span>
             </p>
-            <Markdown>{entryData.text}</Markdown>
+            <p className="select-text"><Markdown>{entryData.text}</Markdown></p>
 
-            {/* <span className='absolute right-[16px] top-[16px] group-hover:block hidden ease-in-out'><CopyButton onClick={copyText} /></span> */}
           </div>
 
         </div>

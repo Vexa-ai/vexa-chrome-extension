@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-
 import './TranscriptList.scss';
 import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
@@ -13,8 +12,38 @@ export interface TranscriptListProps {
 export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({transcriptList}) }, className = '' }: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
+  const [isAutoScroll, setIsAutoScroll] = useState(true);
   const transcriptListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleScroll = () => {
+    if (scrollAreaRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+      setIsAutoScroll(scrollTop + clientHeight >= scrollHeight - 10);
+
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      scrollTimeoutRef.current = setTimeout(() => {}, 150);
+    }
+  };
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (scrollAreaRef.current) {
+        scrollAreaRef.current.removeEventListener('scroll', handleScroll);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [scrollAreaRef]);
 
   MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
   MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
@@ -24,11 +53,10 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
       const cursorIndex = previousTranscripts.findLastIndex(prevTranscript => prevTranscript.timestamp === transcription[0].timestamp);
       setTranscripts([...previousTranscripts.splice(0, cursorIndex), ...transcription]);
     }
-
   });
 
   useEffect(() => {
-    if (lastEntryRef.current) {
+    if (isAutoScroll && lastEntryRef.current) {
       lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
     }
     updatedTranscriptList(transcripts);
@@ -38,19 +66,19 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
     setTranscripts(transcriptList);
     return () => {
       MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
-    }
+    };
   }, []);
 
   return (
     <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
-      <div className="flex-grow overflow-y-auto">
+      <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
         {transcripts.map((transcript, index) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
             <TranscriptEntry timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
           </div>
         ))}
       </div>
-
     </div>
   );
 }
+

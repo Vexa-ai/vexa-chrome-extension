@@ -50,7 +50,7 @@ export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryPro
           </span>
         </span>
         <p className='flex gap-2 mb-1 break-words items-center'>
-          <span className="font-semibold text-white">{speaker}</span><span className='items-center text-xs'>{formattedTimestamp}</span>
+          <span className="font-semibold text-white select-text">{speaker}</span><span className='items-center text-xs select-text'>{formattedTimestamp}</span>
         </p>
         <p className='break-words select-text'>{text}</p>
       </div>

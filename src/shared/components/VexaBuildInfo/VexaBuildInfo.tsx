@@ -7,7 +7,9 @@ export interface VexaBuildInfoProps {
 }
 
 export function VexaBuildInfo({className = ''}: VexaBuildInfoProps) {
+  const versionNumber = chrome.runtime.getManifest()?.version;
+  
   return <div className={`VexaBuildInfo text-gray-400 font-semibold text-center items-center flex ${className}`}>
-    6.01
+    {versionNumber}
   </div>;
 }

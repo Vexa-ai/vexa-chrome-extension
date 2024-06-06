@@ -1,7 +1,7 @@
 {
   "name": "vexa",
   "displayName": "Vexa",
-  "version": "0.0.1",
+  "version": "6.01",
   "description": "Vexa - AI video call recording and summary",
   "author": "Vexa",
   "scripts": {

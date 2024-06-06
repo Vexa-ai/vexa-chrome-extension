@@ -6,6 +6,7 @@ import { AssistantInput } from '../AssistantInput';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { MessageSenderService } from '~lib/services/message-sender.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
+import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
 export interface AssistantEntryData {
   current_chain: number;
@@ -27,8 +28,10 @@ export interface AssistantListProps {
   updatedAssistantList?: (assistantList: AssistantEntryData[]) => void;
 }
 
-export function AssistantList({ assistantList = [], className = '', updatedAssistantList = (assistantList) => { console.log({assistantList}) } }: AssistantListProps) {
+export function AssistantList({ assistantList = [], className = '', updatedAssistantList = (assistantList) => { console.log({ assistantList }) } }: AssistantListProps) {
 
+  const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+  const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE);
   const [responses, setResponses] = useState<AssistantEntryData[]>([]);
   const [clearField, setClearField] = useState<boolean>(false);
   const assistantListRef = useRef<HTMLDivElement>(null);
@@ -42,6 +45,31 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
     newResponses[newResponses.length > 0 ? newResponses.length - 1 : 0] = response;
     setResponses(newResponses);
     setClearField(true);
+  });
+
+  MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY);
+  MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY, (message) => {
+    const response: AssistantMessageUnit[] = message.data?.messages;
+
+    if (response) {
+      const responseEntryData: AssistantEntryData[] = response?.map(responseUnit => {
+        if (responseUnit.role === 'user') {
+          return {
+            current_chain: message.data.current_chain || 1,
+            user_message: responseUnit,
+          };
+        } else {
+          return {
+            current_chain: message.data.current_chain || 1,
+            assistant_message: responseUnit,
+          };
+        }
+      })
+      console.log({ response, responseEntryData })
+      setResponses(responseEntryData);
+      setClearField(true);
+    }
+
   });
 
   const onPrompted = async (prompt: string) => {
@@ -63,6 +91,12 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
       return false;
     }
   }
+
+  useEffect(() => {
+    if (typeof isMaximized === 'boolean' && isMaximized && isCapturing && !assistantList?.length) {
+      messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST });
+    }
+  }, [isMaximized]);
 
   useEffect(() => {
     if (lastEntryRef.current) {

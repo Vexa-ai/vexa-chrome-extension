@@ -129,6 +129,31 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
     consoleDebug(evt.data.url);
 });
 
+MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender, sendResponse) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages?token=${authData.__vexa_token}&meeting_id=${getIdFromUrl(sender.tab.url)}`)
+    .then(async res => {
+        if (!(res.status < 401)) {
+            if (res.status === 401) {
+                messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
+            }
+            return;
+        }
+        const responseJson = await res.json();
+        messageSender.sendTabMessage(sender.tab, {
+            type: MessageType.ASSISTANT_PROMPT_HISTORY,
+            data: responseJson || [],
+        });
+    }, err => {
+        console.error(err);
+        sendResponse(null);
+    });
+});
+
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",

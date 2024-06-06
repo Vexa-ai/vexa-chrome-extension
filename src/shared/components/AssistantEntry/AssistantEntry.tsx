@@ -29,7 +29,9 @@ export function AssistantEntry({ entryData }: AssistantEntryProps) {
             <p className='flex gap-2 mb-1 break-words'>
               <span className="font-semibold text-white select-text">{entryData.role}</span>
             </p>
-            <p className="select-text"><Markdown>{entryData.text}</Markdown></p>
+            <div className="select-text">
+              <Markdown>{entryData.text}</Markdown>
+            </div>
 
           </div>
 

@@ -46,11 +46,13 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
   return (
     <div {...rest} className='MainContentView flex flex-grow overflow-hidden h-auto'>
       <Tabs onSelect={onTabChanged} className='text-gray-300 w-full flex flex-col flex-1 mt-[40px]'>
-        <TabList className='flex text-gray-300 top-[65px] left-0 z-10 fixed w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm'>
-          <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Transcript</Tab>
-          <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Notes</Tab>
-          <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>
-        </TabList>
+        <div className='fixed left-0 top-[65px] w-full px-4'>
+          <TabList className='flex text-gray-300 z-10 w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm'>
+            <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Transcript</Tab>
+            <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Notes</Tab>
+            <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Assistant</Tab>
+          </TabList>
+        </div>
 
         <TabPanel className='w-full hidden react-tab-panel'>
           <TranscriptList className={hasTranscripts ? '' : `mt-[50px]`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />

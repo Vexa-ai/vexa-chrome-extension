@@ -13,6 +13,7 @@ const Vexa = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
     const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
+    const [hasRecorded, setHasRecorded] = useState(false);
     const [isDraggableDisabled, setIsDraggableDisabled] = useState(true);
     const vexaToolbarRef = useRef(null);
     const defaultPosition = { x: 0, y: 0 };
@@ -30,6 +31,13 @@ const Vexa = () => {
             setPosition(defaultPosition);
         }
     };
+
+    useEffect(() => {
+      if (isCapturing) {
+        setHasRecorded(true);
+      }
+    }, [isCapturing])
+    
 
     useEffect(() => {
         const handleResize = () => {
@@ -64,7 +72,7 @@ const Vexa = () => {
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <NotificationContainer/>
                             <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
-                            {isCapturing
+                            {isCapturing || hasRecorded
                                 ? <MainContentView onMouseOut={() => setIsDraggableDisabled(true)} />
                                 : <>
                                     <MicrophoneOptions className="mt-3" />

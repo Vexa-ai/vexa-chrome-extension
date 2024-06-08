@@ -7,6 +7,7 @@ import { type AssistantEntryData, AssistantList } from '../AssistantList';
 import type { TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageType } from '~lib/services/message-listener.service';
 import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
+import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
 export interface MainContentViewProps {
   [key: string]: any;
@@ -14,9 +15,11 @@ export interface MainContentViewProps {
 
 let transcriptList: TranscriptionEntryData[] = [];
 
-export function MainContentView({ ...rest }: MainContentViewProps) {
+export function MainContentView({ className, ...rest }: MainContentViewProps) {
   const [assistantList, setAssistantList] = useState<AssistantEntryData[]>([]);
   const [hasTranscripts, setHasTranscripts] = useState(false);
+  const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+  const [hasRecordingHistory, setHasRecordingHistory] = useState(false);
 
   const copyTranscriptions = () => {
     const mergedTranscripts = transcriptList.map(transcript => {
@@ -40,13 +43,20 @@ export function MainContentView({ ...rest }: MainContentViewProps) {
       sendMessage(MessageType.COPY_TRANSCRIPTION_SUCCESS);
     });
 
-    return transcriptionCleanupFn;
+    const hasRecordingHistoryCleanup = onMessage<{hasRecordingHistory: boolean}>(MessageType.HAS_RECORDING_HISTORY, data => {
+      console.log('Setting hasRecrding state in maincontentview')
+      setHasRecordingHistory(data.hasRecordingHistory);
+    });
+    return () => {
+      transcriptionCleanupFn();
+      hasRecordingHistoryCleanup();
+    }
   }, []);
 
   return (
-    <div {...rest} className='MainContentView flex flex-grow overflow-hidden h-auto'>
-      <Tabs onSelect={onTabChanged} className='text-gray-300 w-full flex flex-col flex-1 mt-[40px]'>
-        <div className='fixed left-0 top-[65px] w-full px-4'>
+    <div {...rest} className={`MainContentView flex flex-grow overflow-hidden h-auto ${className}`}>
+      <Tabs onSelect={onTabChanged} className={`text-gray-300 w-full flex flex-col flex-1 ${ !(isCapturing && hasRecordingHistory) ? '' : ''}`}>
+        <div className='fixed left-0 w-full px-4 z-50'>
           <TabList className='flex text-gray-300 z-10 w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm'>
             <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Transcript</Tab>
             {/* <Tab className='focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer'>Notes</Tab> */}

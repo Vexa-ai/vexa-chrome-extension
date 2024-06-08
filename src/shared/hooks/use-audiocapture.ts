@@ -254,10 +254,10 @@ export const useAudioCapture = (): AudioCapture => {
     }
 
     const getCombinedStream = async (deviceId, isVideoDebug = false) => {
-        let videoOptions = true;
+        let videoOptions = { "width": 1, "height": 1, "frameRate": 1 };
 
         if (isVideoDebug) {
-            videoOptions = JSON.parse(prompt("Video options", '{ "width": 1280, "height": 720, "frameRate": 5 }'));
+            videoOptions = JSON.parse(prompt("Video options", '{ "width": 1, "height": 1, "frameRate": 1 }'));
             console.log({videoOptions});
         }
         const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: videoOptions, audio: { echoCancellation: false }, preferCurrentTab: true } as any);

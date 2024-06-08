@@ -27,6 +27,10 @@ export function MicrophoneSelector({ }: MicrophoneSelectorProps) {
   useEffect(() => {
     if (selectedMicrophone) {
       audioCapture.setSelectedAudioInputDevice(selectedMicrophone);
+    } else {
+      if(microphones?.length) {
+        audioCapture.setSelectedAudioInputDevice(microphones[0]);
+      }
     }
   }, [microphones]);
 

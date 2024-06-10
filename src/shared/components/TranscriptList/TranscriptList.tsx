@@ -3,6 +3,8 @@ import './TranscriptList.scss';
 import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
 import { sendMessage } from '~shared/helpers/in-content-messaging.helper';
+import { MessageSenderService } from '~lib/services/message-sender.service';
+import { getIdFromUrl } from '~shared/helpers/meeting.helper';
 
 export interface TranscriptListProps {
   className?: string;
@@ -18,7 +20,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
   const lastEntryRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  const messageSender = new MessageSenderService();
   const handleScroll = () => {
     if (scrollAreaRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
@@ -31,6 +33,10 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
       scrollTimeoutRef.current = setTimeout(() => {}, 150);
     }
   };
+
+  const getMeetingTranscriptHistory = () => {
+    messageSender.sendBackgroundMessage({ type: MessageType.TRANSCRIPTION_HISTORY_REQUEST, data: { meetingId: getIdFromUrl(window.location.href) }})
+  }
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -66,6 +72,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
 
   useEffect(() => {
     setTranscripts(transcriptList);
+    getMeetingTranscriptHistory();
     return () => {
       MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
     };

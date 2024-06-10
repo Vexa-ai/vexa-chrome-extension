@@ -189,6 +189,36 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
     });
 });
 
+MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_HISTORY_REQUEST, async (message, sender, sendResponse) => {
+    const meetingId = message.data.meetingId || '';
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    const transcriptionURL = `${authData.__vexa_main_domain}/api/v1/transcription?meeting_id=${meetingId}&token=${authData.__vexa_token}`;
+    messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
+    fetch(transcriptionURL, {
+      method: 'GET',
+    }).then(async res => {
+      if (!(res.status < 401)) {
+        if (res.status === 401) {
+          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+        }
+        return;
+      }
+      const transcripts = await res.json();
+      messageSender.sendTabMessage(sender.tab, {
+        type: MessageType.TRANSCRIPTION_RESULT,
+        data: {
+          transcripts,
+          tabId: sender.tab.id,
+        },
+      });
+    }, error => {
+    });
+});
+
 MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDING, (message, sender) => {
     chrome.tabs.query({ lastFocusedWindow: true, active: true, currentWindow: true }, async tabs => {
         const tab = tabs[0];

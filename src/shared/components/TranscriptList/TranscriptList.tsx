@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './TranscriptList.scss';
 import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
+import { sendMessage } from '~shared/helpers/in-content-messaging.helper';
 
 export interface TranscriptListProps {
   className?: string;
@@ -59,6 +60,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
     if (isAutoScroll && lastEntryRef.current) {
       lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+    sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory: true });
     updatedTranscriptList(transcripts);
   }, [transcripts]);
 

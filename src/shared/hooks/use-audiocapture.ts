@@ -65,6 +65,7 @@ export const useAudioCapture = (): AudioCapture => {
             }
             console.log('Failed to get media permissions', error);
             setDevices([]);
+            setSelectedMicrophone(null);
         }
     };
 

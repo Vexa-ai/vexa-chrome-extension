@@ -5,6 +5,7 @@ import { MessageListenerService, MessageType } from '~lib/services/message-liste
 import { sendMessage } from '~shared/helpers/in-content-messaging.helper';
 import { MessageSenderService } from '~lib/services/message-sender.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
+import { TranscriptionCopyButton } from '../TranscriptionCopyButton';
 
 export interface TranscriptListProps {
   className?: string;
@@ -12,7 +13,7 @@ export interface TranscriptListProps {
   updatedTranscriptList?: (transcriptList: TranscriptionEntryData[]) => void;
 }
 
-export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({transcriptList}) }, className = '' }: TranscriptListProps) {
+export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({ transcriptList }) }, className = '' }: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
@@ -30,12 +31,12 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
         clearTimeout(scrollTimeoutRef.current);
       }
 
-      scrollTimeoutRef.current = setTimeout(() => {}, 150);
+      scrollTimeoutRef.current = setTimeout(() => { }, 150);
     }
   };
 
   const getMeetingTranscriptHistory = () => {
-    messageSender.sendBackgroundMessage({ type: MessageType.TRANSCRIPTION_HISTORY_REQUEST, data: { meetingId: getIdFromUrl(window.location.href) }})
+    messageSender.sendBackgroundMessage({ type: MessageType.TRANSCRIPTION_HISTORY_REQUEST, data: { meetingId: getIdFromUrl(window.location.href) } })
   }
 
   useEffect(() => {
@@ -81,6 +82,9 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
   return (
     <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
       <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
+        {transcripts.length > 0 && <div className="mr-2 flex mt-2 sticky top-1 z-50 w-[fit-content]">
+          <TranscriptionCopyButton className='rounded-lg' />
+        </div>}
         {transcripts.map((transcript, index) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
             <TranscriptEntry timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />

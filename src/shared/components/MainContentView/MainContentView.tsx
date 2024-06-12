@@ -60,7 +60,6 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
     sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory: !!transcriptList.length });
 
     const hasRecordingHistoryCleanup = onMessage<{hasRecordingHistory: boolean}>(MessageType.HAS_RECORDING_HISTORY, data => {
-      console.log('Setting hasRecrding state in maincontentview')
       setHasRecordingHistory(data.hasRecordingHistory);
     });
     return () => {

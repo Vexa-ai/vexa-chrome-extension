@@ -213,6 +213,7 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
     lastValidTranscriptTimestamp = null;
   }
   setTimeout(async () => {
+    console.log('current lastValidTranscriptTimestamp: ', lastValidTranscriptTimestamp)
     const transcriptionURL = `${main_domain}/api/v1/transcription?meeting_id=${meetingId}&token=${token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
     messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
     fetch(transcriptionURL, {
@@ -230,6 +231,7 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
         const dateBackBy5Minute = new Date(transcripts[transcripts.length - 1].timestamp);
         dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
         lastValidTranscriptTimestamp = dateBackBy5Minute;
+        console.log('next lastValidTranscriptTimestamp: ', lastValidTranscriptTimestamp);
       }
       messageSender.sendBackgroundMessage({
         type: MessageType.OFFSCREEN_TRANSCRIPTION_RESULT,

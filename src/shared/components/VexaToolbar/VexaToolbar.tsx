@@ -16,7 +16,7 @@ export function VexaToolbar({ toolbarRef, ...rest }: VexaToolbarProps) {
   return <div ref={toolbarRef} {...rest} className='VexaToolbar flex flex-row w-full h-9 mb-3 cursor-move'>
     <VexaLogo />
     <div className='ml-auto gap-2 flex'>
-      <TranscriptionCopyButton />
+      {/* <TranscriptionCopyButton /> */}
       <VexaMinimizeButton />
       <AudioRecordingControlButton className='h-auto'/>
     </div>

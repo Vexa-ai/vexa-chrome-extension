@@ -12,7 +12,7 @@ export class MessageSenderService {
         try {
             chrome.tabs.sendMessage(tab.id, payload);
         } catch (error) {
-            console.error(error);
+            console.trace();
         }
 
     }
@@ -22,7 +22,7 @@ export class MessageSenderService {
         try {
             chrome.runtime.sendMessage({ target: 'background', ...payload, tab });
         } catch (error) {
-            console.error(error);
+            console.trace();
         }
 
     }
@@ -32,7 +32,7 @@ export class MessageSenderService {
         try {
             chrome.runtime.sendMessage({ target: 'background', ...payload });
         } catch (error) {
-            console.error(error);
+            console.trace();
         }
 
     }
@@ -43,7 +43,7 @@ export class MessageSenderService {
             chrome.runtime.sendMessage({ target: 'offscreen', ...payload });
         
         } catch (error) {
-            console.error(error);
+            console.trace();
         }
 
     }

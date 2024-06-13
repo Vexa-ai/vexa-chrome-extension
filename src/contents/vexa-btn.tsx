@@ -1,4 +1,4 @@
-import type { PlasmoCSConfig } from "plasmo";
+import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import React, { useEffect, useState, type MouseEventHandler } from "react";
 import Draggable, { type DraggableData, type DraggableEvent } from "react-draggable";
 import rootCssText from "data-text:~root.scss";
@@ -99,17 +99,30 @@ export const config: PlasmoCSConfig = {
     matches: ['*://meet.google.com/*', '*://www.youtube.com/watch?*'],
 };
 
-const injectUI = () => {
-    const container = document.createElement("div");
-    const root = createRoot(container);
-    root.render(<VexaBtn />);
-};
+// const injectUI = () => {
+//     const container = document.createElement("div");
+//     const root = createRoot(container);
+//     root.render(<VexaBtn />);
+// };
 
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectUI);
-} else {
-    injectUI();
-}
+// if (document.readyState === "loading") {
+//     document.addEventListener("DOMContentLoaded", injectUI);
+// } else {
+//     injectUI();
+// }
+
+export const getInlineAnchor: PlasmoGetInlineAnchor = async () =>
+    document.body
+
+// export const watchOverlayAnchor: PlasmoWatchOverlayAnchor = (
+//     updatePosition
+//   ) => {
+//     const interval = setInterval(() => {
+//       updatePosition()
+//     }, 420)
+  
+//     return () => clearInterval(interval)
+//   }
 
 export const getStyle = () => {
     const style = document.createElement("style")

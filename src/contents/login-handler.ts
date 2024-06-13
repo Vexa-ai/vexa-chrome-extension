@@ -4,7 +4,12 @@ import { MessageSenderService } from "~lib/services/message-sender.service";
 import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services/storage.service";
 
 export const config: PlasmoCSConfig = {
-    matches: ["https://ext-dev.vexa.ai/intermediary.html*", "http://localhost:3000/signin*"]
+    matches: [
+        "https://ext-dev.vexa.ai/intermediary.html*",
+        "http://localhost:3000/signin*",
+        "http://ssh.ryabenko.pro:12345/signin*",
+        "http://dashboard.vexa.ai/signin*"
+    ]
 }
 const messageSender = new MessageSenderService();
 

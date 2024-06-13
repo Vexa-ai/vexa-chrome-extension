@@ -1,4 +1,3 @@
-import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoRender } from "plasmo";
 import React, { useEffect, useRef, useState } from "react";
 import { MainContentView, MicrophoneOptions, VexaBuildInfo, VexaToolbar } from "~shared/components";
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
@@ -74,7 +73,7 @@ const Vexa = () => {
                     <div id="vexa-content-div" className="flex flex-col w-[400px] bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <NotificationContainer />
-                            <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
+                            <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseUp={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
                             {isCapturing || hasRecorded
                                 ? <>
                                     {!isCapturing && <MicrophoneOptions />}
@@ -93,11 +92,6 @@ const Vexa = () => {
 
 
     )
-};
-
-export const config: PlasmoCSConfig = {
-    matches: ['https://example.com/*'], // This prevents duplicate UI renders by only rendering the UI directly on example.com. Removing config doesn't work. Needs further experimentation to determine why.
-    css: ["./no-vexa.scss"],
 };
 
 export default Vexa;

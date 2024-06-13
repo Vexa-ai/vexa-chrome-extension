@@ -62,6 +62,9 @@
     "host_permissions": [
       "https://*/*"
     ],
+    "externally_connectable": {
+      "matches": ["https://*.vexa.ai/*", "https://*.ryabenko.pro/*", "http://*.ryabenko.pro/*", "https://*.ngrok-free.app/*"]
+    },
     "web_accessible_resources": [
       {
         "resources": [

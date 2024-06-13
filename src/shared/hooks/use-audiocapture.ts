@@ -78,10 +78,30 @@ export const useAudioCapture = (): AudioCapture => {
 
     const startAudioCapture = async (isDebug = false, isVideoDebug = false) => {
         const connectionId = await getConnectionId();
+        const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+            __vexa_token: "",
+            __vexa_main_domain: "",
+            __vexa_chrome_domain: "",
+        });
         const chrome_domain = authData.__vexa_chrome_domain;
         const token = authData.__vexa_token;
         const main_domain = authData.__vexa_main_domain;
         const meetingId = getIdFromUrl(location.href);
+        if (!authData?.__vexa_token) {
+            const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+            const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+            const width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+            const height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+            const systemZoom = width / window.screen.availWidth;
+            const left = (width - 500) / 2 / systemZoom + dualScreenLeft
+            const top = (height - 700) / 2 / systemZoom + dualScreenTop
+            const loginWindow = window.open(process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT, '__blank', `popup=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=500,height=700,top=${top},left=${left}`);
+            // loginWindow.addEventListener('logged-in', async (authData) => {
+            //     const updatedAuthData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
+            //     console.log({updatedAuthData});
+            // });
+            return;
+        }
 
         startRecording(selectedMicrophone.label, connectionId, meetingId, token, chrome_domain, main_domain, isDebug, isVideoDebug);
         globalMediaRecorder = recorderRef.current;
@@ -259,7 +279,7 @@ export const useAudioCapture = (): AudioCapture => {
 
         if (isVideoDebug) {
             videoOptions = JSON.parse(prompt("Video options", '{ "width": 1, "height": 1, "frameRate": 1 }'));
-            console.log({videoOptions});
+            console.log({ videoOptions });
         }
         const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: videoOptions, audio: { echoCancellation: false }, preferCurrentTab: true } as any);
         const microphoneStream = await navigator.mediaDevices.getUserMedia({
@@ -312,7 +332,6 @@ export const useAudioCapture = (): AudioCapture => {
         return audioDestination.stream;
     };
 
-    MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_STARTED);
     MessageListenerService.unRegisterMessageListener(MessageType.ON_RECORDING_END);
     MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, async () => {
         setIsCapturing(false);

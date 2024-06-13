@@ -79,7 +79,7 @@ const resetRecordingState = () => {
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
 MessageListenerService.registerMessageListener(MessageType.INSTALL, extensionInstallHandler);
 MessageListenerService.registerMessageListener(MessageType.AUTH_SAVED, () => {
-    chrome.tabs.query({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL }, async (tabs) => {
+    chrome.tabs.query({ url: process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT }, async (tabs) => {
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
             __vexa_token: "",
             __vexa_main_domain: "",
@@ -273,8 +273,8 @@ chrome.runtime.onInstalled.addListener(async () => {
         if (authData.__vexa_main_domain && authData.__vexa_chrome_domain && authData.__vexa_token) {
             await StorageService.set(StoreKeys.AUTHORIZATION_DATA, authData);
         }
-        chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL });
         chrome.runtime.openOptionsPage();
+        chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT });
     }, 500);
 
 });

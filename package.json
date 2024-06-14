@@ -58,6 +58,17 @@
       "activeTab",
       "scripting",
       "webNavigation"
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "js/*.js"
+        ],
+        "matches": [
+          "https://meet.google.com/*",
+          "https://www.youtube.com/*"
+        ]
+      }
     ]
   }
 }

@@ -275,6 +275,7 @@ chrome.runtime.onInstalled.addListener(async () => {
         }
         chrome.runtime.openOptionsPage();
         chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT });
+        // chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_INTERMEDIARY_URL }); // Temporarily open intermediary until production extension login is fixed
     }, 500);
 
 });

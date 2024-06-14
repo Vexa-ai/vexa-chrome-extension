@@ -111,7 +111,7 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
       MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
     }
   }, [])
-  // mb-[120px]
+
   return <div ref={assistantListRef} className={`AssistantList flex flex-col mb-[60px] max-h-full w-full overflow-hidden ${className}`}>
     {responses.length ? <div className="flex-grow overflow-y-auto">
       {responses.map((entry, index) => (

@@ -50,7 +50,7 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     if (!isDragging) return;
     const x = e.touches[0].pageX - suggestionsRef.current!.offsetLeft;
     const walk = x - startX;
-    if (Math.abs(walk) > 5) { // You can adjust this threshold
+    if (Math.abs(walk) > 5) {
       setDragged(true);
     }
     suggestionsRef.current!.scrollLeft = scrollLeft - walk;

@@ -1,6 +1,5 @@
-import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoWatchOverlayAnchor } from "plasmo";
-import React, { useEffect } from "react";
-import ReactDOM from "react-dom";
+import type { PlasmoCSConfig } from "plasmo";
+import React from "react";
 import rootCssText from "data-text:~root.scss";
 import customSelectCss from 'data-text:../shared/components/CustomSelect/CustomSelect.scss';
 import microphoneSelectCss from 'data-text:../shared/components/MicrophoneSelector/MicrophoneSelector.scss';
@@ -10,7 +9,7 @@ import vexaCss from 'data-text:../shared/components/vexa/vexa.scss';
 import vexaBtnCss from 'data-text:./vexa-btn.scss';
 import { createRoot } from "react-dom/client";
 import Vexa from "../shared/components/vexa/vexa";
-import { getPlatform, isRecordablePlatform } from "~shared/helpers/is-recordable-platform.helper";
+import { getPlatform } from "~shared/helpers/is-recordable-platform.helper";
 
 const VexaInMeetContext = () => {
   const platform = getPlatform();
@@ -24,7 +23,7 @@ const VexaInMeetContext = () => {
   );
 };
 
-// export default VexaInMeetContext;
+export default () => <></>;
 
 const injectUI = async () => {
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -39,19 +38,6 @@ if (document.readyState === "loading") {
 } else {
   injectUI();
 }
-
-// export const getInlineAnchor: PlasmoGetInlineAnchor = async () =>
-//   document.body
-
-// export const watchOverlayAnchor: PlasmoWatchOverlayAnchor = (
-//   updatePosition
-// ) => {
-//   const interval = setInterval(() => {
-//     updatePosition()
-//   }, 420)
-
-//   return () => clearInterval(interval)
-// }
 
 
 export const getStyle = () => {

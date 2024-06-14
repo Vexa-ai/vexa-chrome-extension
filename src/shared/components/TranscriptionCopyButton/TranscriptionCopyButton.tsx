@@ -41,14 +41,6 @@ export function TranscriptionCopyButton({ className = '' }: TranscriptionCopyBut
     }
   }, []);
 
-  // return (
-  //   <>
-  //     {((isCapturingStore || hasRecordingHistory) && activeTabIndex === 0) && <div className='TranscriptionCopyButton'>
-  //       <CopyButton onClick={copyTranscription} />
-  //     </div>}
-  //   </>
-  // );
-
   return (
     <>
       {((isCapturingStore || hasRecordingHistory)) && <div onClick={copyTranscription} className={`TranscriptionCopyButton flex gap-2 items-center bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 cursor-pointer ${className}`}>

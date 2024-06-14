@@ -99,30 +99,8 @@ export const config: PlasmoCSConfig = {
     matches: ['*://meet.google.com/*', '*://www.youtube.com/watch?*'],
 };
 
-// const injectUI = () => {
-//     const container = document.createElement("div");
-//     const root = createRoot(container);
-//     root.render(<VexaBtn />);
-// };
-
-// if (document.readyState === "loading") {
-//     document.addEventListener("DOMContentLoaded", injectUI);
-// } else {
-//     injectUI();
-// }
-
 export const getInlineAnchor: PlasmoGetInlineAnchor = async () =>
     document.body
-
-// export const watchOverlayAnchor: PlasmoWatchOverlayAnchor = (
-//     updatePosition
-//   ) => {
-//     const interval = setInterval(() => {
-//       updatePosition()
-//     }, 420)
-  
-//     return () => clearInterval(interval)
-//   }
 
 export const getStyle = () => {
     const style = document.createElement("style")

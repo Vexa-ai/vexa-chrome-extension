@@ -1,7 +1,7 @@
 {
   "name": "vexa",
   "displayName": "Vexa",
-  "version": "6.04",
+  "version": "6.05",
   "description": "Vexa - AI video call recording and summary",
   "author": "Vexa",
   "scripts": {
@@ -55,8 +55,6 @@
       "offscreen",
       "tabs",
       "tabCapture",
-      "activeTab",
-      "scripting",
       "webNavigation"
     ],
     "web_accessible_resources": [

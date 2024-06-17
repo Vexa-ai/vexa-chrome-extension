@@ -8,7 +8,8 @@ export const config: PlasmoCSConfig = {
         "https://ext-dev.vexa.ai/intermediary.html*",
         "http://localhost:3000/signin*",
         "http://ssh.ryabenko.pro:12345/signin*",
-        "http://dashboard.vexa.ai/signin*"
+        "https://dashboard.vexa.ai/signin*",
+        "https://ext-dev.vexa.ai/signin*"
     ]
 }
 const messageSender = new MessageSenderService();

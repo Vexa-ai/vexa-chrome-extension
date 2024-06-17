@@ -1,16 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './options.scss';
 import { StorageService, type AuthorizationData, StoreKeys } from '~lib/services/storage.service';
-import { VexaBuildInfo } from '~shared/components';
+import vexaPermissionsImage from "data-base64:~assets/images/svg/permissions-popup.png";
+import { VexaBuildInfo, VexaLogo } from '~shared/components';
 
 const OptionsIndex = () => {
 
   const [hasMediaPermissions, setHasMediaPermissions] = useState(false);
   const [isCheckingToken, setIsCheckingToken] = useState(false);
+  const [isClosed, setIsClosed] = useState(false);
   const tokenInputRef = useRef<HTMLInputElement>(null);
   const [_, setVexaToken] = StorageService.useHookStorage<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
     __vexa_token: "",
-    __vexa_domain: ""
+    __vexa_main_domain: "",
+    __vexa_chrome_domain: "",
   });
 
   const getMediaPermissions = async () => {
@@ -62,8 +65,16 @@ const OptionsIndex = () => {
     getMediaPermissions();
   }, []);
 
-  return <div className='OptionsMain w-full h-screen items-center justify-center flex flex-col'>
-    <form action="" className="flex flex-col gap-3 w-96 shadow-md p-4 bg-gray-100 rounded-lg">
+  return <div className='OptionsMain w-full h-screen flex flex-col'>
+
+    {(hasMediaPermissions || isClosed) ? <></> : <div className="absolute right-5 top-5 rounded-3xl bg-[#0C111D] border border-[#333741] flex flex-col p-8 w-[360px]">
+      <VexaLogo/>
+      <h2 className='text-base mt-7 font-semibold text-[#F5F5F6]'>Give Vexa microphone permissions to transcribe your audio</h2>
+      <p className="text-sm font-normal text-[#94969C] mt-1">Don’t worry! We never keep your audio stored</p>
+      <img className='my-7' src={vexaPermissionsImage} alt="Permissions popup" />
+      <button onClick={() => setIsClosed(true)} className='text-[#CECFD2] border border-[#333741] rounded-lg p-2 bg-[#101828] hover:bg-[#202c44]'>Dismiss</button>
+    </div>}
+    <form action="" className="flex-col gap-3 w-96 shadow-md p-4 bg-gray-100 rounded-lg hidden">
       <p className='font-semibold'>
         {hasMediaPermissions
           ? <span className="text-green-500">Microphone permission enabled</span>
@@ -83,7 +94,7 @@ const OptionsIndex = () => {
         </button>
       </div>
     </form>
-    <VexaBuildInfo className='mt-4'/>
+    {/* <VexaBuildInfo className='mt-4' /> */}
   </div>;
 }
 

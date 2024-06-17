@@ -22,7 +22,7 @@ export function CopyButton({
         return () => clearTimeout(timeout);
     }, [copied]);
 
-    return <button className={className} aria-label="Copy" {...rest}>
+    return <button className={`CopyButton ${className}`} aria-label="Copy" {...rest}>
         {copied ? <CopySuccess /> : <img onClick={() => setCopied(true)} alt='Copy' className='w-5 h-5' src={copyIcon} />}
     </button>
 }

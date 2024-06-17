@@ -2,7 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import './options.scss';
 import { StorageService, type AuthorizationData, StoreKeys } from '~lib/services/storage.service';
 import vexaPermissionsImage from "data-base64:~assets/images/svg/permissions-popup.png";
+import googleMeetLogo from "data-base64:~assets/images/svg/google-meet-logo.svg";
+import searchIcon from "data-base64:~assets/images/svg/search.svg";
 import { VexaBuildInfo, VexaLogo } from '~shared/components';
+import { CopyButton } from '~shared/components/CopyButton';
+import { VexaIcon } from '~shared/components/VexaLogo/VexaIcon';
 
 const OptionsIndex = () => {
 
@@ -61,19 +65,65 @@ const OptionsIndex = () => {
     });
   };
 
+  const goToGooleMeet = () => {
+    window.open('https://meet.google.com', '__blank');
+  }
+
+  const goToVexaDashboard = () => {
+    window.open('https://dashboard.vexa.ai', '__blank');
+  }
+
   useEffect(() => {
     getMediaPermissions();
   }, []);
 
-  return <div className='OptionsMain w-full h-screen flex flex-col'>
+  return <div className='OptionsMain w-full h-screen flex flex-col bg-[#161B26]'>
 
     {(hasMediaPermissions || isClosed) ? <></> : <div className="absolute right-5 top-5 rounded-3xl bg-[#0C111D] border border-[#333741] flex flex-col p-8 w-[360px]">
-      <VexaLogo/>
+      <VexaLogo />
       <h2 className='text-base mt-7 font-semibold text-[#F5F5F6]'>Give Vexa microphone permissions to transcribe your audio</h2>
       <p className="text-sm font-normal text-[#94969C] mt-1">Don’t worry! We never keep your audio stored</p>
       <img className='my-7' src={vexaPermissionsImage} alt="Permissions popup" />
       <button onClick={() => setIsClosed(true)} className='text-[#CECFD2] border border-[#333741] rounded-lg p-2 bg-[#101828] hover:bg-[#202c44]'>Dismiss</button>
     </div>}
+    <div className="w-full h-screen grid grid-cols-2">
+      <div className="flex flex-col items-end justify-center p-8 w-3/5">
+        <div>
+          <h1 className="font-semibold text-4xl text-[#F5F5F6]">SUCCESS!</h1>
+          <p className="text-xl font-normal text-[#94969C] mt-1">Now you are ready to join the meetings</p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-[60px] items-start justify-center w-3/5">
+        <div className="flex gap-2">
+          <CopyButton className="w-[48px] h-[48px] rounded-lg border border-[#333741] flex items-center justify-center" />
+          <div className='flex flex-col gap-2 flex-1'>
+            <h1 className="font-semibold text-xl text-[#F5F5F6] flex items-center h-[48px]">Real-Time Transcription and Analysis</h1>
+            <p className="text-base font-normal text-[#94969C]">Automatically transcribe meetings and analyze conversations in real-time to capture key points and action items.</p>
+          </div>
+        </div>
+
+        <button onClick={goToGooleMeet} className="p-2 rounded-lg border border-[#333741] gap-2 flex items-center justify-center">
+          <img src={googleMeetLogo} alt="Start a meeting" />
+          <span className="font-semibold text-[#CECFD2]">Go to Google Meet</span>
+        </button>
+
+        <div className="flex gap-2">
+          <div className="w-[48px] h-[48px] rounded-lg border border-[#333741] flex items-center justify-center">
+            <img src={searchIcon} alt="Start a meeting" />
+          </div>
+          <div className='flex flex-col gap-2 flex-1'>
+            <h1 className="font-semibold text-xl text-[#F5F5F6] flex items-center h-[48px]">AI-Powered Search & Prompts</h1>
+            <p className="text-base font-normal text-[#94969C]">Quickly find relevant information from past meetings and communications using AI-powered search capabilities.</p>
+          </div>
+        </div>
+
+        <button onClick={goToVexaDashboard} className="p-2 rounded-lg border border-[#333741] flex gap-2 items-center justify-center">
+          <VexaIcon />
+          <span className="font-semibold text-[#CECFD2]">Go to Vexa Dashboard</span>
+        </button>
+      </div>
+    </div>
+    <VexaBuildInfo className=' mx-auto mt-auto mb-3 text-[#CECFD2]' />
     <form action="" className="flex-col gap-3 w-96 shadow-md p-4 bg-gray-100 rounded-lg hidden">
       <p className='font-semibold'>
         {hasMediaPermissions
@@ -94,7 +144,6 @@ const OptionsIndex = () => {
         </button>
       </div>
     </form>
-    {/* <VexaBuildInfo className='mt-4' /> */}
   </div>;
 }
 

@@ -28,6 +28,11 @@ export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
 
   const audioCapture = useAudioCapture();
 
+  const onStopClicked = () => {
+    audioCapture.stopAudioCapture()
+    window.open(process.env.PLASMO_PUBLIC_DASHBOARD_URL, '__blank');
+  }
+
   useEffect(() => {
     if (storedStartTime) {
       const elapsedTime = new Date().getTime() - storedStartTime;
@@ -43,8 +48,8 @@ export function VexaPauseButton({ ...rest }: VexaPauseButtonProps) {
   }, [storedStartTime]);
 
   return <div {...rest} className='VexaPauseButton'>
-    <div onClick={() => audioCapture.stopAudioCapture()} className='bg-[#F04438] hover:bg-[#d1807a] h-auto px-2 py-2 flex gap-3 items-center justify-center rounded-3xl font-medium text-white cursor-pointer'>
-      <span className='text-base'>{hours < 1 ? '' : hours + ':'}{minutes < 10 ? '0' + minutes : minutes}:{seconds < 10 ? '0' + seconds : seconds}</span>
+    <div onClick={onStopClicked} className='bg-[#F04438] hover:bg-[#d1807a] h-auto px-2 py-2 flex gap-3 items-center justify-center rounded-3xl font-medium text-white cursor-pointer'>
+      <span className={`${hours === 0 ? 'w-10' : 'w-16'} text-base`}>{hours < 1 ? '' : hours + ':'}{minutes < 10 ? '0' + minutes : minutes}:{seconds < 10 ? '0' + seconds : seconds}</span>
       <button className="rounded-[50%] bg-black p-1">
         <img alt='' className='w-3 h-3' src={pauseIcon} />
       </button>

@@ -80,7 +80,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
         </div>
 
         <TabPanel className='w-full hidden react-tab-panel'>
-          <TranscriptList className={hasTranscripts ? '' : `mt-[50px]`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
+          <TranscriptList className={hasTranscripts ? '' : `mt-[10px]`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
         </TabPanel>
 
         {/* <TabPanel className={`w-full hidden react-tab-panel`}>

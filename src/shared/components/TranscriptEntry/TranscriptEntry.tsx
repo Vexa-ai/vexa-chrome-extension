@@ -1,7 +1,8 @@
 import React from 'react';
 import './TranscriptEntry.scss';
 import { CopyButton } from '../CopyButton';
-import { RotatingLines } from 'react-loader-spinner';
+import { LineWave, RotatingLines } from 'react-loader-spinner';
+import { BouncingDots } from '../BouncingDots';
 
 export interface TranscriptEntryProps {
   speaker: string;
@@ -50,16 +51,11 @@ export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryPro
             <CopyButton onClick={copyTranscript} />
           </span>
         </span>
-        <p className='flex gap-2 mb-1 break-words items-center'>
-          <span className="font-semibold text-white select-text break-words">{speaker === 'TBD' ? <RotatingLines
-            visible={true}
-            width="20"
-            strokeColor="white"
-            strokeWidth="3"
-            animationDuration="0.75"
-            ariaLabel="loading-names"
-          /> : speaker}</span><span className='items-center text-xs select-text break-words'>{formattedTimestamp}</span>
-        </p>
+        <div className='flex gap-2 mb-1 break-words items-center'>
+          <span className="font-semibold text-white select-text break-words">{speaker === 'TBD'
+            ? <BouncingDots />
+            : speaker}</span><span className='items-center text-xs select-text break-words'>{formattedTimestamp}</span>
+        </div>
         <p className='break-words select-text'>{text}</p>
       </div>
     </div>

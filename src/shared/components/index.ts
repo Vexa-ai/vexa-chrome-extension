@@ -18,3 +18,5 @@ export {CustomSelect} from './CustomSelect';
 export {VexaMinimizeButton} from './VexaMinimizeButton';
 export {VexaBuildInfo} from './VexaBuildInfo';
 export {TranscriptionCopyButton} from './TranscriptionCopyButton';
+export {VexaDragHandle} from './VexaDragHandle';
+export {BouncingDots} from './BouncingDots';

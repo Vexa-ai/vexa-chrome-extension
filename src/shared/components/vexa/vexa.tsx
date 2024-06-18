@@ -73,7 +73,7 @@ const Vexa = () => {
                     <div id="vexa-content-div" className="flex flex-col w-[400px] bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <NotificationContainer />
-                            <VexaToolbar onMouseOut={() => setIsDraggableDisabled(true)} onMouseUp={() => setIsDraggableDisabled(true)} onMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
+                            <VexaToolbar onDragHandleMouseOut={() => setIsDraggableDisabled(true)} onDragHandleMouseUp={() => setIsDraggableDisabled(true)} onDragHandleMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
                             {isCapturing || hasRecorded
                                 ? <>
                                     {!isCapturing && <MicrophoneOptions />}

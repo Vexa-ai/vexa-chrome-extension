@@ -3,9 +3,9 @@ import './options.scss';
 import { StorageService, type AuthorizationData, StoreKeys } from '~lib/services/storage.service';
 import vexaPermissionsImage from "data-base64:~assets/images/svg/permissions-popup.png";
 import googleMeetLogo from "data-base64:~assets/images/svg/google-meet-logo.svg";
+import messageChat from "data-base64:~assets/images/svg/message-chat-circle.svg";
 import searchIcon from "data-base64:~assets/images/svg/search.svg";
 import { VexaBuildInfo, VexaLogo } from '~shared/components';
-import { CopyButton } from '~shared/components/CopyButton';
 import { VexaIcon } from '~shared/components/VexaLogo/VexaIcon';
 
 const OptionsIndex = () => {
@@ -95,7 +95,9 @@ const OptionsIndex = () => {
       </div>
       <div className="flex flex-col gap-[60px] items-start justify-center w-3/5">
         <div className="flex gap-2">
-          <CopyButton className="w-[48px] h-[48px] rounded-lg border border-[#333741] flex items-center justify-center" />
+        <div className="w-[48px] h-[48px] rounded-lg border border-[#333741] flex items-center justify-center">
+            <img src={messageChat} alt="Chat icon" />
+          </div>
           <div className='flex flex-col gap-2 flex-1'>
             <h1 className="font-semibold text-xl text-[#F5F5F6] flex items-center h-[48px]">Real-Time Transcription and Analysis</h1>
             <p className="text-base font-normal text-[#94969C]">Automatically transcribe meetings and analyze conversations in real-time to capture key points and action items.</p>
@@ -109,7 +111,7 @@ const OptionsIndex = () => {
 
         <div className="flex gap-2">
           <div className="w-[48px] h-[48px] rounded-lg border border-[#333741] flex items-center justify-center">
-            <img src={searchIcon} alt="Start a meeting" />
+            <img src={searchIcon} alt="Search icon" />
           </div>
           <div className='flex flex-col gap-2 flex-1'>
             <h1 className="font-semibold text-xl text-[#F5F5F6] flex items-center h-[48px]">AI-Powered Search & Prompts</h1>

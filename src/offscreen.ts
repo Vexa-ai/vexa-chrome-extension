@@ -52,9 +52,8 @@ let queueInterval = setInterval(() => {
     }).then((res) => {
 
       if (!(res.status < 400)) {
-        if (res.status === 401) {
-          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
-        }
+        stopRecording();
+        messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED, data: { code: res.status } });
         return;
       }
       currentChunkBeingSent = null;
@@ -219,10 +218,9 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
     fetch(transcriptionURL, {
       method: 'GET',
     }).then(async res => {
-      if (!(res.status < 401)) {
-        if (res.status === 401) {
-          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
-        }
+      if (!(res.status < 400)) {
+        stopRecording();
+        messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED, data: { code: res.status } });
         return;
       }
       const transcripts = await res.json();
@@ -248,6 +246,7 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
 
 async function stopRecording() {
   isDebugMode = false;
+  queue.length = 0;
   messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
   return true;
 }

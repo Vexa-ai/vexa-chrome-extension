@@ -16,9 +16,9 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
   const formRef = useRef<HTMLFormElement>(null);
 
   const [suggestions, setSuggestions] = useState<string[]>([
-    'First suggestion value',
-    'Second suggested value to show',
-    'Third suggested value to display'
+    'Write key points from Competitor Analysis Report ',
+    'Summarize what was discussed',
+    'List key issues discussed',
   ]);
 
   const handlePromptSubmit = async (evt) => {
@@ -27,7 +27,10 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
       return;
     }
     const promptText = promptInputRef.current.value;
-    onEnter(promptText);
+    const canClearField = await onEnter(promptText);
+    if (canClearField && promptInputRef.current) {
+      promptInputRef.current.value = '';
+    }
   };
 
   const handleSuggestionSelection = (index: number) => {
@@ -43,8 +46,8 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
   }, [clearField, setClearField]);
 
   return <div className={`AssistantInput mt-auto ${className}`}>
-    <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/>
-    <form ref={formRef} onSubmit={handlePromptSubmit} className="flex gap-1">
+    {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
+    <form autoComplete="off" ref={formRef} onSubmit={handlePromptSubmit} className="flex gap-1">
       <input ref={promptInputRef} type="text" placeholder='Start typing...' className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2" name='assistant-input' />
       <button ref={submitBtnRef} disabled={!!promptInputRef.current?.value?.trim()} type='submit'>
         <img src={vexaLogoIcon} alt="" />

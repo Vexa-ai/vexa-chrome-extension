@@ -5,6 +5,8 @@ import './VexaPlayButton.scss';
 import { useAudioCapture } from '~shared/hooks/use-audiocapture';
 import { useStorage } from '@plasmohq/storage/hook';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
+import { getIdFromUrl } from '~shared/helpers/meeting.helper';
+import { consoleDebug } from '~shared/helpers/utils.helper';
 
 export interface VexaPlayButtonProps {
   [key: string]: any;
@@ -13,7 +15,17 @@ export interface VexaPlayButtonProps {
 export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   const audioCapture = useAudioCapture();
   const [selectedMicrophone] = StorageService.useHookStorage(StoreKeys.SELECTED_MICROPHONE);
-  const startCapture = () => {
+  const meetingId = getIdFromUrl(location.href);
+  const startCapture = (evt) => {
+    if (evt.ctrlKey && evt.shiftKey) {
+      console.debug('%c Debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
+      return audioCapture.startAudioCapture(true);
+    }
+    if (evt.ctrlKey && evt.altKey) {
+      console.debug('%c Video debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
+      return audioCapture.startAudioCapture(false, true);
+    }
+    consoleDebug('Recording started');
     audioCapture.startAudioCapture();
   }
 
@@ -21,10 +33,10 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   }, [selectedMicrophone]);
 
   return <div {...rest} className='VexaPlayButton'>
-    <button disabled={!selectedMicrophone} onClick={startCapture} className='bg-[#9E77ED] hover:bg-[#b492f8] disabled:bg-[#CECFD2] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white'>
+    <button disabled={!selectedMicrophone || !meetingId} onClick={startCapture} className='bg-[#9E77ED] hover:bg-[#b492f8] disabled:bg-[#CECFD2] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white'>
       <img alt='' className='w-5 h-5' src={playIcon} />
       <span>Start recording</span>
     </button>
-    
+
   </div>;
 }

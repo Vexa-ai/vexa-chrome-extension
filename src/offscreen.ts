@@ -1,13 +1,83 @@
-import { Storage } from "@plasmohq/storage";
 import { MessageListenerService, MessageType } from "~lib/services/message-listener.service";
 import { MessageSenderService } from "~lib/services/message-sender.service";
-import { StorageService, StoreKeys } from "~lib/services/storage.service";
-const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
-MessageListenerService.initializeListenerService();
 
+const VOLUME_PROCESSOR_PATH = chrome.runtime.getURL('js/volume-processor.js');
+
+export interface AudioChunkEntry {
+  chunk: string;
+  chunkType: string;
+  bufferChunkData: ArrayBuffer;
+  bufferString: string;
+  connectionId: string;
+  chrome_domain: string;
+  main_domain: string;
+  token: string;
+  url: string;
+  meetingId: string;
+  isDebug: boolean;
+  countIndex: number;
+  tab: chrome.tabs.Tab;
+  chunkBufferBlob: Blob;
+}
+
+const queue: AudioChunkEntry[] = [];
+let messagesCounter = 1;
+let currentChunkBeingSent: AudioChunkEntry = null;
+let queueInterval = setInterval(() => {
+  if (currentChunkBeingSent) {
+    return;
+  }
+
+  function sentNextChunk() {
+    if (queue.length === 0) {
+      return;
+    }
+
+    currentChunkBeingSent = queue.shift();
+
+    if (!currentChunkBeingSent) return;
+    const { chunkBufferBlob, chunkType, connectionId, chrome_domain, token, main_domain, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
+    if (chunkBufferBlob.size === 0) {
+      currentChunkBeingSent = null;
+      return;
+    }
+    const audioURL = `${chrome_domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`;
+    messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: audioURL, destinationTabId: tab.id } });
+    fetch(audioURL, {
+      method: 'PUT',
+      body: chunkBufferBlob,
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      }
+    }).then((res) => {
+
+      if (!(res.status < 400)) {
+        if (res.status === 401) {
+          messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+        }
+        return;
+      }
+      currentChunkBeingSent = null;
+      messagesCounter++;
+
+      setTimeout(sentNextChunk, 200);
+      pollTranscript(main_domain, meetingId, token, tab.id);
+    }).catch(() => {
+      queue.unshift(currentChunkBeingSent);
+      currentChunkBeingSent = null;
+    });
+  }
+  sentNextChunk();
+}, 1000);
+
+MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
 let recorder: MediaRecorder = null;
 let streamsToClose: MediaStream[] = [];
+let lastValidTranscriptTimestamp = null;
+let lastMeetingId = '';
+let isDebugMode = false;
+const blobChunks: AudioChunkEntry[] = [];
 
 let audioContext: AudioContext;
 
@@ -28,71 +98,62 @@ async function getMicDeviceIdByLabel(micLabel, tab?) {
   }
 }
 
-
 let micCheckStopper = () => {
 };
 
-MessageListenerService.registerMessageListener(MessageType.REQUEST_MEDIA_DEVICES, async (evtData, sender, sendResponse) => {
-  try {
-    await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    navigator.mediaDevices.enumerateDevices().then(devices => {
-      messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices } })
-    }).catch(error => console.error('Error getting available microphones:', error));
-  } catch (error) {
-    if (error.message === 'Permission dismissed') {
-      messageSender.sendBackgroundMessage({ type: MessageType.OPEN_SETTINGS })
-    }
-    console.log('Failed to get media permissions', error);
-    // sendResponse([]);
-    messageSender.sendSidebarMessage({ type: MessageType.MEDIA_DEVICES, data: { devices: [] } })
-  }
-});
 
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
   try {
-    console.log('Starting mic stream');
     const micLabel: string = evtData.data.micLabel;
-    micCheckStopper(); // Stop previous checker
+    micCheckStopper();
     const deviceId = await getMicDeviceIdByLabel(micLabel, sender.tab);
-  
+
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { deviceId: { exact: deviceId } },
     });
-  
+
     audioContext = new AudioContext();
-    console.log("Creating processor", VOLUME_PROCESSOR_PATH);
-    await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH); // Load the audio worklet processor
+    await audioContext.resume();
+    await audioContext.audioWorklet.addModule(VOLUME_PROCESSOR_PATH);
     const microphone = audioContext.createMediaStreamSource(stream);
-    const volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
-    microphone.connect(volumeProcessorNode).connect(audioContext.destination);
-  
+    // DOMException: Failed to construct 'AudioWorkletNode': AudioWorkletNode cannot be created: No execution context available.
+    let volumeProcessorNode: AudioWorkletNode;
+    try {
+      volumeProcessorNode = new AudioWorkletNode(audioContext, 'volume-processor');
+      microphone.connect(volumeProcessorNode).connect(audioContext.destination);
+    } catch (error) {
+
+    }
+
     const micLevelAccumulator = new Array(100);
     let pointer = 0;
     const ACC_CAPACITY = 50;
-    volumeProcessorNode.port.onmessage = (event) => {
-      // pointer = (pointer + 1) % 100;
-      micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
-      pointer++;
-    };
-  
+
+    if (volumeProcessorNode) {
+      volumeProcessorNode.port.onmessage = (event) => {
+        micLevelAccumulator[pointer % ACC_CAPACITY] = +event.data;
+        pointer++;
+      };
+    }
+
+
     const _interval = setInterval(() => {
       const level = micLevelAccumulator.reduce((a, b) => +a + +b, 0) / (ACC_CAPACITY / 10);
-      messageSender.sendSidebarMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer } })
+      messageSender.sendBackgroundMessage({ type: MessageType.MIC_LEVEL_STREAM_RESULT, data: { level, pointer, tab: sender.tab } })
     }, 150);
-  
+
     micCheckStopper = async () => {
-      console.log("Kill checker");
-      if (audioContext) {
-        await audioContext.close(); // Close any existing audio context
+      if (audioContext && audioContext.state !== 'closed') {
+        await audioContext.close();
       }
       microphone.disconnect();
-      volumeProcessorNode.disconnect();
+      if (volumeProcessorNode) {
+        volumeProcessorNode.disconnect();
+      }
+
       clearInterval(_interval);
     };
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     stopRecording();
   }
@@ -106,142 +167,89 @@ MessageListenerService.registerMessageListener(MessageType.RESUME_RECORDING, asy
   sendResponse(unpauseRecording());
 });
 
-MessageListenerService.registerMessageListener(MessageType.START_RECORDING, async (message, sender, sendResponse) => {
-  sendResponse(startRecording(message.data.micLabel, message.data.streamId, message.data.connectionId, message.data.meetingId, message.data.token, message.data.domain, message.data.tabId));
-});
-
 MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender, sendResponse) => {
   stopRecording();
 });
 
-let timestamp;
-let counter;
-
-async function startRecording(micLabel, streamId, connectionId, meetingId, token, domain, tabId) {
-  let deviceId;
-  try {
-    deviceId = await getMicDeviceIdByLabel(micLabel);
-  } catch (e) {
-    console.log("Get mic", e);
-
-    throw e;
+function base64ToArrayBuffer(base64) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
+  return bytes.buffer;
+}
 
-  if (!streamId || recorder?.state === 'recording') {
+MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
+  const chunkBuffer = base64ToArrayBuffer(message.data.chunk);
+  const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, message.data.chunkType);
+  if (isDebugMode) {
+    const audioUrl = URL.createObjectURL(chunkBufferBlob);
+    const audio = new Audio(audioUrl);
+    audio.play().then(() => {
+      sendResponse({ status: 'playing' });
+    }).catch(error => {
+      console.error('Error playing audio:', error);
+      sendResponse({ status: 'error', error });
+    });
     return;
   }
 
-  try {
-    let isStopped = false;
+  message.data['tab'] = sender.tab;
+  message.data['chunkBufferBlob'] = chunkBufferBlob;
+  queue.push(message.data);
+  console.log(queue.map(el => el.countIndex));
+});
 
-    timestamp = Math.floor((new Date()).getTime() / 1000);
-    counter = 1;
-
-    let combinedStream = await getCombinedStream(deviceId, streamId);
-    if (!combinedStream) {
-      return;
-    }
-
-    recorder = new MediaRecorder(combinedStream, {
-      mimeType: 'audio/webm;codecs=opus',
-    });
-
-
-    let i = 0;
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        const timestamp = new Date();
-        fetch(`${domain}/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${i++}`, {
-          method: 'PUT',
-          body: event.data,
-          headers: {
-            'Content-Type': 'application/octet-stream'
-          }
-        }).then(response => {
-          if(!(response.status < 401)) {
-            if (response.status === 401) {
-              messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
-            }
-            return;
-          }
-          pollTranscript(meetingId, token, timestamp);
-        }, error => {
-          debugger;
-        });
-      }
-    };
-
-    recorder.onerror = (error) => {
-      console.log("Error", error);
-      messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'An error occured' } })
-    };
-
-    recorder.onstop = () => {
-      recorder = null;
-      window.location.hash = '';
-      isStopped = true;
-      messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' }  })
-
-    }
-
-    recorder.start(3000);
-    // window.location.hash = 'recording';
-    console.log('Updating state')
-    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_STARTED, data: { tabId } })
-
-    return true;
-  } catch (error) {
-    console.log(error)
-    await stopRecording();
-  }
-
-  return false;
+function arrayBufferToBlob(arrayBuffer: ArrayBuffer, mimeType: string): Blob {
+  return new Blob([arrayBuffer], { type: mimeType });
 }
 
-async function pollTranscript(meetingId: string, token: string, timestamp = new Date()) {
-  timestamp.setMinutes(timestamp.getMinutes() - 5);
-  setTimeout(() => {
-    fetch(`${process.env.PLASMO_PUBLIC_MAIN_AWAY_BASE_URL}/api/v1/transcription?meeting_id=${meetingId}&token=${token}`, {
-    method: 'GET',
+
+async function pollTranscript(main_domain: string, meetingId: string, token: string, tabId: chrome.tabs.Tab['id']) {
+  if (meetingId !== lastMeetingId) {
+    lastMeetingId = meetingId;
+    lastValidTranscriptTimestamp = null;
+  }
+  setTimeout(async () => {
+    console.log('current lastValidTranscriptTimestamp: ', lastValidTranscriptTimestamp)
+    const transcriptionURL = `${main_domain}/api/v1/transcription?meeting_id=${meetingId}&token=${token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
+    messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
+    fetch(transcriptionURL, {
+      method: 'GET',
     }).then(async res => {
-      if(!(res.status < 401)) {
+      if (!(res.status < 401)) {
         if (res.status === 401) {
           messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
         }
         return;
       }
       const transcripts = await res.json();
-      messageSender.sendSidebarMessage({ 
-        type: MessageType.TRANSCRIPTION_RESULT, 
-        data: transcripts,
+      console.log({ transcripts });
+      if (transcripts && transcripts.length) {
+        const dateBackBy5Minute = new Date(transcripts[transcripts.length - 1].timestamp);
+        dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
+        lastValidTranscriptTimestamp = dateBackBy5Minute;
+        console.log('next lastValidTranscriptTimestamp: ', lastValidTranscriptTimestamp);
+      }
+      messageSender.sendBackgroundMessage({
+        type: MessageType.OFFSCREEN_TRANSCRIPTION_RESULT,
+        data: {
+          transcripts,
+          tabId,
+        },
       });
     }, error => {
-      console.log(error);
-      debugger;
     });
   }, 1500);
-  
+
 }
 
 async function stopRecording() {
-  try {
-    if (["recording", "paused"].includes(recorder?.state)) {
-      recorder.stop(); // WS disconnect after recorder stop
-      recorder.stream.getTracks().forEach(t => t.stop());
-
-      streamsToClose.forEach(stream => {
-        stream.getTracks().forEach(track => track.stop());
-      })
-    }
-    window.location.hash = '';
-    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
-
-    return true;
-  } catch (e) {
-    console.log(e)
-    messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: e?.message } })
-  }
-  return false;
+  isDebugMode = false;
+  messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
+  return true;
 }
 
 async function pauseRecording() {
@@ -256,52 +264,4 @@ async function unpauseRecording() {
   return true;
 }
 
-
-const getCombinedStream = async (deviceId, streamId) => {
-  // Capturing microphone and tab audio
-  const microphone = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
-  });
-
-  const streamOriginal = await navigator.mediaDevices.getUserMedia({
-    audio: {mandatory: {chromeMediaSource: "tab", chromeMediaSourceId: streamId}},
-  } as any);
-
-  streamsToClose = [microphone, streamOriginal];
-
-  // Making original sound available in the tab
-  const context = new AudioContext();
-  const stream = context.createMediaStreamSource(streamOriginal);
-  stream.connect(context.destination);
-
-
-  // Merging stream together
-  const audioContext = new AudioContext();
-  const audioSources = [];
-
-  const gainNode = audioContext.createGain();
-  gainNode.connect(audioContext.destination);
-  gainNode.gain.value = 0; // don't hear self
-
-  let audioTracksLength = 0;
-  [microphone, streamOriginal].forEach(function (stream) {
-    if (!stream.getTracks().filter(function (t) {
-      return t.kind === 'audio';
-    }).length) {
-      return;
-    }
-
-    audioTracksLength++;
-
-    let audioSource = audioContext.createMediaStreamSource(stream);
-    audioSource.connect(gainNode);
-    audioSources.push(audioSource);
-  });
-
-  const audioDestination = audioContext.createMediaStreamDestination();
-  audioSources.forEach(function (audioSource) {
-    audioSource.connect(audioDestination);
-  });
-  return audioDestination.stream;
-};
 

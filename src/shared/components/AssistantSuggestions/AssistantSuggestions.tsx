@@ -8,16 +8,17 @@ export interface AssistantSuggestionsProps {
 }
 
 export function AssistantSuggestions({ suggestions = [], selectSuggestion }: AssistantSuggestionsProps) {
-
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [startX, setStartX] = useState<number>(0);
   const [scrollLeft, setScrollLeft] = useState<number>(0);
+  const [dragged, setDragged] = useState<boolean>(false);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
     setStartX(e.pageX - suggestionsRef.current!.offsetLeft);
     setScrollLeft(suggestionsRef.current!.scrollLeft);
+    setDragged(false);
   };
 
   const handleMouseUp = () => {
@@ -28,6 +29,9 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     if (!isDragging) return;
     const x = e.pageX - suggestionsRef.current!.offsetLeft;
     const walk = x - startX;
+    if (Math.abs(walk) > 5) {
+      setDragged(true);
+    }
     suggestionsRef.current!.scrollLeft = scrollLeft - walk;
   };
 
@@ -35,6 +39,7 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     setIsDragging(true);
     setStartX(e.touches[0].pageX - suggestionsRef.current!.offsetLeft);
     setScrollLeft(suggestionsRef.current!.scrollLeft);
+    setDragged(false);
   };
 
   const handleTouchEnd = () => {
@@ -45,22 +50,43 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     if (!isDragging) return;
     const x = e.touches[0].pageX - suggestionsRef.current!.offsetLeft;
     const walk = x - startX;
+    if (Math.abs(walk) > 5) {
+      setDragged(true);
+    }
     suggestionsRef.current!.scrollLeft = scrollLeft - walk;
   };
 
-  return <div className='AssistantSuggestions flex w-full overflow-x-auto' ref={suggestionsRef}
-    onMouseDown={handleMouseDown}
-    onMouseUp={handleMouseUp}
-    onMouseLeave={handleMouseUp}
-    onMouseMove={handleMouseMove}
-    onTouchStart={handleTouchStart}
-    onTouchEnd={handleTouchEnd}
-    onTouchMove={handleTouchMove}>
-    <div className='flex gap-2 min-w-[180%] overflow-x-auto mb-2'>
-      {suggestions.map((suggestion, key) => <div onClick={() => selectSuggestion(key)} className={`suggestion select-none p-1 w-[66.66%] border border-[#333741] rounded font-medium text-[#F5F5F6] ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`} key={key}>
-        {suggestion}
-      </div>)}
-    </div>
+  const handleClick = (index: number) => {
+    if (!dragged) {
+      selectSuggestion(index);
+    }
+  };
 
-  </div>;
+  return (
+    <div
+      className='AssistantSuggestions flex w-full overflow-x-hidden'
+      ref={suggestionsRef}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+    >
+      <div className='flex gap-2 min-w-[180%] overflow-x-auto mb-2'>
+        {suggestions.map((suggestion, key) => (
+          <div
+            onClick={() => handleClick(key)}
+            className={`suggestion select-none p-1 w-[66.66%] border border-[#333741] rounded font-medium text-[#F5F5F6] ${
+              isDragging ? 'cursor-grabbing' : 'cursor-pointer'
+            } ${key === suggestions.length - 1 ? 'mr-7' : ''}`}
+            key={key}
+          >
+            {suggestion}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

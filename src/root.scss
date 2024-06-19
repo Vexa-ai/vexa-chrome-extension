@@ -1,19 +1,69 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-    font-family: 'Inter', sans-serif;
+#plasmo-shadow-container {
+    & > div {
+        left: unset !important;
+        right: 0 !important;
+    }
+}
+
+#vexa-content-ui {
+ &.youtube {
+    font-size: 1.44rem;
+
+    // :root {
+        --base-font-size: 16px; /* Default base font size */
+        --base-spacing: 1rem; /* Default base spacing */
+    //   }
+
+    .text-base {
+        font-size: 1.5rem !important;
+        line-height: 2rem !important;
+    }
+
+    .h-9 {
+        height: 35.9896px !important;
+    }
+
+    .VexaToolbar {
+        font-size: 14.4px !important;
+    }
+
+    .VexaPauseButton > div{
+        padding: 8px !important;
+        height: auto !important;
+
+        button {
+            @apply p-2 #{!important};
+        }
+    }
+
+    .VexaMinimizeButton img {
+        height: 20px;
+        width: 20px;
+    }
+ }
+}
+
+#vexa-content-div {
+    position: fixed;
+    width: 400px;
+    height: calc(100vh - 32px) !important;
+    min-height: 500px;
+    top: 0;
     overflow: hidden;
+    right: 0;
+    
     @apply bg-slate-950;
     // scrollbar-gutter: stable;
 
     * {
+        font-family: 'Inter', sans-serif !important;
 
         ::-webkit-scrollbar {
-            display: none;
+            // display: auto;
         }
 
         ::-webkit-scrollbar {

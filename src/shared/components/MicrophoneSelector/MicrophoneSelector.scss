@@ -1,29 +1,4 @@
 .MicrophoneSelector {
-  .react-dropdown-select-dropdown {
-    @apply rounded-lg p-1 bg-slate-950 border-[#333741] #{!important};
-
-    /* width */
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    /* Track */
-    &::-webkit-scrollbar-track {
-      background: #0C111D;
-      border-radius: 4px;
-    }
-
-    /* Handle */
-    &::-webkit-scrollbar-thumb {
-      background: #272829;
-      border-radius: 4px;
-    }
-
-    /* Handle on hover */
-    &::-webkit-scrollbar-thumb:hover {
-      background: #333741;
-    }
-  }
 
   .react-dropdown-select-content {
     @apply block overflow-hidden;
@@ -32,5 +7,38 @@
   .react-dropdown-select-dropdown-handle {
     margin: 0 8px;
     color: #94969C;
+  }
+
+  .CustomSelect {
+    .custom--dropdown-container {
+      @apply border-[#333741] #{!important};
+
+      .dropdown-menu {
+        @apply bg-slate-950 border-[#1F242F] shadow-md #{!important};
+        @apply rounded-lg p-1 bg-slate-950 border-[#333741] #{!important};
+
+        /* width */
+        &::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        /* Track */
+        &::-webkit-scrollbar-track {
+          background: #0C111D;
+          border-radius: 4px;
+        }
+
+        /* Handle */
+        &::-webkit-scrollbar-thumb {
+          background: #272829;
+          border-radius: 4px;
+        }
+
+        /* Handle on hover */
+        &::-webkit-scrollbar-thumb:hover {
+          background: #333741;
+        }
+      }
+    }
   }
 }

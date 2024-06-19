@@ -1,14 +1,28 @@
-import React from 'react';
+import React, { type MutableRefObject } from 'react';
 
 import './VexaToolbar.css';
 import { AudioRecordingControlButton } from '../AudioRecordingControlButton';
 import { VexaLogo } from '../VexaLogo';
+import { VexaMinimizeButton } from '../VexaMinimizeButton';
+import { VexaDragHandle } from '../VexaDragHandle';
 
-export interface VexaToolbarProps {}
+export interface VexaToolbarProps {
+  toolbarRef?: MutableRefObject<any>;
+  onDragHandleMouseOut: () => void;
+  onDragHandleMouseUp: () => void;
+  onDragHandleMouseOver: () => void;
+  [key: string]: any;
+}
 
-export function VexaToolbar({}: VexaToolbarProps) {
-  return <div className='VexaToolbar flex flex-row w-full h-9 mb-3'>
+export function VexaToolbar({ toolbarRef, onDragHandleMouseOut = () => {}, onDragHandleMouseUp = () => {}, onDragHandleMouseOver = () => {}, ...rest }: VexaToolbarProps) {
+  
+  return <div ref={toolbarRef} {...rest} className='VexaToolbar flex flex-row w-full h-9 mb-3 items-center'>
+    <VexaDragHandle className='items-center mr-1 cursor-move' onHandleMouseOut={onDragHandleMouseOut} onHandleMouseUp={onDragHandleMouseUp} onHandleMouseOver={onDragHandleMouseOver} />
     <VexaLogo />
-    <AudioRecordingControlButton className='ml-auto h-auto'/>
+    <div className='ml-auto gap-2 flex'>
+      <VexaMinimizeButton />
+      <AudioRecordingControlButton className='h-auto'/>
+    </div>
+    
   </div>;
 }

@@ -23,6 +23,7 @@ export interface AudioChunkEntry {
 const queue: AudioChunkEntry[] = [];
 let messagesCounter = 1;
 let currentChunkBeingSent: AudioChunkEntry = null;
+let recordingStopped = true;
 let queueInterval = setInterval(() => {
   if (currentChunkBeingSent) {
     return;
@@ -101,7 +102,7 @@ let micCheckStopper = () => {
 };
 
 
-MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender, sendResponse) => {
+MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender) => {
   try {
     const micLabel: string = evtData.data.micLabel;
     micCheckStopper();
@@ -158,15 +159,7 @@ MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREA
   }
 });
 
-MessageListenerService.registerMessageListener(MessageType.PAUSE_RECORDING, async (message, sender, sendResponse) => {
-  sendResponse(pauseRecording());
-});
-
-MessageListenerService.registerMessageListener(MessageType.RESUME_RECORDING, async (message, sender, sendResponse) => {
-  sendResponse(unpauseRecording());
-});
-
-MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender, sendResponse) => {
+MessageListenerService.registerMessageListener(MessageType.STOP_RECORDING, async (message, sender) => {
   stopRecording();
 });
 
@@ -180,23 +173,25 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender, sendResponse) => {
+MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIVED, async (message, sender) => {
   const chunkBuffer = base64ToArrayBuffer(message.data.chunk);
   const chunkBufferBlob = arrayBufferToBlob(chunkBuffer, message.data.chunkType);
   if (isDebugMode) {
     const audioUrl = URL.createObjectURL(chunkBufferBlob);
     const audio = new Audio(audioUrl);
     audio.play().then(() => {
-      sendResponse({ status: 'playing' });
     }).catch(error => {
       console.error('Error playing audio:', error);
-      sendResponse({ status: 'error', error });
     });
     return;
   }
 
   message.data['tab'] = sender.tab;
   message.data['chunkBufferBlob'] = chunkBufferBlob;
+  if(recordingStopped) {
+    queue.length = 0;
+    recordingStopped = false;
+  }
   queue.push(message.data);
   console.log(queue.map(el => el.countIndex));
 });
@@ -246,21 +241,17 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
 
 async function stopRecording() {
   isDebugMode = false;
+  recordingStopped = true;
   queue.length = 0;
   messageSender.sendBackgroundMessage({ type: MessageType.ON_RECORDING_END, data: { message: 'Recording stopped' } })
-  return true;
 }
 
 async function pauseRecording() {
   recorder.pause();
-
-  return true;
 }
 
 async function unpauseRecording() {
   recorder.resume();
-
-  return true;
 }
 
 

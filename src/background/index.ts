@@ -37,6 +37,7 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
     const capturingTabId = await StorageService.get(StoreKeys.CAPTURED_TAB_ID);
     if (capturingTabId && capturingTabId === tabId) {
         messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+        messageSender.sendOffscreenMessage({ type: MessageType.STOP_RECORDING });
     }
 });
 
@@ -116,6 +117,7 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED,
 MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (message) => {
     console.log('Stopping recording');
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+    messageSender.sendOffscreenMessage({ type: MessageType.STOP_RECORDING });
     StorageService.set<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
         __vexa_main_domain: "",
@@ -136,7 +138,7 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
     consoleDebug(evt.data.url);
 });
 
-MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender, sendResponse) => {
+MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender) => {
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
         __vexa_main_domain: "",
@@ -155,11 +157,10 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQ
             });
         }, err => {
             console.error(err);
-            sendResponse(null);
         });
 });
 
-MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender, sendResponse) => {
+MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender) => {
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
         __vexa_main_domain: "",
@@ -188,11 +189,10 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         });
     }, err => {
         console.error(err);
-        sendResponse(null);
     });
 });
 
-MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_HISTORY_REQUEST, async (message, sender, sendResponse) => {
+MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_HISTORY_REQUEST, async (message, sender) => {
     const meetingId = message.data.meetingId || '';
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
@@ -201,11 +201,13 @@ MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_HISTORY
     });
     const transcriptionURL = `${authData.__vexa_main_domain}/api/v1/transcription?meeting_id=${meetingId}&token=${authData.__vexa_token}`;
     messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
+    messageSender.sendOffscreenMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: transcriptionURL } });
     fetch(transcriptionURL, {
         method: 'GET',
     }).then(async res => {
         if (!(res.status < 400)) {
             messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+            messageSender.sendOffscreenMessage({ type: MessageType.USER_UNAUTHORIZED });
             return;
         }
         const transcripts = await res.json();
@@ -238,6 +240,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                 if (chrome.runtime.lastError) {
                     console.error(chrome.runtime.lastError.message);
                     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+                    messageSender.sendOffscreenMessage({ type: MessageType.STOP_RECORDING });
                     return;
                 }
             } catch (error) {
@@ -265,6 +268,7 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
 chrome.runtime.onInstalled.addListener(async () => {
     setTimeout(async () => {
         await messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
+        messageSender.sendOffscreenMessage({ type: MessageType.STOP_RECORDING });
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
             __vexa_token: "",
             __vexa_main_domain: "",

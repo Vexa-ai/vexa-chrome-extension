@@ -43,12 +43,12 @@ export class MessageListenerService {
     }
 
     private static registerExtensionMessageEvents() {
-        chrome.runtime.onMessage.addListener((request: { type: StoreKeys, data: any}, sender, sendResponse) => {
+        chrome.runtime.onMessage.addListener((request: { type: StoreKeys, data: any}, sender) => {
             if(request.type && MessageListenerService.messages[request.type]) {
                 const registeredListeners = MessageListenerService.messages[request.type];
                 for(const key in registeredListeners) {
                     if(typeof registeredListeners?.[key]?.handler === 'function') {
-                        registeredListeners[key].handler(request, sender, sendResponse); // TODO: Add optional sendresponse handling
+                        registeredListeners[key].handler(request, sender); // TODO: Add optional sendresponse handling
                     }
                     // return true;
                 }

@@ -78,7 +78,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
 
   useEffect(() => {
     setTranscripts(transcriptList);
-    getMeetingTranscriptHistory();
+    // getMeetingTranscriptHistory();
     return () => {
       MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
     };

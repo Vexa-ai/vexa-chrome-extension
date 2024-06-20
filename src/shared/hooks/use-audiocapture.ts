@@ -95,11 +95,7 @@ export const useAudioCapture = (): AudioCapture => {
             const systemZoom = width / window.screen.availWidth;
             const left = (width - 500) / 2 / systemZoom + dualScreenLeft
             const top = (height - 700) / 2 / systemZoom + dualScreenTop
-            const loginWindow = window.open(process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT, '__blank', `popup=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=500,height=700,top=${top},left=${left}`);
-            // loginWindow.addEventListener('logged-in', async (authData) => {
-            //     const updatedAuthData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
-            //     console.log({updatedAuthData});
-            // });
+            window.open(process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT, '__blank', `popup=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=500,height=700,top=${top},left=${left}`);
             return;
         }
 

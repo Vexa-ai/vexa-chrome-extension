@@ -6,11 +6,15 @@ import vexaBtnCss from 'data-text:./vexa-btn.scss';
 import { VexaIcon } from "~shared/components/VexaLogo/VexaIcon";
 import { createRoot } from "react-dom/client";
 import { StorageService, StoreKeys } from "../lib/services/storage.service";
+import { platform } from "os";
+import { Platform, getPlatform } from "~shared/helpers/is-recordable-platform.helper";
 
 const VexaBtn = () => {
     const [isMaximized, setIsMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE);
     const [isDragging, setIsDragging] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const platform = getPlatform();
+    const [isYoutubeEnabled] = StorageService.useHookStorage(StoreKeys.YOUTUBE_ENABLED, false);
     const defaultPosition = { x: 0, y: 0 };
     const [position, setPosition] = useState(defaultPosition);
 
@@ -71,7 +75,7 @@ const VexaBtn = () => {
     return (
         <>
             {
-                isReady && !isMaximized && (
+                (platform === Platform.YOUTUBE && isYoutubeEnabled || platform === Platform.MEET) && isReady && !isMaximized && (
                     <div onMouseOver={() => setIsDragging(false)} onMouseOut={() => setIsDragging(false)}>
                         <Draggable
                             position={position}

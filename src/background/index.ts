@@ -7,6 +7,11 @@ import { consoleDebug } from "~shared/helpers/utils.helper";
 
 let previousUrl = null;
 
+chrome.action.onClicked.addListener(async () => {
+    const youtubeEnabled = await StorageService.get(StoreKeys.YOUTUBE_ENABLED, false);
+    StorageService.set(StoreKeys.YOUTUBE_ENABLED, !youtubeEnabled);
+});
+
 chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
     if (previousUrl && previousUrl !== details.url) {
         const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
@@ -281,7 +286,6 @@ chrome.runtime.onInstalled.addListener(async () => {
         chrome.runtime.openOptionsPage();
         chrome.tabs.create({ url: process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT });
     }, 500);
-
 });
 createOffscreenDocument();
 resetRecordingState();

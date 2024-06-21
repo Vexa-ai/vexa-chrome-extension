@@ -20,3 +20,4 @@ export {VexaBuildInfo} from './VexaBuildInfo';
 export {TranscriptionCopyButton} from './TranscriptionCopyButton';
 export {VexaDragHandle} from './VexaDragHandle';
 export {BouncingDots} from './BouncingDots';
+export {SpeakerEditorModal} from './SpeakerEditorModal';

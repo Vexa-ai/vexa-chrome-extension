@@ -14,7 +14,7 @@ chrome.action.onClicked.addListener(async () => {
 
 chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
     if (previousUrl && previousUrl !== details.url) {
-        const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
+        const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
         if (regexPattern.test(details.url)) {
             chrome.tabs.reload(details.tabId);
         }
@@ -24,8 +24,8 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
 });
 
 chrome.webNavigation.onCompleted.addListener(details => {
-    const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
-    const meetRegex = /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
+    const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
+    const meetRegex = /^(?:https?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]{3,}(?:-[a-zA-Z0-9-]{4,})?(?:-[a-zA-Z0-9-]{3,})?)/; // /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
     if (previousUrl && previousUrl !== details.url) {
         if (youtubeRegexPattern.test(details.url) || meetRegex.test(details.url)) {
             resetRecordingState();

@@ -49,6 +49,16 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
     {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
     <form autoComplete="off" ref={formRef} onSubmit={handlePromptSubmit} className="flex gap-1">
       <input ref={promptInputRef} type="text" placeholder='Start typing...' className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2" name='assistant-input' />
+      {/* <textarea
+        ref={promptInputRef}
+        className="textarea"
+        value={value}
+        ref={textAreaRef}
+        onChange={(e) => {
+          setValue(e.target.value);
+          resizeTextArea();
+        }}
+      ></textarea> */}
       <button ref={submitBtnRef} disabled={!!promptInputRef.current?.value?.trim()} type='submit'>
         <img src={vexaLogoIcon} alt="" />
       </button>

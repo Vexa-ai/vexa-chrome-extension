@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MainContentView, MicrophoneOptions, VexaBuildInfo, VexaToolbar } from "~shared/components";
+import { MainContentView, MicrophoneOptions, SpeakerEditorModal, VexaBuildInfo, VexaToolbar } from "~shared/components";
 import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
 import { MessageSenderService } from "~lib/services/message-sender.service";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
@@ -84,6 +84,7 @@ const Vexa = () => {
                                     <VexaBuildInfo className="mx-auto mt-auto" />
                                 </>
                             }
+                            <SpeakerEditorModal />
                         </AudioCaptureContext.Provider>
                     </div>
                 </Draggable>)

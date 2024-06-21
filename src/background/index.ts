@@ -193,6 +193,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             data: responseJson || [],
         });
     }, err => {
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.ASSISTANT_PROMPT_ERROR });
         console.error(err);
     });
 });

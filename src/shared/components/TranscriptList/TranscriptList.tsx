@@ -94,9 +94,6 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
   return (
     <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full overflow-hidden group/transcript-container ${className}`}>
       <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
-        {transcripts.length === 0 && isCapturing && <div className="flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26]">
-          <BouncingDots />
-        </div>}
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
           <TranscriptionCopyButton className='rounded-lg' />
         </div>}
@@ -105,6 +102,9 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
             <TranscriptEntry speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
           </div>
         ))}
+        {isCapturing && <div className="flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26]">
+          <BouncingDots />
+        </div>}
       </div>
     </div>
   );

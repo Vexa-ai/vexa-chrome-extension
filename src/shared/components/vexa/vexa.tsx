@@ -26,9 +26,9 @@ const Vexa = () => {
 
     const handleStop = (e: DraggableEvent, data: DraggableData) => {
         const { clientWidth, clientHeight } = document.documentElement;
-        const node = document.querySelector(".VexaToolbar");
+        const node = document.querySelector(".VexaDragHandle");
         const rect = node.getBoundingClientRect();
-        if (rect.right < 0 || (rect.top > clientHeight || rect.bottom < 0) || rect.left > clientWidth) {
+        if (rect.right < 10 || (rect.top > clientHeight - 20 || rect.bottom < 20) || rect.left > clientWidth - 20) {
             setPosition(defaultPosition);
         }
     };
@@ -45,10 +45,10 @@ const Vexa = () => {
         const handleResize = () => {
             if (isMaximized) {
                 const { clientWidth, clientHeight } = document.documentElement;
-                const node = document.querySelector(".VexaToolbar");
+                const node = document.querySelector(".VexaDragHandle");
                 if (node) {
                     const rect = node.getBoundingClientRect();
-                    if (rect.right < 0 || (rect.top > clientHeight || rect.bottom < 0) || rect.left > clientWidth) {
+                    if (rect.right < 10 || (rect.top > clientHeight || rect.bottom < 20) || rect.left > clientWidth - 20) {
                         setPosition(defaultPosition);
                     }
                 }

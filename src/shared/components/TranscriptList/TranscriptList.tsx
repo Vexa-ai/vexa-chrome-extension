@@ -79,7 +79,14 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
   useEffect(() => {
     setTranscripts(transcriptList);
     // getMeetingTranscriptHistory();
+
+    MessageListenerService.unRegisterMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT);
+    MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT, (message) => {
+      console.log({message});
+      sendMessage(MessageType.SPEAKER_EDIT_COMPLETE, message);
+    });
     return () => {
+      MessageListenerService.unRegisterMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT);
       MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
     };
   }, []);
@@ -95,7 +102,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
         </div>}
         {transcripts.map((transcript, index) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
-            <TranscriptEntry timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
+            <TranscriptEntry speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
           </div>
         ))}
       </div>

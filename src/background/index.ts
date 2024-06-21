@@ -270,6 +270,34 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
     });
 });
 
+MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_REQUEST, async (message, sender) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    const { speaker_id, alias } = message.data;
+    const speakerRenameUrl = `${authData.__vexa_main_domain}/api/v1/speakers/add-alias?token=${authData.__vexa_token}`;
+    fetch(speakerRenameUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({speaker_id, alias})
+    }).then(async res => {
+        if (!(res.status < 400)) {
+            messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+            messageSender.sendOffscreenMessage({ type: MessageType.USER_UNAUTHORIZED });
+            return;
+        }
+        const result = await res.json();
+        console.log({result});
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.UPDATE_SPEAKER_NAME_RESULT, data: { speaker_id, alias } })
+    }, error => {
+        console.error(error);
+    });
+});
+
 chrome.runtime.onInstalled.addListener(async () => {
     setTimeout(async () => {
         await messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });

@@ -9,6 +9,7 @@ import { MessageType } from '~lib/services/message-listener.service';
 
 export interface TranscriptEntryProps {
   speaker: string;
+  speaker_id: string;
   text: string;
   timestamp: string;
 }
@@ -17,6 +18,7 @@ export interface TranscriptionEntryData {
   content: string;
   keywords: string[];
   speaker: string;
+  speaker_id: string;
   timestamp: string;
 }
 
@@ -39,11 +41,11 @@ function formatDateString(timestamp: string): string {
 }
 
 
-export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryProps) {
+export function TranscriptEntry({ speaker, text, speaker_id, timestamp }: TranscriptEntryProps) {
   const formattedTimestamp = formatDateString(timestamp);
 
   const editSpeaker = () => {
-    sendMessage(MessageType.SPEAKER_EDIT_START, { speaker })
+    sendMessage(MessageType.SPEAKER_EDIT_START, { speaker, speaker_id })
   };
 
   const copyTranscript = () => {

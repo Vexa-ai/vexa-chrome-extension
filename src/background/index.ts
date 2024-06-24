@@ -14,7 +14,7 @@ chrome.action.onClicked.addListener(async () => {
 
 chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
     if (previousUrl && previousUrl !== details.url) {
-        const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
+        const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
         if (regexPattern.test(details.url)) {
             chrome.tabs.reload(details.tabId);
         }
@@ -24,8 +24,8 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
 });
 
 chrome.webNavigation.onCompleted.addListener(details => {
-    const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9]+)$/;
-    const meetRegex = /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
+    const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
+    const meetRegex = /^(?:https?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]{3,}(?:-[a-zA-Z0-9-]{4,})?(?:-[a-zA-Z0-9-]{3,})?)/; // /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
     if (previousUrl && previousUrl !== details.url) {
         if (youtubeRegexPattern.test(details.url) || meetRegex.test(details.url)) {
             resetRecordingState();
@@ -193,6 +193,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             data: responseJson || [],
         });
     }, err => {
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.ASSISTANT_PROMPT_ERROR });
         console.error(err);
     });
 });
@@ -267,6 +268,34 @@ MessageListenerService.registerMessageListener(MessageType.REQUEST_START_RECORDI
                 }
             });
         });
+    });
+});
+
+MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_REQUEST, async (message, sender) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    const { speaker_id, alias } = message.data;
+    const speakerRenameUrl = `${authData.__vexa_main_domain}/api/v1/speakers/add-alias?token=${authData.__vexa_token}`;
+    fetch(speakerRenameUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({speaker_id, alias})
+    }).then(async res => {
+        if (!(res.status < 400)) {
+            messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
+            messageSender.sendOffscreenMessage({ type: MessageType.USER_UNAUTHORIZED });
+            return;
+        }
+        const result = await res.json();
+        console.log({result});
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.UPDATE_SPEAKER_NAME_RESULT, data: { speaker_id, alias } })
+    }, error => {
+        console.error(error);
     });
 });
 

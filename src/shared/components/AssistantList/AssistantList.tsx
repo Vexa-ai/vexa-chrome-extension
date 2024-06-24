@@ -7,6 +7,7 @@ import { MessageListenerService, MessageType } from '~lib/services/message-liste
 import { MessageSenderService } from '~lib/services/message-sender.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
+import { BouncingDots } from '../BouncingDots/BouncingDots';
 
 export interface AssistantEntryData {
   current_chain: number;
@@ -34,6 +35,7 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
   const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE);
   const [responses, setResponses] = useState<AssistantEntryData[]>([]);
   const [clearField, setClearField] = useState<boolean>(false);
+  const [isPrompting, setIsPrompting] = useState<boolean>(false);
   const assistantListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
   const messageSender = new MessageSenderService();
@@ -45,6 +47,7 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
     newResponses[newResponses.length > 0 ? newResponses.length - 1 : 0] = response;
     setResponses(newResponses);
     setClearField(true);
+    setIsPrompting(false);
   });
 
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY);
@@ -68,8 +71,13 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
       console.log({ response, responseEntryData })
       setResponses(responseEntryData);
       setClearField(true);
+      setIsPrompting(false);
     }
+  });
 
+  MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_ERROR);
+  MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_ERROR, (message) => {
+    setIsPrompting(false);
   });
 
   const onPrompted = async (prompt: string) => {
@@ -85,9 +93,11 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
         }
       };
       setResponses([...responses, unRepliedMessageUnit]);
+      setIsPrompting(true);
       await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt } });
       return true;
     } catch (error) {
+      setIsPrompting(false);
       return false;
     }
   }
@@ -95,6 +105,7 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
   useEffect(() => {
     if (typeof isMaximized === 'boolean' && isMaximized && isCapturing && !assistantList?.length) {
       messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST });
+      setIsPrompting(true);
     }
   }, [isMaximized]);
 
@@ -108,19 +119,26 @@ export function AssistantList({ assistantList = [], className = '', updatedAssis
   useEffect(() => {
     setResponses(assistantList);
     return () => {
+      setIsPrompting(false);
       MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
     }
   }, [])
 
   return <div ref={assistantListRef} className={`AssistantList flex flex-col mb-[60px] max-h-full w-full overflow-hidden ${className}`}>
-    {responses.length ? <div className="flex-grow overflow-y-auto">
-      {responses.map((entry, index) => (
-        <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>
-          {entry.user_message && <AssistantEntry entryData={entry.user_message} />}
-          {entry.assistant_message && <AssistantEntry entryData={entry.assistant_message} />}
-        </div>
-      ))}
-    </div> : null}
+    {
+      responses.length ? <div className="flex-grow overflow-y-auto">
+        {responses.map((entry, index) => (
+          <div key={index} ref={responses.length - 1 === index ? lastEntryRef : null}>
+            {entry.user_message && <AssistantEntry entryData={entry.user_message} />}
+            {entry.assistant_message && <AssistantEntry entryData={entry.assistant_message} />}
+          </div>
+        ))}
+      </div> : null
+    }
+    {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${responses.length ? '' : 'mt-2'}`}>
+      <BouncingDots />
+    </div>
+    }
     <AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute bottom-3' />
-  </div>;
+  </div >;
 }

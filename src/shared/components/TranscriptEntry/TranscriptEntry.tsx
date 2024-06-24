@@ -3,9 +3,13 @@ import './TranscriptEntry.scss';
 import { CopyButton } from '../CopyButton';
 import { LineWave, RotatingLines } from 'react-loader-spinner';
 import { BouncingDots } from '../BouncingDots';
+import { EditPenButton } from '../EditPenButton';
+import { sendMessage } from '~shared/helpers/in-content-messaging.helper';
+import { MessageType } from '~lib/services/message-listener.service';
 
 export interface TranscriptEntryProps {
   speaker: string;
+  speaker_id: string;
   text: string;
   timestamp: string;
 }
@@ -14,6 +18,7 @@ export interface TranscriptionEntryData {
   content: string;
   keywords: string[];
   speaker: string;
+  speaker_id: string;
   timestamp: string;
 }
 
@@ -36,8 +41,12 @@ function formatDateString(timestamp: string): string {
 }
 
 
-export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryProps) {
+export function TranscriptEntry({ speaker, text, speaker_id, timestamp }: TranscriptEntryProps) {
   const formattedTimestamp = formatDateString(timestamp);
+
+  const editSpeaker = () => {
+    sendMessage(MessageType.SPEAKER_EDIT_START, { speaker, speaker_id })
+  };
 
   const copyTranscript = () => {
     navigator.clipboard.writeText(text);
@@ -52,9 +61,14 @@ export function TranscriptEntry({ speaker, text, timestamp }: TranscriptEntryPro
           </span>
         </span>
         <div className='flex gap-2 mb-1 break-words items-center'>
-          <span className="font-semibold text-white select-text break-words">{speaker === 'TBD'
-            ? <BouncingDots />
-            : speaker}</span><span className='items-center text-xs select-text break-words'>{formattedTimestamp}</span>
+          <span className='flex gap-2 group/speaker-name'>
+            <span className={`font-semibold text-[#94969C] select-text break-words ${speaker !== 'TBD' && 'cursor-pointer'}`}>{speaker === 'TBD'
+              ? <BouncingDots />
+              : speaker}
+            </span>
+            {speaker !== 'TBD' && <EditPenButton onClick={editSpeaker} className='hidden group-hover/speaker-name:inline-block stroke-[#94969C]' />}
+          </span>
+          <span className='items-center text-[#94969C] text-xs select-text break-words ml-auto'>{formattedTimestamp}</span>
         </div>
         <p className='break-words select-text'>{text}</p>
       </div>

@@ -88,7 +88,7 @@ export function SpeakerEditorModal({ }: SpeakerEditorModalProps) {
                     onClick={updateSpeakerName}
                     className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#7F56D9] disabled:text-[#85888E] text-white text-center font-semibold text-base"
                   >
-                    {isUpdatingSpeakerName ? <BouncingDots className='h-[42px]' /> : 'Confirm'}
+                    {isUpdatingSpeakerName ? <BouncingDots className='py-[10px]' /> : 'Confirm'}
                   </button>
                   <button disabled={isUpdatingSpeakerName} onClick={closeModal} className="w-full p-2 rounded-md border border-[#333741] disabled:bg-[#1F242F] bg-[#161B26] text-[#CECFD2] text-center font-semibold text-base">
                     Cancel

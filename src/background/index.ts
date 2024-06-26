@@ -120,7 +120,6 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_STARTED,
     StorageService.set(StoreKeys.MIC_LEVEL_STATE, { level: 0, pointer: 0 });
 });
 MessageListenerService.registerMessageListener(MessageType.USER_UNAUTHORIZED, (message) => {
-    console.log('Stopping recording');
     messageSender.sendBackgroundMessage({ type: MessageType.STOP_RECORDING });
     messageSender.sendOffscreenMessage({ type: MessageType.STOP_RECORDING });
     StorageService.set<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
@@ -171,7 +170,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         __vexa_main_domain: "",
         __vexa_chrome_domain: "",
     });
-    const { prompt } = message.data;
+    const { prompt, chain = 1 } = message.data;
     fetch(`${authData.__vexa_main_domain}/api/v1/assistant/copilot?token=${authData.__vexa_token}`, {
         method: 'POST',
         headers: {
@@ -180,7 +179,40 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         body: JSON.stringify({
             content: prompt,
             meeting_id: getIdFromUrl(sender.tab.url),
-            chain: 0,
+            chain,
+        })
+    }).then(async res => {
+        if (!(res.status < 400)) {
+            messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
+            return;
+        }
+        const responseJson = await res.json();
+        messageSender.sendTabMessage(sender.tab, {
+            type: MessageType.ASSISTANT_PROMPT_RESULT,
+            data: responseJson || [],
+        });
+    }, err => {
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.ASSISTANT_PROMPT_ERROR });
+        console.error(err);
+    });
+});
+
+MessageListenerService.registerMessageListener(MessageType.FORK_MESSAGE_CHAIN, async (message, sender) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    const { prompt, chain } = message.data;
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/fork?token=${authData.__vexa_token}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            content: prompt,
+            meeting_id: getIdFromUrl(sender.tab.url),
+            chain,
         })
     }).then(async res => {
         if (!(res.status < 400)) {
@@ -292,7 +324,6 @@ MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_R
             return;
         }
         const result = await res.json();
-        console.log({result});
         messageSender.sendTabMessage(sender.tab, { type: MessageType.UPDATE_SPEAKER_NAME_RESULT, data: { speaker_id, alias } })
     }, error => {
         console.error(error);

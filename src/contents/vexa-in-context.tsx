@@ -11,14 +11,15 @@ import { createRoot } from "react-dom/client";
 import Vexa from "../shared/components/vexa/vexa";
 import { Platform, getPlatform } from "~shared/helpers/is-recordable-platform.helper";
 import { StorageService, StoreKeys } from "~lib/services/storage.service";
+import { MessageListenerService } from "~lib/services/message-listener.service";
 
 const VexaInMeetContext = () => {
   const platform = getPlatform();
   const [isYoutubeEnabled] = StorageService.useHookStorage(StoreKeys.YOUTUBE_ENABLED, false);
 
   useEffect(() => {
-    console.log({isYoutubeEnabled})
-  }, [isYoutubeEnabled]);
+    MessageListenerService.initializeListenerService();
+  }, []);
 
   return (
     <div id="vexa-content-ui" className={platform} style={{

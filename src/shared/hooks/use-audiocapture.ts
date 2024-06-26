@@ -8,7 +8,7 @@ import { downloadFileInContent } from '~shared/helpers/is-recordable-platform.he
 import { consoleDebug } from '~shared/helpers/utils.helper';
 
 export type AudioCaptureState = boolean;
-MessageListenerService.initializeListenerService();
+// MessageListenerService.initializeListenerService();
 
 let globalMediaRecorder: MediaRecorder;
 let globalStreamsToClose: MediaStream[] = [];
@@ -275,7 +275,6 @@ export const useAudioCapture = (): AudioCapture => {
 
         if (isVideoDebug) {
             videoOptions = JSON.parse(prompt("Video options", '{ "width": 1, "height": 1, "frameRate": 1 }'));
-            console.log({ videoOptions });
         }
         const deviceStream = await navigator.mediaDevices.getDisplayMedia({ video: videoOptions, audio: { echoCancellation: false }, preferCurrentTab: true } as any);
         const microphoneStream = await navigator.mediaDevices.getUserMedia({

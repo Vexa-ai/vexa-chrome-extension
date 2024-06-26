@@ -27,7 +27,7 @@ export function CustomSelect({
   selectedComponent: SelectedComponent = ({ value }) => <span>{value}</span>,
   options,
   isMulti,
-  isSearchable,
+  isSearchable = false,
   noOptionsComponent: NoOptionsComponent,
   keepOpen = false,
   selectedValue: initialValue,

@@ -18,11 +18,9 @@ export const getPlatform = (): Platform => {
     const meetMatch = location.href.match(meetRegex);
     const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)/;
     const youtubeMatch = location.href.match(youtubeRegex);
-    console.log({meetMatch});
     if (meetMatch) {
         return Platform.MEET;
     }
-    console.log({youtubeMatch});
     if (youtubeMatch) {
         return Platform.YOUTUBE;
     }

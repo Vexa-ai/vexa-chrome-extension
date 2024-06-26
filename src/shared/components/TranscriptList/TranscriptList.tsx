@@ -82,7 +82,6 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
 
     MessageListenerService.unRegisterMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT);
     MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT, (message) => {
-      console.log({message});
       sendMessage(MessageType.SPEAKER_EDIT_COMPLETE, message);
     });
     return () => {

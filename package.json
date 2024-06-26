@@ -12,6 +12,7 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "@mdxeditor/editor": "^3.6.1",
     "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.10.0",
     "@types/audioworklet": "^0.0.55",

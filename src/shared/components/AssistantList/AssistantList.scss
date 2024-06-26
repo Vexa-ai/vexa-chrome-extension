@@ -1,4 +1,23 @@
 .AssistantList {
+
+  .CustomSelect {
+    @apply h-full;
+
+    .custom--dropdown-container {
+      @apply rounded-md border-0 h-full disabled:bg-[#1F242F] bg-[#161B26] text-center font-semibold text-base;
+
+      .dropdown-menu {
+        background-color: #1F242F;
+        border: none;
+        min-height: 0;
+      }
+
+      .dropdown-input {
+        @apply py-2 px-3;
+      }
+    }
+  }
+
   .AssistantInput {
     width: calc(100% - 2rem);
   }

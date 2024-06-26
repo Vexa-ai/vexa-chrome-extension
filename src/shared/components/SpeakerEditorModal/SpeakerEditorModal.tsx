@@ -39,7 +39,6 @@ export function SpeakerEditorModal({ }: SpeakerEditorModalProps) {
     });
 
     const speakerEditorCompletedCleanup = onMessage(MessageType.SPEAKER_EDIT_COMPLETE, (speakerData: any) => {
-      console.log('In editor modal', {speakerData});
       closeModal();
     });
 

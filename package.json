@@ -1,7 +1,7 @@
 {
   "name": "vexa",
   "displayName": "Vexa",
-  "version": "6.10",
+  "version": "6.11",
   "description": "Vexa - AI video call recording and summary",
   "author": "Vexa",
   "scripts": {
@@ -63,8 +63,7 @@
           "js/*.js"
         ],
         "matches": [
-          "https://meet.google.com/*",
-          "https://www.youtube.com/*"
+          "https://meet.google.com/*"
         ]
       }
     ]

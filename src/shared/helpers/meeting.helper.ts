@@ -14,9 +14,9 @@ export const getIdFromUrl = (url: string): string | null => {
     const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)/;
     const youtubeMatch = trimmedUrl.match(youtubeRegex);
     console.log({youtubeMatch});
-    if (youtubeMatch) {
-      return youtubeMatch[1]; // Extract video ID (group 1)
-    }
+    // if (youtubeMatch) {
+    //   return youtubeMatch[1]; // Extract video ID (group 1)
+    // }
   
     // No match for either format
     return null;

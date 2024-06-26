@@ -247,6 +247,7 @@ export const useAudioCapture = (): AudioCapture => {
     }
 
     async function stopRecording() {
+        console.trace('Trace'); 
         try {
             const recorder = globalMediaRecorder;
             if (recorder && ["recording", "paused"].includes(recorder.state)) {

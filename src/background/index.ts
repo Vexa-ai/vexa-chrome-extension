@@ -8,33 +8,37 @@ import { consoleDebug } from "~shared/helpers/utils.helper";
 let previousUrl = null;
 
 chrome.action.onClicked.addListener(async () => {
-    const youtubeEnabled = await StorageService.get(StoreKeys.YOUTUBE_ENABLED, false);
-    StorageService.set(StoreKeys.YOUTUBE_ENABLED, !youtubeEnabled);
+    // const youtubeEnabled = await StorageService.get(StoreKeys.YOUTUBE_ENABLED, false);
+    // StorageService.set(StoreKeys.YOUTUBE_ENABLED, !youtubeEnabled);
 });
 
 chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
-    if (previousUrl && previousUrl !== details.url) {
-        const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
-        if (regexPattern.test(details.url)) {
-            chrome.tabs.reload(details.tabId);
-        }
-    }
+    // if (previousUrl && previousUrl !== details.url) {
+    //     const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
+    //     if (regexPattern.test(details.url)) {
+    //         chrome.tabs.reload(details.tabId);
+    //     }
+    // }
 
     previousUrl = details.url;
 });
 
 chrome.webNavigation.onCompleted.addListener(details => {
-    const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
-    const meetRegex = /^(?:https?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]{3,}(?:-[a-zA-Z0-9-]{4,})?(?:-[a-zA-Z0-9-]{3,})?)/; // /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;
+    // const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
+    const meetRegex = /^(?:https?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]{3,}(?:-[a-zA-Z0-9-]{4,})?(?:-[a-zA-Z0-9-]{3,})?)/; // /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;   
+    const isRecording = StorageService.get(StoreKeys.CAPTURING_STATE);
     if (previousUrl && previousUrl !== details.url) {
-        if (youtubeRegexPattern.test(details.url) || meetRegex.test(details.url)) {
+        // if ((youtubeRegexPattern.test(details.url) || meetRegex.test(details.url) && !isRecording)) {
+        //     resetRecordingState();
+        // }
+        if ((meetRegex.test(details.url) && !isRecording)) {
             resetRecordingState();
         }
     }
 
-    if (details.url.includes('meet.google.com') || youtubeRegexPattern.test(details.url)) {
-        resetRecordingState();
-    }
+    // if ((details.url.includes('meet.google.com') || youtubeRegexPattern.test(details.url) && !isRecording)) {
+    //     resetRecordingState();
+    // }
     previousUrl = details.url;
 });
 

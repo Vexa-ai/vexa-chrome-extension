@@ -100,7 +100,7 @@ const VexaBtn = () => {
 export default VexaBtn;
 
 export const config: PlasmoCSConfig = {
-    matches: ['*://meet.google.com/*', '*://www.youtube.com/watch?*'],
+    matches: ['*://meet.google.com/*'],
 };
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = async () =>

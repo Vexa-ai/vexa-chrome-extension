@@ -21,9 +21,10 @@ export const getPlatform = (): Platform => {
     if (meetMatch) {
         return Platform.MEET;
     }
-    if (youtubeMatch) {
-        return Platform.YOUTUBE;
-    }
+    // console.log({youtubeMatch});
+    // if (youtubeMatch) {
+    //     return Platform.YOUTUBE;
+    // }
 
     return Platform.UNSUPPORTED;
 };

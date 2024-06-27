@@ -64,6 +64,6 @@ export const getStyle = () => {
 
 
 export const config: PlasmoCSConfig = {
-  matches: ['*://meet.google.com/*', '*://www.youtube.com/watch?*'],
+  matches: ['*://meet.google.com/*'],
   css: ["../shared/components/vexa/vexa.scss", "../assets/fonts/Inter/inter.face.scss"],
 };

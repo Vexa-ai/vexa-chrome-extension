@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import './MainContentView.scss';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { TranscriptList } from '../TranscriptList';
-import { type AssistantEntryData, AssistantList } from '../AssistantList';
+import { type AssistantEntryData, AssistantList, type AssistantChains } from '../AssistantList';
 import type { TranscriptionEntryData } from '../TranscriptEntry';
 import { MessageType } from '~lib/services/message-listener.service';
 import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
@@ -15,6 +15,7 @@ export interface MainContentViewProps {
 
 let transcriptList: TranscriptionEntryData[] = [];
 let assistantList: AssistantEntryData[] = [];
+let assistantChains: AssistantChains = { available_chains: [] };
 let activeTabIndex = 0;
 
 export function MainContentView({ className, ...rest }: MainContentViewProps) {
@@ -35,8 +36,9 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
     setHasTranscripts(!!transcriptList.length);
   }
 
-  const onAssistantListUpdated = (list: AssistantEntryData[]) => {
+  const onAssistantListUpdated = (list: AssistantEntryData[], chains: AssistantChains) => {
     assistantList = list;
+    assistantChains = chains;
   }
 
   const onTabChanged = (currentTabIndex: number) => {
@@ -88,7 +90,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
         </TabPanel> */}
 
         <TabPanel className='w-full hidden react-tab-panel'>
-          <AssistantList assistantList={assistantList} updatedAssistantList={(list) => onAssistantListUpdated(list)} />
+          <AssistantList chains={assistantChains} assistantList={assistantList} updatedAssistantList={(list, chains) => onAssistantListUpdated(list, chains)} />
         </TabPanel>
       </Tabs>
     </div>

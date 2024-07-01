@@ -16,22 +16,25 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
     // if (previousUrl && previousUrl !== details.url) {
     //     const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
     //     if (regexPattern.test(details.url)) {
-    //         chrome.tabs.reload(details.tabId);
+            // chrome.tabs.reload(details.tabId);
+            resetRecordingState();
     //     }
     // }
 
-    previousUrl = details.url;
+    // previousUrl = details.url;
 });
 
-chrome.webNavigation.onCompleted.addListener(details => {
+chrome.webNavigation.onCompleted.addListener(async details => {
     // const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
     const meetRegex = /^(?:https?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]{3,}(?:-[a-zA-Z0-9-]{4,})?(?:-[a-zA-Z0-9-]{3,})?)/; // /^(?:http(s)?:\/\/)?meet\.google\.com\/([a-zA-Z0-9-]+)(?:\?.*)?$/;   
-    const isRecording = StorageService.get(StoreKeys.CAPTURING_STATE);
+    const isRecording = await StorageService.get(StoreKeys.CAPTURING_STATE);
     if (previousUrl && previousUrl !== details.url) {
         // if ((youtubeRegexPattern.test(details.url) || meetRegex.test(details.url) && !isRecording)) {
         //     resetRecordingState();
         // }
-        if ((meetRegex.test(details.url) && !isRecording)) {
+        // if ((meetRegex.test(details.url) && !isRecording)) {
+
+        if ((meetRegex.test(details.url))) {
             resetRecordingState();
         }
     }
@@ -147,12 +150,13 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
 });
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender) => {
+    const chainId = message?.data?.chain || 1;
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
         __vexa_main_domain: "",
         __vexa_chrome_domain: "",
     });
-    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages?token=${authData.__vexa_token}&meeting_id=${getIdFromUrl(sender.tab.url)}`)
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages?token=${authData.__vexa_token}&meeting_id=${getIdFromUrl(sender.tab.url)}&chain=${chainId}`)
         .then(async res => {
             if (!(res.status < 400)) {
                 messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });

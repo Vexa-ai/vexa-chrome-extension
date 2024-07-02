@@ -53,6 +53,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   const [threads, setThreads] = useState<(Thread & Option)[]>([]);
   const [clearField, setClearField] = useState<boolean>(false);
   const [isPrompting, setIsPrompting] = useState<boolean>(false);
+  const [previousChainId, setPreviousChainId] = useState(1);
   const [selectedThread, setSelectedThread] = useState<Thread & Option>();
   const [isOpen, setIsOpen] = useState(false);
   const assistantListRef = useRef<HTMLDivElement>(null);
@@ -62,8 +63,9 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
 
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
   MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_RESULT, (message) => {
+    console.log(message.data, responses);
     const response: AssistantEntryData = message.data;
-    const newResponses = [...responses];
+    const newResponses = [...responses.filter(entry => entry.current_chain === selectedThread.chain)];
     newResponses[newResponses.length > 0 ? newResponses.length - 1 : 0] = response;
     setResponses([...newResponses]);
     setClearField(true);
@@ -74,6 +76,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY, (result) => {
     const response: AssistantMessageUnit[] = result.data?.messages;
     console.log({ result });
+    if (!result.data?.current_chain) return;
     if (!result.data.available_chains?.length && !threads?.length) {
       onStartNewThread();
     } else {
@@ -99,6 +102,8 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     }
     setClearField(true);
     setIsPrompting(false);
+    // console.log('filter assistant 1')
+    // filterAssistantList();
   });
 
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_ERROR);
@@ -174,8 +179,9 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     console.log({ newSelectedThread });
     setSelectedThread(newSelectedThread[0]);
     setIsOpen(false);
+    console.log('filter assistant 2')
     filterAssistantList();
-    messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
+    // messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
   };
 
   const onDropdownOpenHandler = () => {
@@ -210,11 +216,19 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   }
 
   const filterAssistantList = () => {
-    if (selectedThread) {
+    console.log(selectedThread, previousChainId)
+    debugger;
+    if (selectedThread && (previousChainId !== selectedThread?.chain)) {
+      setPreviousChainId(selectedThread?.chain || 1);
       const filteredChain = responses.filter(response => response.current_chain === selectedThread.chain);
       console.log({ filteredChain });
-      setRenderedResponses(filteredChain)
+      if(filteredChain.length === 0) {
+        console.log('Got here 1');
+        messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
+      }
+      setRenderedResponses(filteredChain);
     } else {
+      console.log('Got here 2');
       setRenderedResponses(responses);
     }
   }
@@ -226,7 +240,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   }, [threads]);
 
   useEffect(() => {
-
+    filterAssistantList();
   }, [selectedThread]);
 
 
@@ -243,6 +257,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     }
     updatedAssistantList(responses, { available_chains: messageChains });
     updateThreadList();
+    // console.log('filter assistant 3')
     filterAssistantList();
   }, [responses, messageChains]);
 
@@ -267,7 +282,6 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   }, [assistantList]);
 
   useEffect(() => {
-    debugger;
     const threadList: (Thread & Option)[] = chains.available_chains?.map(chain => ({ chain: chain.chain, label: chain.label, value: chain.chain }));
       console.log(threadList);
       setThreads(threadList);
@@ -308,13 +322,13 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     </div>
     {
       renderedResponses.length ? <div className="flex-grow overflow-y-auto">
-        {renderedResponses.map((res, index) => <span key={index}>{JSON.stringify(res?.current_chain)}</span>)}
-        {/* {renderedResponses.map((entry, index) => (
+        {/* {renderedResponses.map((res, index) => <span key={index}>{JSON.stringify(res)}</span>)} */}
+        {renderedResponses.map((entry, index) => (
           <div key={index} ref={renderedResponses.length - 1 === index ? lastEntryRef : null}>
             {entry.user_message && <AssistantEntry onTextUpdated={onStartNewThread} entryData={entry.user_message} />}
             {entry.assistant_message && <AssistantEntry entryData={entry.assistant_message} />}
           </div>
-        ))} */}
+        ))}
       </div> : null
     }
     {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${responses.length ? '' : 'mt-2'}`}>

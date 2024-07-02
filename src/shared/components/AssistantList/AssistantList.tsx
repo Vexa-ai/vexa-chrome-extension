@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import './AssistantList.scss';
 import { AssistantEntry } from '../AssistantEntry';
@@ -13,6 +13,7 @@ import threadIcon from "data-base64:~assets/images/svg/git-branch-01.svg";
 import copyIcon from "data-base64:~assets/images/svg/copy-07.svg";
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg";
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg";
+import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
 
 export interface AssistantEntryData {
   current_chain: number;
@@ -44,7 +45,6 @@ export interface AssistantListProps {
 }
 
 export function AssistantList({ assistantList = [], chains = { available_chains: [] }, className = '', updatedAssistantList = (assistantList, chains) => { console.log({ assistantList }) } }: AssistantListProps) {
-
   const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
   const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE);
   const [responses, setResponses] = useState<AssistantEntryData[]>([]);
@@ -63,10 +63,10 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
 
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
   MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_RESULT, (message) => {
-    console.log(message.data, responses);
     const response: AssistantEntryData = message.data;
     const newResponses = [...responses.filter(entry => entry.current_chain === selectedThread.chain)];
     newResponses[newResponses.length > 0 ? newResponses.length - 1 : 0] = response;
+    console.log(71, { newResponses });
     setResponses([...newResponses]);
     setClearField(true);
     setIsPrompting(false);
@@ -75,8 +75,14 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY);
   MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY, (result) => {
     const response: AssistantMessageUnit[] = result.data?.messages;
-    console.log({ result });
-    if (!result.data?.current_chain) return;
+    if (!result.data?.current_chain) {
+      if (!result.data.available_chains?.length && !threads?.length) {
+        onStartNewThread();
+      }
+      setClearField(true);
+      setIsPrompting(false);
+      return;
+    };
     if (!result.data.available_chains?.length && !threads?.length) {
       onStartNewThread();
     } else {
@@ -85,6 +91,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
       setMessageChains(threadList);
     }
     if (response?.length) {
+      // console.log({response});
       const responseEntryData: AssistantEntryData[] = response?.map(responseUnit => {
         if (responseUnit.role === 'user') {
           return {
@@ -98,6 +105,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
           };
         }
       });
+      console.log(111, { responseEntryData })
       setResponses(responseEntryData);
     }
     setClearField(true);
@@ -111,10 +119,27 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     setIsPrompting(false);
   });
 
-  const onPrompted = async (prompt: string) => {
+  MessageListenerService.unRegisterMessageListener(MessageType.THREAD_DELETED);
+  MessageListenerService.registerMessageListener(MessageType.THREAD_DELETED, (message) => {
+    const threadIndex = threads.findIndex(thread => thread.chain === message.data.chain);
+    sendMessage(MessageType.DELETE_THREAD_COMPLETE);
+    if (threadIndex !== -1) {
+      const updatedThreads = [...threads];
+      updatedThreads.splice(threadIndex, 1);
+      setThreads(updatedThreads);
+      setSelectedThread(updatedThreads.at(-1));
+    }
+  });
+
+  MessageListenerService.unRegisterMessageListener(MessageType.THREAD_DELETED_ERROR);
+  MessageListenerService.registerMessageListener(MessageType.THREAD_DELETED_ERROR, (message) => {
+    // setIsPrompting(false);
+  });
+
+  const onPrompted = async (prompt: string, chain = undefined) => {
     try {
       const unRepliedMessageUnit: AssistantEntryData = {
-        current_chain: selectedThread?.chain || 1,
+        current_chain: chain || selectedThread?.chain || 1,
         user_message: {
           user_id: '',
           text: prompt,
@@ -123,65 +148,55 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
           timestamp: new Date().toISOString(),
         }
       };
+      console.log(153, { xx: [...responses, unRepliedMessageUnit] })
       setResponses([...responses, unRepliedMessageUnit]);
       setIsPrompting(true);
-      await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt, chain: selectedThread?.chain || 1 } });
+      await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt, chain: chain || selectedThread?.chain || 1 } });
       return true;
     } catch (error) {
       setIsPrompting(false);
       return false;
     }
+  };
+
+  const createThreadFromUserPrompt = (updatedEntry?: AssistantMessageUnit) => {
+    debugger;
+    onStartNewThread((createdThread) => {
+      if (updatedEntry?.text) {
+        console.log(selectedThread);
+        onPrompted(updatedEntry.text, createdThread.chain);
+      }
+    });
   }
 
-  const onStartNewThread = (updatedEntry?: AssistantMessageUnit) => {
+  const onStartNewThread = (callback?: (createdThread:  Thread & Option) => void) => {
     const sortedThreads = [...threads].sort((a, b) => a.chain - b.chain);
-    if (!updatedEntry) {
-      const lastAddedThread = sortedThreads.at(-1);
-      if (lastAddedThread) {
-        sortedThreads.push({ label: `New thread started ${lastAddedThread.chain + 1}`, value: lastAddedThread.chain + 1, chain: lastAddedThread.chain + 1 });
-      } else {
-        sortedThreads.push({ label: `New thread started`, value: 1, chain: 1 });
-      }
+    const lastAddedThread = sortedThreads.at(-1);
+    if (lastAddedThread) {
+      sortedThreads.push({ label: `New thread started ${lastAddedThread.chain + 1}`, value: lastAddedThread.chain + 1, chain: lastAddedThread.chain + 1 });
+    } else {
+      sortedThreads.push({ label: `New thread started`, value: 1, chain: 1 });
     }
-    // else {
-    //   // Creating thread from a message
-    //   // Call /fork endpoint to create for this
-    //   // messageSender.sendBackgroundMessage({ 
-    //   //   type: MessageType.FORK_MESSAGE_CHAIN,
-    //   //   data: {
-    //   //     "meeting_id": getIdFromUrl(location.href),
-    //   //     "meeting_session_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    //   //     "content": "string",
-    //   //     "message_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-    //   //   }
-    //   // });
-    //   const responsesData = [...responses];
-    //   const responseForNewThreadIndex = responsesData.findIndex(rd => rd.user_message?.timestamp === updatedEntry.timestamp);
-    //   if (responseForNewThreadIndex > -1) {
-    //     responsesData[responseForNewThreadIndex].current_chain = sortedThreads.at(-1)?.chain + 1;
-    //     sortedThreads.push({
-    //       label: responsesData[responseForNewThreadIndex].user_message.text.substring(0, 10),
-    //       value: responsesData[responseForNewThreadIndex].current_chain,
-    //       chain: responsesData[responseForNewThreadIndex].current_chain,
-    //     });
-    //   }
-    //   setResponses(responsesData);
-    //   onPrompted(updatedEntry.text);
-    // }
-    // const sortedThreadChainIds = Array.from(new Set(sortedThreads.map(thread => thread.chain)));
-
     setThreads(sortedThreads);
-    setSelectedThread(sortedThreads.at(-1));
+    const newThread = sortedThreads.at(-1);
+    
     setMessageChains(sortedThreads);
+    setResponses([]);
+    if (callback) {
+      // callback();
+      setSelectedThread(() => {
+        callback(newThread);
+        return {...newThread};
+    });
+    } else {
+      setSelectedThread({...newThread});
+    }
   }
 
   const handleThreadChange = (newSelectedThread: typeof selectedThread) => {
-    console.log({ newSelectedThread });
     setSelectedThread(newSelectedThread[0]);
     setIsOpen(false);
-    console.log('filter assistant 2')
     filterAssistantList();
-    // messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
   };
 
   const onDropdownOpenHandler = () => {
@@ -198,37 +213,18 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
         threadGroupings[response.current_chain].push(response);
       }
     });
-    // const orderedThreadKeys = Array.from(new Set([...Object.keys(threadGroupings).map(groupKey => Number(groupKey)).sort((a, b) => a - b), ...chainIds]));
-    // const sortedThreads = orderedThreadKeys.map(threadKey => threadGroupings[threadKey] || []);
-    // if (sortedThreads.length > 0) {
-    //   console.log(sortedThreads);
-    //   const threadOptions: (Thread & Option)[] = sortedThreads.map(threads => ({
-    //     chain: threads[0]?.current_chain || 0,
-    //     value: threads[0]?.current_chain || 0,
-    //     label: threads[0]?.assistant_message ? threads[0]?.assistant_message.text.substring(0, 40) : threads[0]?.user_message.text.substring(0, 40) || 'New thread',
-    //   }));
-    //   // setThreads(threadOptions);
-    //   if(!selectedThread) {
-    //     // setSelectedThread(threadOptions[0]);
-    //   }
-    // }
-
   }
 
   const filterAssistantList = () => {
-    console.log(selectedThread, previousChainId)
-    debugger;
     if (selectedThread && (previousChainId !== selectedThread?.chain)) {
       setPreviousChainId(selectedThread?.chain || 1);
       const filteredChain = responses.filter(response => response.current_chain === selectedThread.chain);
       console.log({ filteredChain });
-      if(filteredChain.length === 0) {
-        console.log('Got here 1');
+      if (filteredChain.length === 0) {
         messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
       }
       setRenderedResponses(filteredChain);
     } else {
-      console.log('Got here 2');
       setRenderedResponses(responses);
     }
   }
@@ -240,12 +236,14 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   }, [threads]);
 
   useEffect(() => {
+    console.log({selectedThread});
+    debugger;
     filterAssistantList();
   }, [selectedThread]);
 
 
   useEffect(() => {
-    if (typeof isMaximized === 'boolean' && isMaximized && !assistantList?.length) {
+    if (isMaximized) {
       messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
       setIsPrompting(true);
     }
@@ -257,7 +255,6 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     }
     updatedAssistantList(responses, { available_chains: messageChains });
     updateThreadList();
-    // console.log('filter assistant 3')
     filterAssistantList();
   }, [responses, messageChains]);
 
@@ -274,6 +271,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
   }, [dropdownRef.current]);
 
   useEffect(() => {
+    console.log(311, { assistantList });
     setResponses(assistantList);
     return () => {
       setIsPrompting(false);
@@ -283,16 +281,20 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
 
   useEffect(() => {
     const threadList: (Thread & Option)[] = chains.available_chains?.map(chain => ({ chain: chain.chain, label: chain.label, value: chain.chain }));
-      console.log(threadList);
-      setThreads(threadList);
+    setThreads(threadList);
   }, [chains]);
 
   useEffect(() => {
-    console.log('rendered');
-    // messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST });
-    // filterAssistantList();
-    // filterAssistantList();
-    // onStartNewThread();
+    const deleteThreadCleanup = onMessage(MessageType.DELETE_THREAD, (data: { chain: number }) => {
+      messageSender.sendBackgroundMessage({ type: MessageType.DELETE_THREAD, data });
+    });
+    // const duplicateThreadCleanup = onMessage(MessageType.DUPLICATE_THREAD, (data: { chain: number}) => {
+    //   duplicateThread(threads.find(thread => thread.chain === data.chain));
+    // });
+    return () => {
+      deleteThreadCleanup();
+      // duplicateThreadCleanup();
+    }
   }, []);
 
 
@@ -325,7 +327,7 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
         {/* {renderedResponses.map((res, index) => <span key={index}>{JSON.stringify(res)}</span>)} */}
         {renderedResponses.map((entry, index) => (
           <div key={index} ref={renderedResponses.length - 1 === index ? lastEntryRef : null}>
-            {entry.user_message && <AssistantEntry onTextUpdated={onStartNewThread} entryData={entry.user_message} />}
+            {entry.user_message && <AssistantEntry onTextUpdated={createThreadFromUserPrompt} entryData={entry.user_message} />}
             {entry.assistant_message && <AssistantEntry entryData={entry.assistant_message} />}
           </div>
         ))}
@@ -359,22 +361,26 @@ const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
   </div>
 );
 
-const ThreadOption: React.FC<{ option: Option; selected: boolean; onClick: () => void }> = ({ option, selected, onClick }) => {
-  const newFromThread = () => { };
-  const deleteThread = () => { };
+const ThreadOption: React.FC<{ option: Option; options: Option[]; selected: boolean; onClick: () => void }> = ({ option, options, selected, onClick }) => {
+  const newFromThread = () => {
+    // sendMessage(MessageType.DELETE_THREAD_START, { thread: option });
+  };
+  const deleteThread = () => {
+    sendMessage(MessageType.DELETE_THREAD_START, { thread: option });
+  };
 
   return <div className={`flex gap-2 ${selected ? 'bg-[#333741]' : 'bg-[#1F242F]'} py-2 px-2 group hover:bg-[#333741] text-[#CECFD2] text-sm font-semibold rounded-lg`}>
     <p onClick={onClick} className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full flex-grow text-left' title={option.label}>
       {option.label}
     </p>
     <div className="flex gap-2">
-      <button onClick={newFromThread} className="bg-transparent h-5 w-5 hidden group-hover:block">
+      <button onClick={newFromThread} className="bg-transparent h-5 w-5 hidden">
         <img src={copyIcon} alt="Copy thread" />
       </button>
 
-      <button onClick={deleteThread} className="bg-transparent h-5 w-5 hidden group-hover:block">
+      {options.length > 1 && <button onClick={deleteThread} className="bg-transparent h-5 w-5 hidden group-hover:block">
         <img src={trashIcon} alt="Delete thread" />
-      </button>
+      </button>}
     </div>
   </div>
 };

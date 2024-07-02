@@ -12,17 +12,17 @@ chrome.action.onClicked.addListener(async () => {
     // StorageService.set(StoreKeys.YOUTUBE_ENABLED, !youtubeEnabled);
 });
 
-chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
+// chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
     // if (previousUrl && previousUrl !== details.url) {
     //     const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
     //     if (regexPattern.test(details.url)) {
-            // chrome.tabs.reload(details.tabId);
-            resetRecordingState();
+    // chrome.tabs.reload(details.tabId);
+    // resetRecordingState();
     //     }
     // }
 
     // previousUrl = details.url;
-});
+// });
 
 chrome.webNavigation.onCompleted.addListener(async details => {
     // const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
@@ -140,6 +140,42 @@ MessageListenerService.registerMessageListener(MessageType.ON_RECORDING_END, (me
     resetRecordingState();
 });
 
+MessageListenerService.registerMessageListener(MessageType.DELETE_THREAD, async (message, sender) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    const { chain } = message.data;
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/chain/delete?token=${authData.__vexa_token}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            meeting_id: getIdFromUrl(sender.tab.url),
+            chain,
+        })
+    }).then(async res => {
+        if (!(res.status < 400)) {
+            messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
+            return;
+        }
+        const responseJson = await res.json();
+        messageSender.sendTabMessage(sender.tab, {
+            type: MessageType.THREAD_DELETED,
+            data: { chain },
+        });
+    }, err => {
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.THREAD_DELETED_ERROR });
+        console.error(err);
+    });
+});
+
+// MessageListenerService.registerMessageListener(MessageType.DUPLICATE_THREAD, (message) => {
+//     resetRecordingState();
+// });
+
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
     const { level, pointer, tab } = message.data;
     messageSender.sendTabMessage(tab, { type: MessageType.MICROPHONE_LEVEL_STATUS, data: { level, pointer } })
@@ -157,19 +193,19 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQ
         __vexa_chrome_domain: "",
     });
     fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages?token=${authData.__vexa_token}&meeting_id=${getIdFromUrl(sender.tab.url)}&chain=${chainId}`)
-        .then(async res => {
-            if (!(res.status < 400)) {
-                messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
-                return;
-            }
-            const responseJson = await res.json();
-            messageSender.sendTabMessage(sender.tab, {
-                type: MessageType.ASSISTANT_PROMPT_HISTORY,
-                data: responseJson || [],
-            });
-        }, err => {
-            console.error(err);
+    .then(async res => {
+        if (!(res.status < 400)) {
+            messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
+            return;
+        }
+        const responseJson = await res.json();
+        messageSender.sendTabMessage(sender.tab, {
+            type: MessageType.ASSISTANT_PROMPT_HISTORY,
+            data: responseJson || [],
         });
+    }, err => {
+        console.error(err);
+    });
 });
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQUEST, async (message, sender) => {
@@ -324,7 +360,7 @@ MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_R
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({speaker_id, alias})
+        body: JSON.stringify({ speaker_id, alias })
     }).then(async res => {
         if (!(res.status < 400)) {
             messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });

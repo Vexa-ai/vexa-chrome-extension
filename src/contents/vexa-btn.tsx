@@ -14,7 +14,7 @@ const VexaBtn = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const platform = getPlatform();
-    const [isYoutubeEnabled] = StorageService.useHookStorage(StoreKeys.YOUTUBE_ENABLED, false);
+    // const [isYoutubeEnabled] = StorageService.useHookStorage(StoreKeys.YOUTUBE_ENABLED, false);
     const defaultPosition = { x: 0, y: 0 };
     const [position, setPosition] = useState(defaultPosition);
 
@@ -75,7 +75,8 @@ const VexaBtn = () => {
     return (
         <>
             {
-                (platform === Platform.YOUTUBE && isYoutubeEnabled || platform === Platform.MEET) && isReady && !isMaximized && (
+                // (platform === Platform.YOUTUBE && isYoutubeEnabled || platform === Platform.MEET) && isReady && !isMaximized && (
+                (platform === Platform.MEET) && isReady && !isMaximized && (
                     <div onMouseOver={() => setIsDragging(false)} onMouseOut={() => setIsDragging(false)}>
                         <Draggable
                             position={position}

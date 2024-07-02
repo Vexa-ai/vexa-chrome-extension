@@ -7,6 +7,7 @@ import Draggable, { type DraggableData, type DraggableEvent } from "react-dragga
 import { NotificationContainer, NotificationManager } from 'react-notifications';
 import { sendMessage } from "~shared/helpers/in-content-messaging.helper";
 import { MessageType } from "~lib/services/message-listener.service";
+import { ThreadDeletePromptModal } from "../ThreadDeletePromptModal";
 
 const messageSender = new MessageSenderService();
 
@@ -85,6 +86,7 @@ const Vexa = () => {
                                 </>
                             }
                             <SpeakerEditorModal />
+                            <ThreadDeletePromptModal />
                         </AudioCaptureContext.Provider>
                     </div>
                 </Draggable>)

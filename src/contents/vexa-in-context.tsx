@@ -15,7 +15,7 @@ import { MessageListenerService } from "~lib/services/message-listener.service";
 
 const VexaInMeetContext = () => {
   const platform = getPlatform();
-  const [isYoutubeEnabled] = StorageService.useHookStorage(StoreKeys.YOUTUBE_ENABLED, false);
+  // const [isYoutubeEnabled] = StorageService.useHookStorage(StoreKeys.YOUTUBE_ENABLED, false);
 
   useEffect(() => {
     MessageListenerService.initializeListenerService();
@@ -26,7 +26,8 @@ const VexaInMeetContext = () => {
       position: 'fixed',
       zIndex: 99999999
     }}>
-      {(platform === Platform.YOUTUBE && isYoutubeEnabled || platform === Platform.MEET) ? <Vexa /> : <></>}
+      {/* {(platform === Platform.YOUTUBE && isYoutubeEnabled || platform === Platform.MEET) ? <Vexa /> : <></>} */}
+      {(platform === Platform.MEET) ? <Vexa /> : <></>}
     </div>
   );
 };

@@ -19,7 +19,7 @@ export interface CustomSelectProps {
   onChange: (value: Option | Option[]) => void;
   onBlur?: () => void;
   align: 'left' | 'right';
-  optionComponent: React.ComponentType<{ option: Option; selected: boolean; onClick: () => void }>;
+  optionComponent: React.ComponentType<{ options?: Option[], option: Option; selected: boolean; onClick: () => void }>;
 }
 
 export function CustomSelect({
@@ -156,6 +156,7 @@ export function CustomSelect({
                   <OptionComponent
                     key={key}
                     option={option}
+                    options={options}
                     selected={isSelected(option)}
                     onClick={() => onItemClick(option)}
                   />

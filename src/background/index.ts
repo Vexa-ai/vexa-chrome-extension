@@ -8,21 +8,9 @@ import { consoleDebug } from "~shared/helpers/utils.helper";
 let previousUrl = null;
 
 chrome.action.onClicked.addListener(async () => {
-    // const youtubeEnabled = await StorageService.get(StoreKeys.YOUTUBE_ENABLED, false);
-    // StorageService.set(StoreKeys.YOUTUBE_ENABLED, !youtubeEnabled);
 });
 
-// chrome.webNavigation.onHistoryStateUpdated.addListener(details => {
-    // if (previousUrl && previousUrl !== details.url) {
-    //     const regexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
-    //     if (regexPattern.test(details.url)) {
-    // chrome.tabs.reload(details.tabId);
-    // resetRecordingState();
-    //     }
-    // }
 
-    // previousUrl = details.url;
-// });
 
 chrome.webNavigation.onCompleted.addListener(async details => {
     // const youtubeRegexPattern = /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)$/;
@@ -87,6 +75,29 @@ const resetRecordingState = () => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
     StorageService.set(StoreKeys.CAPTURING_STATE, false);
     StorageService.set(StoreKeys.RECORD_START_TIME, 0);
+}
+
+const getChatHistory = async (message, sender) => {
+    const chainId = message?.data?.chain || 1;
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages?token=${authData.__vexa_token}&meeting_id=${getIdFromUrl(sender.tab.url)}&chain=${chainId}`)
+        .then(async res => {
+            if (res.status === 403) {
+                messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
+                return;
+            }
+            const responseJson = await res.json();
+            messageSender.sendTabMessage(sender.tab, {
+                type: MessageType.ASSISTANT_PROMPT_HISTORY,
+                data: responseJson || [],
+            });
+        }, err => {
+            console.error(err);
+        });
 }
 
 MessageListenerService.registerMessageListener(MessageType.OPEN_SETTINGS, () => chrome.runtime.openOptionsPage());
@@ -157,7 +168,7 @@ MessageListenerService.registerMessageListener(MessageType.DELETE_THREAD, async 
             chain,
         })
     }).then(async res => {
-        if (!(res.status < 400)) {
+        if (res.status === 403) {
             messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
             return;
         }
@@ -172,10 +183,6 @@ MessageListenerService.registerMessageListener(MessageType.DELETE_THREAD, async 
     });
 });
 
-// MessageListenerService.registerMessageListener(MessageType.DUPLICATE_THREAD, (message) => {
-//     resetRecordingState();
-// });
-
 MessageListenerService.registerMessageListener(MessageType.MIC_LEVEL_STREAM_RESULT, (message) => {
     const { level, pointer, tab } = message.data;
     messageSender.sendTabMessage(tab, { type: MessageType.MICROPHONE_LEVEL_STATUS, data: { level, pointer } })
@@ -186,24 +193,62 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
 });
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender) => {
-    const chainId = message?.data?.chain || 1;
+    getChatHistory(message, sender);
+});
+
+
+MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_EDIT, async (message, sender) => {
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
         __vexa_token: "",
         __vexa_main_domain: "",
         __vexa_chrome_domain: "",
     });
-    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages?token=${authData.__vexa_token}&meeting_id=${getIdFromUrl(sender.tab.url)}&chain=${chainId}`)
-    .then(async res => {
-        if (!(res.status < 400)) {
+    const { prompt, chain = 1, messageId } = message.data;
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/messages/edit?token=${authData.__vexa_token}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            content: prompt,
+            meeting_id: getIdFromUrl(sender.tab.url),
+            chain,
+            message_id: messageId
+        })
+    }).then(async res => {
+        getChatHistory(message, sender);
+    }, err => {
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.ASSISTANT_PROMPT_ERROR });
+        console.error(err);
+    });
+});
+
+MessageListenerService.registerMessageListener(MessageType.CREATE_THREAD, async (message, sender) => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+    fetch(`${authData.__vexa_main_domain}/api/v1/assistant/chain/create?token=${authData.__vexa_token}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            meeting_id: getIdFromUrl(sender.tab.url),
+        })
+    }).then(async res => {
+        if (res.status === 403) {
             messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
             return;
         }
         const responseJson = await res.json();
         messageSender.sendTabMessage(sender.tab, {
-            type: MessageType.ASSISTANT_PROMPT_HISTORY,
-            data: responseJson || [],
+            type: MessageType.CREATE_THREAD_SUCCESS,
+            data: responseJson,
         });
     }, err => {
+        messageSender.sendTabMessage(sender.tab, { type: MessageType.CREATE_THREAD_ERROR });
         console.error(err);
     });
 });
@@ -214,7 +259,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
         __vexa_main_domain: "",
         __vexa_chrome_domain: "",
     });
-    const { prompt, chain = 1 } = message.data;
+    const { prompt, chain } = message.data;
     fetch(`${authData.__vexa_main_domain}/api/v1/assistant/copilot?token=${authData.__vexa_token}`, {
         method: 'POST',
         headers: {
@@ -226,7 +271,7 @@ MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_REQU
             chain,
         })
     }).then(async res => {
-        if (!(res.status < 400)) {
+        if (res.status === 403) {
             messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
             return;
         }
@@ -259,7 +304,7 @@ MessageListenerService.registerMessageListener(MessageType.FORK_MESSAGE_CHAIN, a
             chain,
         })
     }).then(async res => {
-        if (!(res.status < 400)) {
+        if (res.status === 403) {
             messageSender.sendTabMessage(sender.tab, { type: MessageType.USER_UNAUTHORIZED });
             return;
         }
@@ -287,7 +332,7 @@ MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_HISTORY
     fetch(transcriptionURL, {
         method: 'GET',
     }).then(async res => {
-        if (!(res.status < 400)) {
+        if (res.status === 403) {
             messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
             messageSender.sendOffscreenMessage({ type: MessageType.USER_UNAUTHORIZED });
             return;
@@ -362,7 +407,7 @@ MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_R
         },
         body: JSON.stringify({ speaker_id, alias })
     }).then(async res => {
-        if (!(res.status < 400)) {
+        if (res.status === 403) {
             messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED });
             messageSender.sendOffscreenMessage({ type: MessageType.USER_UNAUTHORIZED });
             return;

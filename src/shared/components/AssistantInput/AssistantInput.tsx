@@ -6,11 +6,13 @@ import { AssistantSuggestions } from '../AssistantSuggestions';
 export interface AssistantInputProps {
   className?: string;
   onEnter: (prompt: string) => Promise<boolean>;
+  onFocus?: () => void;
+  onBlur?: () => void;
   clearField: boolean;
   setClearField: (clear: boolean) => void;
 }
 
-export function AssistantInput({ className = '', onEnter, clearField, setClearField }: AssistantInputProps) {
+export function AssistantInput({ className = '', onEnter, onFocus, onBlur, clearField, setClearField }: AssistantInputProps) {
   const promptInputRef = useRef<HTMLInputElement>(null);
   const submitBtnRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -48,7 +50,7 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
   return <div className={`AssistantInput mt-auto ${className}`}>
     {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
     <form autoComplete="off" ref={formRef} onSubmit={handlePromptSubmit} className="flex gap-1">
-      <input ref={promptInputRef} type="text" placeholder='Start typing...' className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2" name='assistant-input' />
+      <input onFocus={onFocus} onBlur={onBlur} ref={promptInputRef} type="text" placeholder='Start typing...' className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2" name='assistant-input' />
       {/* <textarea
         ref={promptInputRef}
         className="textarea"

@@ -13,10 +13,12 @@ import { MessageType } from '~lib/services/message-listener.service';
 
 export interface AssistantEntryProps {
   entryData: AssistantMessageUnit;
+  onTextUpdateStarted?: (entryToUpdate: AssistantMessageUnit) => void;
+  onTextUpdateCancelled?: () => void;
   onTextUpdated?: (updatedEntry: AssistantMessageUnit) => void;
 }
 
-export function AssistantEntry({ entryData, onTextUpdated }: AssistantEntryProps) {
+export function AssistantEntry({ entryData, onTextUpdated, onTextUpdateStarted, onTextUpdateCancelled }: AssistantEntryProps) {
   const editorRef = useRef<HTMLTextAreaElement>();
   const [entry, setEntry] = useState<AssistantMessageUnit>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -28,10 +30,12 @@ export function AssistantEntry({ entryData, onTextUpdated }: AssistantEntryProps
   const showEditor = () => {
     sendMessage(MessageType.ASSISTANT_ENTRY_EDIT_STARTED, entry);
     setIsEditing(true);
+    onTextUpdateStarted?.(entry);
   }
 
   const hideEditor = () => {
     setIsEditing(false);
+    onTextUpdateCancelled?.();
   }
 
   const handleTextUpdate = () => {
@@ -47,7 +51,6 @@ export function AssistantEntry({ entryData, onTextUpdated }: AssistantEntryProps
     setEntry(entryData);
     const onEntryEditClickCleanup = onMessage(MessageType.ASSISTANT_ENTRY_EDIT_STARTED, (entryToEdit: AssistantMessageUnit) => {
       console.log({entryToEdit});
-      // if (entryToEdit.)
     });
 
     return onEntryEditClickCleanup;

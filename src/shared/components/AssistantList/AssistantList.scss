@@ -21,6 +21,12 @@
     }
   }
 
+  .AssistantEntry:first-of-type {
+    & > div {
+      margin-top: 0 !important;
+    }
+  }
+
   .AssistantInput {
     width: calc(100% - 2rem);
   }

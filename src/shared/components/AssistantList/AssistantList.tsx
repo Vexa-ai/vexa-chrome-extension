@@ -263,7 +263,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
       content: message.text,
     })
       .then((response: AssistantEntryData) => {
-        setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+        setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message]?.map(m => new ThreadMessage(m))])
       })
       .catch(err => {
         setUserMessage(userMessagePendingRef.current.text)
@@ -356,7 +356,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
             setThreads(prev => [...prev, thread]);
           }
 
-          setThreadMessages(prev => [...prev, ...response.messages.map(m => new ThreadMessage(m))])
+          setThreadMessages(prev => [...prev, ...response.messages?.map(m => new ThreadMessage(m))])
         })
         .catch(err => {
           setUserMessage(userMessagePendingRef.current.text)

@@ -42,7 +42,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
 
   useEffect(() => {
     sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory });
-}, [hasRecordingHistory]);
+  }, [hasRecordingHistory]);
 
   useEffect(() => {
     const transcriptionCleanupFn = onMessage(MessageType.COPY_TRANSCRIPTION, () => {
@@ -54,7 +54,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
     sendMessage(MessageType.TAB_CHANGED, { activeTabIndex: activeTabIndex });
     sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory: !!transcriptList.length });
 
-    const hasRecordingHistoryCleanup = onMessage<{hasRecordingHistory: boolean}>(MessageType.HAS_RECORDING_HISTORY, data => {
+    const hasRecordingHistoryCleanup = onMessage<{ hasRecordingHistory: boolean }>(MessageType.HAS_RECORDING_HISTORY, data => {
       setHasRecordingHistory(data.hasRecordingHistory);
     });
     return () => {
@@ -64,21 +64,22 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
   }, []);
 
   return (
-    <div {...rest} className={`MainContentView flex flex-grow overflow-hidden h-auto ${className}`}>
+    <div {...rest} className={`MainContentView flex flex-col flex-grow overflow-hidden h-auto ${className}`}>
       <ul className="flex text-gray-300 z-10 w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm" role="tablist">
-        <li className="focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer react-tabs__tab--selected" role="tab" id="tab:r0:0" aria-selected="true" aria-disabled="false"
-            aria-controls="panel:r0:0" data-rttab="true" tabIndex="0">
+        <li onClick={() => onTabChanged(0)} className={`focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer${selectedTabIndex === 0 ? ' react-tabs__tab--selected' : ''}`} role="tab" id="tab:r0:0" aria-selected="true" aria-disabled="false"
+          aria-controls="panel:r0:0" data-rttab="true" tabIndex={0}>
           Transcript
         </li>
 
-        <li className="focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer" role="tab" id="tab:r0:1" aria-selected="false" aria-disabled="false" aria-controls="panel:r0:1"
-            data-rttab="true">
+        <li onClick={() => onTabChanged(1)} className={`focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer${selectedTabIndex === 1 ? ' react-tabs__tab--selected' : ''}`} role="tab" id="tab:r0:1" aria-selected="false" aria-disabled="false" aria-controls="panel:r0:1"
+          data-rttab="true" tabIndex={1}>
           Assistant
         </li>
       </ul>
-
-      <TranscriptList className={hasTranscripts ? '' : `mt-[10px] hidden` } transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)}/>
-      <AssistantList/>
+      <TranscriptList className={hasTranscripts && (selectedTabIndex === 0) ? '' : `mt-[10px] hidden`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
+      <div className={`${selectedTabIndex === 1 ? 'flex h-full' : 'hidden'}`}>
+        <AssistantList />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {type FormEvent, useCallback, useEffect, useRef, useState} from 'react';
 
 import './AssistantList.scss';
+import '../AssistantInput/AssistantInput.scss';
 import { AssistantEntry } from '../AssistantEntry';
 import { AssistantInput } from '../AssistantInput';
 import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
@@ -14,253 +15,368 @@ import copyIcon from "data-base64:~assets/images/svg/copy-07.svg";
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg";
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg";
 import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
+import {ThreeCircles} from "react-loader-spinner";
+import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
+import {ThreadDeletePromptModal} from "~shared/components/ThreadDeletePromptModal";
 
 export interface AssistantEntryData {
-  current_chain: number;
+  current_chain?: number;
   user_message?: AssistantMessageUnit;
   assistant_message?: AssistantMessageUnit;
-};
+}
 
+/*
 export interface AssistantChains {
   available_chains: (Thread & Option)[];
 }
 
-export interface Thread {
+export interface Thread extends Option {
   chain: number;
 }
+*/
 
 export interface AssistantMessageUnit {
-  user_id: string;
+  user_id?: string;
   meeting_id: string;
   text: string;
   role: 'user' | 'assistant';
   timestamp: string;
 }
 
-export interface AssistantListProps {
-  className?: string;
-  chains?: AssistantChains;
-  assistantList?: AssistantEntryData[];
-  updatedAssistantList?: (assistantList: AssistantEntryData[], updatedChains: AssistantChains) => void;
+export class ThreadMessage implements AssistantMessageUnit {
+  id: string;
+  user_id?: string;
+  meeting_id: string | null;
+  text: string;
+  role: 'user' | 'assistant';
+  timestamp: string | null;
+
+  constructor({
+    id = null,
+    user_id = null,
+    meeting_id = null,
+    text = null,
+    role = null,
+    timestamp = null,
+  }) {
+    this.id = id;
+    this.user_id = user_id;
+    this.meeting_id = meeting_id;
+    this.text = text;
+    this.role = role;
+    this.timestamp = timestamp;
+  }
+
+  get isUser() {
+    return 'user' === this.role;
+  }
+
+  get isAssistant() {
+    return 'assistant' === this.role;
+  }
+
+  cloneWithText(text: string) {
+    return new ThreadMessage({...this, text: text});
+  }
 }
 
-export function AssistantList({ assistantList = [], chains = { available_chains: [] }, className = '', updatedAssistantList = (assistantList, chains) => { console.log({ assistantList }) } }: AssistantListProps) {
-  const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
-  const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE);
-  const [responses, setResponses] = useState<AssistantEntryData[]>([]);
-  const [renderedResponses, setRenderedResponses] = useState<AssistantEntryData[]>([]);
-  const [messageChains, setMessageChains] = useState<(Thread & Option)[]>([]);
-  const [threads, setThreads] = useState<(Thread & Option)[]>([]);
-  const [clearField, setClearField] = useState<boolean>(false);
-  const [isPrompting, setIsPrompting] = useState<boolean>(false);
-  const [previousChainId, setPreviousChainId] = useState(1);
-  const [selectedThread, setSelectedThread] = useState<Thread & Option>();
+class Thread implements Option {
+  id: string | null
+  title: string | null
+  messages?: ThreadMessage[] = []
+
+  constructor({
+    id = null,
+    title = null,
+    messages = [],
+  } = {}) {
+    this.id = id;
+    this.title = title;
+    this.messages = messages.map(m => new ThreadMessage(m));
+  }
+
+  get label() {
+    return this.title;
+  }
+
+  set label(value) {
+    this.title = value;
+  }
+
+  get value() {
+    return this.id;
+  }
+
+  set value(value) {
+    this.id = value;
+  }
+}
+
+function sendFetchRequest(method: string, url: string, data: object = null): Promise<object> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: MessageType.FETCH_REQUEST,
+        action: method,
+        url: "https://main_andrew.dev.vexa.ai/api/v1" + url,
+        data: data
+      },
+      (response) => {
+        if (response.success) {
+          resolve(response.data);
+        } else {
+          reject(response.error);
+        }
+      }
+    );
+  });
+}
+
+function getRequest(url: string): Promise<object> {
+  return sendFetchRequest('get', url);
+}
+
+function postRequest(url: string, data: object = null): Promise<object> {
+  return sendFetchRequest('post', url, data);
+}
+
+function putRequest(url: string, data: object = null): Promise<object> {
+  return sendFetchRequest('put', url, data);
+}
+
+function deleteRequest(url: string, data: object = null): Promise<object> {
+  return sendFetchRequest('delete', url, data);
+}
+
+
+
+export interface AssistantListProps {
+  className?: string;
+}
+
+export function AssistantList({className}: AssistantListProps) {
+  const MEETING_ID = getIdFromUrl(window.location.href);
+
+  const [userMessage, setUserMessage] = useState<string>('');
+  const [userMessagePending, setUserMessagePending] = useState<ThreadMessage | null>(null);
+  const userMessagePendingRef = useRef(userMessagePending);
+
+  const threadsLoadedRef = useRef(false);
+  const [threads, setThreads] = useState<(Thread)[]>([]);
+  const [selectedThread, setSelectedThread] = useState<(Thread & Option) | undefined>();
+  const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>([]);
+
+  const threadsRef = useRef(threads);
+  const selectedThreadRef = useRef(selectedThread);
+  const threadMessagesRef = useRef(threadMessages);
+
+  useEffect(() => { threadsRef.current = threads; }, [threads]);
+  useEffect(() => { threadMessagesRef.current = threadMessages; }, [threadMessages]);
+  useEffect(() => { selectedThreadRef.current = selectedThread; }, [selectedThread]);
+
+  const [isPrompting, setIsPrompting] = useState(false);
+  // const [isThreadsOpen, setIsOpen] = useState(false);
+
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const messagedContainerRef = useRef<HTMLDivElement>(null);
+  const bottomDiv = useRef<HTMLDivElement>(null);
+  const userMessageInputRef = useRef<HTMLInputElement>(null);
+
+  const isSendingMessageRef = useRef(false);
+
+  const messageSender = new MessageSenderService();
   const [isOpen, setIsOpen] = useState(false);
   const assistantListRef = useRef<HTMLDivElement>(null);
-  const lastEntryRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef(null);
-  const messageSender = new MessageSenderService();
 
-  MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
-  MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_RESULT, (message) => {
-    const response: AssistantEntryData = message.data;
-    const newResponses = [...responses.filter(entry => entry.current_chain === selectedThread.chain)];
-    newResponses[newResponses.length > 0 ? newResponses.length - 1 : 0] = response;
-    console.log(71, { newResponses });
-    setResponses([...newResponses]);
-    setClearField(true);
-    setIsPrompting(false);
-  });
-
-  MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY);
-  MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_HISTORY, (result) => {
-    const response: AssistantMessageUnit[] = result.data?.messages;
-    if (!result.data?.current_chain) {
-      if (!result.data.available_chains?.length && !threads?.length) {
-        onStartNewThread();
-      }
-      setClearField(true);
-      setIsPrompting(false);
-      return;
-    };
-    if (!result.data.available_chains?.length && !threads?.length) {
-      onStartNewThread();
-    } else {
-      const threadList: (Thread & Option)[] = result.data.available_chains?.map(chain => ({ chain: chain.number, label: chain.label, value: chain.number }));
-      setThreads(threadList);
-      setMessageChains(threadList);
-    }
-    if (response?.length) {
-      // console.log({response});
-      const responseEntryData: AssistantEntryData[] = response?.map(responseUnit => {
-        if (responseUnit.role === 'user') {
-          return {
-            current_chain: result.data.current_chain || 1,
-            user_message: responseUnit,
-          };
-        } else {
-          return {
-            current_chain: result.data.current_chain || 1,
-            assistant_message: responseUnit,
-          };
-        }
-      });
-      console.log(111, { responseEntryData })
-      setResponses(responseEntryData);
-    }
-    setClearField(true);
-    setIsPrompting(false);
-    // console.log('filter assistant 1')
-    // filterAssistantList();
-  });
-
-  MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_ERROR);
-  MessageListenerService.registerMessageListener(MessageType.ASSISTANT_PROMPT_ERROR, (message) => {
-    setIsPrompting(false);
-  });
-
-  MessageListenerService.unRegisterMessageListener(MessageType.THREAD_DELETED);
-  MessageListenerService.registerMessageListener(MessageType.THREAD_DELETED, (message) => {
-    const threadIndex = threads.findIndex(thread => thread.chain === message.data.chain);
-    sendMessage(MessageType.DELETE_THREAD_COMPLETE);
-    if (threadIndex !== -1) {
-      const updatedThreads = [...threads];
-      updatedThreads.splice(threadIndex, 1);
-      setThreads(updatedThreads);
-      setSelectedThread(updatedThreads.at(-1));
-    }
-  });
-
-  MessageListenerService.unRegisterMessageListener(MessageType.THREAD_DELETED_ERROR);
-  MessageListenerService.registerMessageListener(MessageType.THREAD_DELETED_ERROR, (message) => {
-    // setIsPrompting(false);
-  });
-
-  const onPrompted = async (prompt: string, chain = undefined) => {
-    try {
-      const unRepliedMessageUnit: AssistantEntryData = {
-        current_chain: chain || selectedThread?.chain || 1,
-        user_message: {
-          user_id: '',
-          text: prompt,
-          meeting_id: getIdFromUrl(location.href),
-          role: 'user',
-          timestamp: new Date().toISOString(),
-        }
-      };
-      console.log(153, { xx: [...responses, unRepliedMessageUnit] })
-      setResponses([...responses, unRepliedMessageUnit]);
-      setIsPrompting(true);
-      await messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_PROMPT_REQUEST, data: { prompt, chain: chain || selectedThread?.chain || 1 } });
-      return true;
-    } catch (error) {
-      setIsPrompting(false);
-      return false;
-    }
-  };
-
-  const createThreadFromUserPrompt = (updatedEntry?: AssistantMessageUnit) => {
-    debugger;
-    onStartNewThread((createdThread) => {
-      if (updatedEntry?.text) {
-        console.log(selectedThread);
-        onPrompted(updatedEntry.text, createdThread.chain);
-      }
-    });
-  }
-
-  const onStartNewThread = (callback?: (createdThread:  Thread & Option) => void) => {
-    const sortedThreads = [...threads].sort((a, b) => a.chain - b.chain);
-    const lastAddedThread = sortedThreads.at(-1);
-    if (lastAddedThread) {
-      sortedThreads.push({ label: `New thread started ${lastAddedThread.chain + 1}`, value: lastAddedThread.chain + 1, chain: lastAddedThread.chain + 1 });
-    } else {
-      sortedThreads.push({ label: `New thread started`, value: 1, chain: 1 });
-    }
-    setThreads(sortedThreads);
-    const newThread = sortedThreads.at(-1);
-    
-    setMessageChains(sortedThreads);
-    setResponses([]);
-    if (callback) {
-      // callback();
-      setSelectedThread(() => {
-        callback(newThread);
-        return {...newThread};
-    });
-    } else {
-      setSelectedThread({...newThread});
-    }
-  }
+  // TODO: delete?
+  const [clearField, setClearField] = useState<boolean>(false);
 
   const handleThreadChange = (newSelectedThread: typeof selectedThread) => {
     setSelectedThread(newSelectedThread[0]);
     setIsOpen(false);
-    filterAssistantList();
   };
 
   const onDropdownOpenHandler = () => {
     setIsOpen(true);
   };
 
-  const updateThreadList = () => {
-    const threadGroupings: { [key: number]: AssistantEntryData[] } = {};
-    responses.forEach(response => {
-      if (threadGroupings[response.current_chain]) {
-        threadGroupings[response.current_chain].push(response);
-      } else {
-        threadGroupings[response.current_chain] = [];
-        threadGroupings[response.current_chain].push(response);
+  const loadThreadMessages = useCallback((thread: Thread) => {
+    getRequest(`/assistant/messages?thread_id=${thread.id}`)
+      .then((messages: ThreadMessage[]) => {
+        // Ignore result if the thread changed
+        if (selectedThread.id !== thread.id) return;
+
+        setThreadMessages(messages.map(m => new ThreadMessage(m)));
+      })
+  }, [selectedThread])
+
+
+  useEffect(() => {
+    setThreadMessages([]);
+    selectedThread && selectedThread.id && loadThreadMessages(selectedThread);
+  }, [loadThreadMessages, selectedThread])
+
+  const onStartNewThread = (callback?: (createdThread:  Thread & Option) => void) => {
+    const emptyThread = threads.find(t => !t.id);
+    if (emptyThread) {
+      setSelectedThread(emptyThread);
+
+      return;
+    }
+
+    const thread = new Thread({
+      title: 'New thread',
+    });
+    setThreads(prev => [...prev, thread]);
+    setSelectedThread(thread)
+
+    callback && callback(thread);
+  }
+
+  const updateThreadFromUserEdit = (message: ThreadMessage) => {
+    setUserMessagePending(new ThreadMessage({
+      text: message.text || '',
+    }))
+
+    setIsPrompting(true);
+
+    setThreadMessages(prev => {
+      const messages = [];
+      for (let m of prev) {
+        if (message.id === m.id) {
+          break;
+        }
+
+        messages.push(m);
       }
+
+      return messages;
+    })
+
+    postRequest(`/assistant/messages/edit`, {
+      thread_id: selectedThread.id,
+      // meeting_session_id: "107d81b3-dd0a-4674-898d-a1615d54c0b7",
+      message_id: message.id,
+      content: message.text,
+    })
+      .then((response: AssistantEntryData) => {
+        setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+      })
+      .catch(err => {
+        setUserMessage(userMessagePendingRef.current.text)
+      })
+      .finally(() => {
+        setUserMessagePending(null)
+        userMessagePendingRef.current = null
+        setIsPrompting(false)
+      })
+    ;
+  }
+
+  const deleteThread = () => {
+    console.log("Delete");
+    const thread = selectedThread;
+    deleteRequest(`/assistant/threads/delete`, {
+      ids: [thread.id],
+    })
+      .then(() => {
+        onThreadDeleted(thread)
+        sendMessage(MessageType.DELETE_THREAD_COMPLETE, { });
+      }, error => {
+        alert('Thread delete failed. Try again.');
+        // toast('Failed to delete thread. Try again.', { type: 'error' });
+      });
+  }
+
+  const onThreadDeleted = function (thread: Thread) {
+    setThreads(prev => {
+      const threads = prev.filter(t => t !== thread);
+      if (threads.length === 0) {
+        onStartNewThread();
+      } else {
+        setSelectedThread(threads[0]);
+      }
+
+      return threads;
     });
   }
 
-  const filterAssistantList = () => {
-    if (selectedThread && (previousChainId !== selectedThread?.chain)) {
-      setPreviousChainId(selectedThread?.chain || 1);
-      const filteredChain = responses.filter(response => response.current_chain === selectedThread.chain);
-      console.log({ filteredChain });
-      if (filteredChain.length === 0) {
-        messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
-      }
-      setRenderedResponses(filteredChain);
+
+
+  const sendUserMessage = useCallback(async (event: FormEvent) => {
+    event.preventDefault();
+
+    userMessagePendingRef.current = new ThreadMessage({
+      id: null,
+      text: userMessage,
+      role: "user",
+    });
+    setUserMessagePending(userMessagePendingRef.current);
+    setIsPrompting(true)
+    isSendingMessageRef.current = true;
+
+    if (selectedThread?.id) {
+      // post message in thread
+      postRequest('/assistant/copilot', {
+        thread_id: selectedThread.id,
+        content: userMessage,
+      })
+        .then((response: AssistantEntryData) => {
+          setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+        })
+        .catch(err => {
+          setUserMessage(userMessagePendingRef.current.text)
+        })
+        .finally(() => {
+          setUserMessagePending(null)
+          userMessagePendingRef.current = null
+          setIsPrompting(false)
+          isSendingMessageRef.current = false;
+        })
     } else {
-      setRenderedResponses(responses);
+      postRequest('/assistant/threads/create', {
+        // title: selectedThread.label,
+        // meeting_id: MEETING_ID,
+        prompt: userMessage,
+        meeting_session_id: "107d81b3-dd0a-4674-898d-a1615d54c0b7",
+      })
+        .then((response: Thread) => {
+          if (selectedThread) {
+            selectedThread.id = response.id;
+            selectedThread.title = response.title;
+          } else {
+            const thread = new Thread({
+              id: response.id,
+              title: response.title,
+            })
+            setSelectedThread(thread);
+            setThreads(prev => [...prev, thread]);
+          }
+
+          setThreadMessages(prev => [...prev, ...response.messages.map(m => new ThreadMessage(m))])
+        })
+        .catch(err => {
+          setUserMessage(userMessagePendingRef.current.text)
+        })
+        .finally(() => {
+          setUserMessagePending(null)
+          userMessagePendingRef.current = null
+          setIsPrompting(false)
+          isSendingMessageRef.current = false;
+        })
     }
-  }
 
-  useEffect(() => {
-    if (!selectedThread && threads.length > 0) {
-      setSelectedThread(threads[0]);
-    }
-  }, [threads]);
+    setUserMessage('')
+  }, [userMessagePending, userMessage])
 
-  useEffect(() => {
-    console.log({selectedThread});
-    debugger;
-    filterAssistantList();
-  }, [selectedThread]);
 
 
   useEffect(() => {
-    if (isMaximized) {
-      messageSender.sendBackgroundMessage({ type: MessageType.ASSISTANT_HISTORY_REQUEST, data: { chain: selectedThread?.chain || 1 } });
-      setIsPrompting(true);
-    }
-  }, [isMaximized]);
-
-  useEffect(() => {
-    if (lastEntryRef.current) {
-      lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-    updatedAssistantList(responses, { available_chains: messageChains });
-    updateThreadList();
-    filterAssistantList();
-  }, [responses, messageChains]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: Event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -268,41 +384,17 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [dropdownRef.current]);
-
-  useEffect(() => {
-    console.log(311, { assistantList });
-    setResponses(assistantList);
-    return () => {
-      setIsPrompting(false);
-      MessageListenerService.unRegisterMessageListener(MessageType.ASSISTANT_PROMPT_RESULT);
-    }
-  }, [assistantList]);
-
-  useEffect(() => {
-    const threadList: (Thread & Option)[] = chains.available_chains?.map(chain => ({ chain: chain.chain, label: chain.label, value: chain.chain }));
-    setThreads(threadList);
-  }, [chains]);
-
-  useEffect(() => {
-    const deleteThreadCleanup = onMessage(MessageType.DELETE_THREAD, (data: { chain: number }) => {
-      messageSender.sendBackgroundMessage({ type: MessageType.DELETE_THREAD, data });
-    });
-    // const duplicateThreadCleanup = onMessage(MessageType.DUPLICATE_THREAD, (data: { chain: number}) => {
-    //   duplicateThread(threads.find(thread => thread.chain === data.chain));
-    // });
-    return () => {
-      deleteThreadCleanup();
-      // duplicateThreadCleanup();
-    }
   }, []);
 
+  useEffect(() => {
+    userMessageInputRef?.current?.focus();
+  }, [threadMessages]);
 
   return <div ref={assistantListRef} className={`AssistantList flex flex-col mb-[60px] max-h-full w-full overflow-hidden ${className}`}>
-    <div className="flex py-2 gap-3 w-full max-w-[368px]">
+    {threads.length && selectedThread && <div className="flex py-2 gap-3 w-full max-w-[368px]">
       <div className='flex-grow' ref={dropdownRef}>
         <CustomSelect
-          placeholder={<ThreadPlaceholder />}
+          placeholder={<ThreadPlaceholder/>}
           selectedComponent={ThreadSelected}
           options={threads}
           isMulti={false}
@@ -318,13 +410,37 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
       </div>
 
       <button onClick={() => onStartNewThread()} className="flex gap-2 p-2 justify-center items-center rounded-md border border-[#333741] disabled:bg-[#1F242F] bg-[#161B26] text-[#CECFD2] text-center font-semibold text-base">
-        <img src={newMessageIcon} alt="New thread" />
+        <img src={newMessageIcon} alt="New thread"/>
         New
       </button>
-    </div>
-    {
+    </div>}
+
+    {threadMessages?.length || userMessagePending ? <div className="flex-grow overflow-y-auto" ref={messagedContainerRef}>
+      {threadMessages?.map((entry: ThreadMessage, index) => (
+        <div>
+          {entry.isUser && <AssistantEntry key={entry.id} onTextUpdated={updateThreadFromUserEdit} entryData={entry}/>}
+          {entry.isAssistant && <AssistantEntry key={entry.id} entryData={entry}/>}
+        </div>
+      ))}
+      {userMessagePending && <AssistantEntry key={"pending"} entryData={userMessagePending} pending/>}
+
+
+      {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${selectedThread?.messages.length ? '' : 'mt-2'}`}>
+        <BouncingDots/>
+      </div>
+      }
+
+      <div ref={bottomDiv}/>
+    </div> : (
+      <div className='flex items-center justify-center flex-grow overflow-hidden'>
+        <span>{isLoadingMessages && !isPolling ? 'Loading your chat history...' : 'Type your message. E.g. "What action points were on the call?"'}</span>
+      </div>
+    )
+    }
+
+
+    {/*
       renderedResponses.length ? <div className="flex-grow overflow-y-auto">
-        {/* {renderedResponses.map((res, index) => <span key={index}>{JSON.stringify(res)}</span>)} */}
         {renderedResponses.map((entry, index) => (
           <div key={index} ref={renderedResponses.length - 1 === index ? lastEntryRef : null}>
             {entry.user_message && <AssistantEntry onTextUpdated={createThreadFromUserPrompt} entryData={entry.user_message} />}
@@ -332,14 +448,39 @@ export function AssistantList({ assistantList = [], chains = { available_chains:
           </div>
         ))}
       </div> : null
-    }
-    {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${responses.length ? '' : 'mt-2'}`}>
-      <BouncingDots />
+      {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${threadMessages.length ? '' : 'mt-2'}`}>
+        <BouncingDots/>
+      </div>
+    */}
+
+    {/*<AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute bottom-3' />*/}
+
+    <div className={`AssistantInput mt-auto ${className}`}>
+      {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
+      <form autoComplete="off" onSubmit={sendUserMessage} className="flex gap-1">
+        <input
+          disabled={isPrompting}
+          value={userMessage}
+          onChange={e => setUserMessage(e.target.value)}
+          type="text"
+          placeholder='Start typing...'
+          className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2"
+          style={{color: 'white'}}
+          name='assistant-input'
+        />
+
+        <button disabled={isPrompting} type='submit'>
+          <img src={vexaLogoIcon} alt=""/>
+        </button>
+      </form>
     </div>
-    }
-    <AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute bottom-3' />
-  </div >;
+
+    <ThreadDeletePromptModal deleteThread={deleteThread} />
+  </div>;
 }
+
+
+
 
 const ThreadNoOption: React.FC = () => (
   <div className={`flex gap-2 items-center bg-[#1F242F] py-1 px-2 text-[#F5F5F6] rounded-lg`}>
@@ -349,14 +490,14 @@ const ThreadNoOption: React.FC = () => (
 
 const ThreadPlaceholder: React.FC = () => (
   <div className='flex gap-2 text-[#CECFD2] font-semibold items-center w-full overflow-hidden'>
-    <img alt='' className='w-5' src={threadIcon} />
+    <img alt='' className='w-5' src={threadIcon}/>
     <p className='flex items-center justify-center min-h-6 text-sm'>Threads</p>
   </div>
 );
 
 const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
   <div className='flex w-full gap-1 overflow-hidden'>
-    <img alt='' className='w-5' src={threadIcon} />
+    <img alt='' className='w-5' src={threadIcon}/>
     <p className='text-[#F5F5F6] min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm' title={values.label}>{values.label}</p>
   </div>
 );

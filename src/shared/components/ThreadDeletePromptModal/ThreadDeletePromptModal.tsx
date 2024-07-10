@@ -10,9 +10,10 @@ import type { Option } from '../CustomSelect';
 
 export interface ThreadDeletePromptModalProps {
   // thread: Thread;
+  deleteThread: Function
 }
 
-export function ThreadDeletePromptModal({ }: ThreadDeletePromptModalProps) {
+export function ThreadDeletePromptModal({ deleteThread }: ThreadDeletePromptModalProps) {
   const [showEditorModal, setShowEditorModal] = useState(false);
   const [isDeletingThread, setIsDeletingThread] = useState(false);
   const [threadData, setThreadData] = useState<Option>();
@@ -21,12 +22,6 @@ export function ThreadDeletePromptModal({ }: ThreadDeletePromptModalProps) {
   const closeModal = () => {
     setIsDeletingThread(false);
     setShowEditorModal(false);
-  }
-
-  const deleteThread = () => {
-    setIsDeletingThread(true);
-    messageSender.sendBackgroundMessage({ type: MessageType.DELETE_THREAD, data: { chain: threadData.value } });
-
   }
 
   useEffect(() => {
@@ -77,7 +72,7 @@ export function ThreadDeletePromptModal({ }: ThreadDeletePromptModalProps) {
                 </div> */}
                 <div className="flex flex-col w-full gap-2">
                   <button
-                    onClick={deleteThread}
+                    onClick={() => deleteThread()}
                     className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#F04438] disabled:text-[#85888E] text-white text-center font-semibold text-base"
                   >
                     {isDeletingThread ? <BouncingDots className='py-[10px]' /> : 'Delete Thread'}

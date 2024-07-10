@@ -150,7 +150,7 @@ export function CustomSelect({
                 />
               </div>
             )}
-            {getOptions().length > 0
+            {getOptions()?.length > 0
               ? (
                 getOptions().map((option, key) => (
                   <OptionComponent

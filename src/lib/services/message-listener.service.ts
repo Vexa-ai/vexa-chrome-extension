@@ -43,12 +43,12 @@ export class MessageListenerService {
     }
 
     private static registerExtensionMessageEvents() {
-        chrome.runtime.onMessage.addListener((request: { type: StoreKeys, data: any}, sender) => {
+        chrome.runtime.onMessage.addListener((request: { type: StoreKeys, data: any}, sender, sendResponse) => {
             if(request.type && MessageListenerService.messages[request.type]) {
                 const registeredListeners = MessageListenerService.messages[request.type];
                 for(const key in registeredListeners) {
                     if(typeof registeredListeners?.[key]?.handler === 'function') {
-                        registeredListeners[key].handler(request, sender); // TODO: Add optional sendresponse handling
+                        registeredListeners[key].handler(request, sender, sendResponse); // TODO: Add optional sendresponse handling
                     }
                     // return true;
                 }
@@ -104,6 +104,10 @@ export enum MessageType {
     ASSISTANT_PROMPT_ERROR = "ASSISTANT_PROMPT_ERROR",
     ASSISTANT_ENTRY_EDIT_STARTED = "ASSISTANT_ENTRY_EDIT_STARTED",
     FORK_MESSAGE_CHAIN = "FORK_MESSAGE_CHAIN",
+
+    FETCH_REQUEST = "FETCH_REQUEST",
+
+    THREAD_CREATE = "THREAD_CREATE",
     DELETE_THREAD = "DELETE_THREAD",
     DUPLICATE_THREAD = "DUPLICATE_THREAD",
     THREAD_DELETED = "THREAD_DELETED",

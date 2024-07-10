@@ -185,6 +185,31 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
     consoleDebug(evt.data.url);
 });
 
+
+MessageListenerService.registerMessageListener(MessageType.FETCH_REQUEST, async (message, sender, sendResponse) => {
+    console.log({message});
+    const { action, url, data } = message;
+
+    let fetchOptions = {
+        method: action.toUpperCase(),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer 0214d19adcc241b385dad8ddccbfd17a`,
+        }
+    };
+
+    if (['post', 'put', 'delete'].includes(action)) {
+        fetchOptions.body = JSON.stringify(data);
+    }
+
+    fetch(url, fetchOptions)
+      .then(response => response.json())
+      .then(data => sendResponse({ success: true, data: data }))
+      .catch(error => sendResponse({ success: false, error: error }));
+
+    return true; // Indicate that response will be sent asynchronously
+});
+
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender) => {
     const chainId = message?.data?.chain || 1;
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {

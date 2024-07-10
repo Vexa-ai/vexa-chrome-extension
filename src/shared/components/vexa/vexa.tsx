@@ -86,7 +86,7 @@ const Vexa = () => {
                                 </>
                             }
                             <SpeakerEditorModal />
-                            <ThreadDeletePromptModal />
+                            {/*<ThreadDeletePromptModal />*/}
                         </AudioCaptureContext.Provider>
                     </div>
                 </Draggable>)

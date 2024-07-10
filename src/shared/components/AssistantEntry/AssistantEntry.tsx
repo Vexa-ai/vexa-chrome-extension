@@ -1,25 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { MDXEditor } from '@mdxeditor/editor';
+import React, {useEffect, useRef, useState} from 'react';
 import '@mdxeditor/editor/style.css';
 import './AssistantEntry.scss';
-import type { AssistantMessageUnit } from '../AssistantList';
-import { CopyButton } from '../CopyButton';
+import {type ThreadMessage} from '../AssistantList';
+import {CopyButton} from '../CopyButton';
 import Markdown from 'markdown-to-jsx';
-import { EditPenButton } from '../EditPenButton';
-// import closeIcon from "data-base64:~assets/images/svg/x-close.svg";
-import checkIcon from "data-base64:~assets/images/svg/check.svg";
-import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
-import { MessageType } from '~lib/services/message-listener.service';
+import {EditPenButton} from '../EditPenButton';
+import {onMessage, sendMessage} from '~shared/helpers/in-content-messaging.helper';
+import {MessageType} from '~lib/services/message-listener.service';
 
 export interface AssistantEntryProps {
-  entryData: AssistantMessageUnit;
-  onTextUpdated?: (updatedEntry: AssistantMessageUnit) => void;
+  entryData: ThreadMessage;
+  onTextUpdated?: (updatedEntry: ThreadMessage) => void;
+  pending?: boolean
 }
 
-export function AssistantEntry({ entryData, onTextUpdated }: AssistantEntryProps) {
+export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantEntryProps) {
   const editorRef = useRef<HTMLTextAreaElement>();
-  const [entry, setEntry] = useState<AssistantMessageUnit>(null);
+  const [entry, setEntry] = useState<ThreadMessage>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isPending, setIsPending] = useState(pending);
 
   const copyText = () => {
     navigator.clipboard.writeText(entryData.text);
@@ -40,12 +39,16 @@ export function AssistantEntry({ entryData, onTextUpdated }: AssistantEntryProps
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEntry({ ...entry, text: e.target.value });
+    setEntry(entry.cloneWithText(e.target.value));
   };
 
   useEffect(() => {
+    setIsPending(pending);
+  }, [pending])
+
+  useEffect(() => {
     setEntry(entryData);
-    const onEntryEditClickCleanup = onMessage(MessageType.ASSISTANT_ENTRY_EDIT_STARTED, (entryToEdit: AssistantMessageUnit) => {
+    const onEntryEditClickCleanup = onMessage(MessageType.ASSISTANT_ENTRY_EDIT_STARTED, (entryToEdit: ThreadMessage) => {
       console.log({entryToEdit});
       // if (entryToEdit.)
     });
@@ -98,6 +101,8 @@ export function AssistantEntry({ entryData, onTextUpdated }: AssistantEntryProps
               <span className="font-semibold text-white select-text break-words">{entry.role}</span>
             </p>
             <div className="select-text break-words">
+              {/*{ isPending ? 'Sending: ' : '' }*/}
+
               {isEditing
                 ? <textarea
                   ref={editorRef}

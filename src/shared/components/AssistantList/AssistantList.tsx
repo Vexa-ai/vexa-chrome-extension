@@ -390,8 +390,8 @@ export function AssistantList({className}: AssistantListProps) {
     userMessageInputRef?.current?.focus();
   }, [threadMessages]);
 
-  return <div ref={assistantListRef} className={`AssistantList flex flex-col mb-[60px] max-h-full w-full overflow-hidden ${className}`}>
-    {threads.length && selectedThread && <div className="flex py-2 gap-3 w-full max-w-[368px]">
+  return <div ref={assistantListRef} className={`AssistantList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
+    {threads.length > 0 && selectedThread && <div className="flex py-2 gap-3 w-full max-w-[368px]">
       <div className='flex-grow' ref={dropdownRef}>
         <CustomSelect
           placeholder={<ThreadPlaceholder/>}

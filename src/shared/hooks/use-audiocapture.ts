@@ -83,9 +83,11 @@ export const useAudioCapture = (): AudioCapture => {
             __vexa_main_domain: "",
             __vexa_chrome_domain: "",
         });
+        console.log("HERE");
         const chrome_domain = authData.__vexa_chrome_domain;
         const token = authData.__vexa_token;
         const main_domain = authData.__vexa_main_domain;
+
         const meetingId = getIdFromUrl(location.href);
         if (!authData?.__vexa_token) {
             const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;

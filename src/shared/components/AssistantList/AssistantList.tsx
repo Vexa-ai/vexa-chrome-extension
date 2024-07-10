@@ -118,7 +118,7 @@ function sendFetchRequest(method: string, url: string, data: object = null): Pro
       {
         type: MessageType.FETCH_REQUEST,
         action: method,
-        url: "https://main_andrew.dev.vexa.ai/api/v1" + url,
+        url: "/api/v1" + url,
         data: data
       },
       (response) => {
@@ -154,7 +154,7 @@ export interface AssistantListProps {
   className?: string;
 }
 
-export function AssistantList({className}: AssistantListProps) {
+export function AssistantList({className = ''}: AssistantListProps) {
   const MEETING_ID = getIdFromUrl(window.location.href);
 
   const [userMessage, setUserMessage] = useState<string>('');

@@ -190,11 +190,17 @@ MessageListenerService.registerMessageListener(MessageType.FETCH_REQUEST, async 
     console.log({message});
     const { action, url, data } = message;
 
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+        __vexa_token: "",
+        __vexa_main_domain: "",
+        __vexa_chrome_domain: "",
+    });
+
     let fetchOptions = {
         method: action.toUpperCase(),
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer 0214d19adcc241b385dad8ddccbfd17a`,
+            'Authorization': `Bearer ${authData.__vexa_token}`,
         }
     };
 
@@ -202,7 +208,7 @@ MessageListenerService.registerMessageListener(MessageType.FETCH_REQUEST, async 
         fetchOptions.body = JSON.stringify(data);
     }
 
-    fetch(url, fetchOptions)
+    fetch(authData.__vexa_main_domain + url, fetchOptions)
       .then(response => response.json())
       .then(data => sendResponse({ success: true, data: data }))
       .catch(error => sendResponse({ success: false, error: error }));

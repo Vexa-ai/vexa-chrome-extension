@@ -10,7 +10,7 @@ import { platform } from "os";
 import { Platform, getPlatform } from "~shared/helpers/is-recordable-platform.helper";
 
 const VexaBtn = () => {
-    const [isMaximized, setIsMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE);
+    const [isMaximized, setIsMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
     const [isDragging, setIsDragging] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const platform = getPlatform();

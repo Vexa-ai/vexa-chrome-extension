@@ -11,6 +11,6 @@ export function VexaLogo({...rest}: VexaLogoProps) {
   return <div {...rest} className='VexaLogo flex gap-2 items-center'>
     {/* <img alt='' className='w-6' src={vexaLogoIcon} /> */}
     <VexaIcon className='w-6'/>
-    <h2 className="font-bold text-base text-white">Vexa</h2>
+    <h2 className="font-bold text-base text-white" onClick={() => open("https://dashboard.vexa.ai")} style={{cursor: 'pointer'}}>Vexa</h2>
   </div>;
 }

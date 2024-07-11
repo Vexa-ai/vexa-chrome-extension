@@ -85,6 +85,11 @@ export class ThreadMessage implements AssistantMessageUnit {
   }
 }
 
+export interface ThreadsResponse {
+  total: number;
+  threads: (Thread & Option)[];
+}
+
 class Thread implements Option {
   id: string | null
   title: string | null
@@ -253,7 +258,6 @@ export function AssistantList({className = ''}: AssistantListProps) {
 
     postRequest(`/assistant/messages/edit`, {
       thread_id: selectedThread.id,
-      // meeting_session_id: "107d81b3-dd0a-4674-898d-a1615d54c0b7",
       message_id: message.id,
       content: message.text,
     })
@@ -303,6 +307,10 @@ export function AssistantList({className = ''}: AssistantListProps) {
   const sendUserMessage = useCallback(async (event: FormEvent) => {
     event.preventDefault();
 
+    if (userMessage?.trim()?.length === 0) {
+      return;
+    }
+
     userMessagePendingRef.current = new ThreadMessage({
       id: null,
       text: userMessage,
@@ -332,10 +340,8 @@ export function AssistantList({className = ''}: AssistantListProps) {
         })
     } else {
       postRequest('/assistant/threads/create', {
-        // title: selectedThread.label,
-        // meeting_id: MEETING_ID,
+        meeting_id: MEETING_ID,
         prompt: userMessage,
-        meeting_session_id: "107d81b3-dd0a-4674-898d-a1615d54c0b7",
       })
         .then((response: Thread) => {
           if (selectedThread) {
@@ -383,8 +389,35 @@ export function AssistantList({className = ''}: AssistantListProps) {
     userMessageInputRef?.current?.focus();
   }, [threadMessages]);
 
+
+  const fetchThreads = function () {
+    getRequest(`/assistant/threads/all?meeting_id=${MEETING_ID}`)
+      .then((response: ThreadsResponse) => {
+        console.log(response);
+
+        const responseThreads = response.threads.map(t => new Thread(t));
+        setThreads(responseThreads);
+        responseThreads && setSelectedThread(responseThreads[0])
+      })
+      .catch(err => {
+      })
+      .finally(() => {
+      })
+    ;
+  }
+
+  // Initial
+  let beingCalled = useRef(0);
+  useEffect(() => {
+    if (beingCalled.current++ !== 0) return;
+
+    fetchThreads();
+  }, []);
+
+
+
   return <div ref={assistantListRef} className={`AssistantList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
-    {threads.length > 0 && selectedThread && <div className="flex py-2 gap-3 w-full max-w-[368px]">
+    {<div className="flex py-2 gap-3 w-full max-w-[368px]">
       <div className='flex-grow' ref={dropdownRef}>
         <CustomSelect
           placeholder={<ThreadPlaceholder/>}
@@ -431,23 +464,6 @@ export function AssistantList({className = ''}: AssistantListProps) {
     )
     }
 
-
-    {/*
-      renderedResponses.length ? <div className="flex-grow overflow-y-auto">
-        {renderedResponses.map((entry, index) => (
-          <div key={index} ref={renderedResponses.length - 1 === index ? lastEntryRef : null}>
-            {entry.user_message && <AssistantEntry onTextUpdated={createThreadFromUserPrompt} entryData={entry.user_message} />}
-            {entry.assistant_message && <AssistantEntry entryData={entry.assistant_message} />}
-          </div>
-        ))}
-      </div> : null
-      {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${threadMessages.length ? '' : 'mt-2'}`}>
-        <BouncingDots/>
-      </div>
-    */}
-
-    {/*<AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute bottom-3' />*/}
-
     <div className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1 absolute bottom-3`}>
       {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
       <form autoComplete="off" onSubmit={sendUserMessage} className="flex gap-1">
@@ -462,7 +478,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
           name='assistant-input'
         />
 
-        <button disabled={isPrompting} type='submit'>
+        <button disabled={isPrompting || userMessage?.trim()?.length === 0} type='submit'>
           <img src={vexaLogoIcon} alt=""/>
         </button>
       </form>

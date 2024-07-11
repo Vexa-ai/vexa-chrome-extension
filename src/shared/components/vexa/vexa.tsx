@@ -14,7 +14,7 @@ const messageSender = new MessageSenderService();
 const Vexa = () => {
     const audioCapture = useAudioCapture();
     const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
-    const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, false);
+    const [isMaximized] = StorageService.useHookStorage<boolean>(StoreKeys.WINDOW_STATE, true);
     const [hasRecorded, setHasRecorded] = useState(false);
     const [isDraggableDisabled, setIsDraggableDisabled] = useState(true);
     const vexaToolbarRef = useRef(null);

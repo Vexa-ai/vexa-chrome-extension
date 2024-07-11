@@ -110,7 +110,16 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
                   value={entry.text}
                   className='w-full bg-[#121824] border border-[#333741] p-2 flex rounded-lg font-medium text-white'
                   name="editor" id="editor" cols={5}></textarea>
-                : <div className='markdown'><Markdown>{entry.text}</Markdown></div>
+                : <div className='markdown'><Markdown options={{
+                  overrides: {
+                    a: {
+                      props: {
+                        target: '_blank',
+                      },
+                    },
+                  },
+                }}
+                >{entry.text}</Markdown></div>
               }
               {/* <MDXEditor markdown='Hello world' /> */}
             </div>

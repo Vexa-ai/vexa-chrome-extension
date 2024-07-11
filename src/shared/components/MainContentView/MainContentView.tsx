@@ -80,7 +80,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
           Assistant
         </li>
       </ul>
-      <TranscriptList className={hasTranscripts || (selectedTabIndex === 0) ? '' : `mt-[10px] hidden`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
+      <TranscriptList className={selectedTabIndex === 0 ? '' : `mt-[10px] hidden`} transcriptList={transcriptList} updatedTranscriptList={(list) => onListUpdated(list)} />
       <div className={`${selectedTabIndex === 1 ? 'flex h-full' : 'hidden'}`}>
         <AssistantList />
       </div>

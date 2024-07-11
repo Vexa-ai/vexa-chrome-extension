@@ -448,7 +448,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
 
     {/*<AssistantInput clearField={clearField} setClearField={setClearField} onEnter={onPrompted} className='bg-slate-950 mb-2 ml-1 absolute bottom-3' />*/}
 
-    <div className={`AssistantInput mt-auto ${className}`}>
+    <div className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1 absolute bottom-3`}>
       {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
       <form autoComplete="off" onSubmit={sendUserMessage} className="flex gap-1">
         <input

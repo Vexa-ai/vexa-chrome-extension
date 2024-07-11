@@ -101,7 +101,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
             <TranscriptEntry speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
           </div>
         ))}
-        {isCapturing && <div className="flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26]">
+        {isCapturing && <div className="flex flex-grow-0 p-3 mt-1 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26]">
           <BouncingDots />
         </div>}
       </div>

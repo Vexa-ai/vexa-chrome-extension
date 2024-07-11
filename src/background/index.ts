@@ -186,6 +186,59 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
 });
 
 
+// TODO: make it prettier
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    if (message.type === 'ASYNC_MESSAGE') {
+        const { action, url, data } = message.message;
+
+        const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+            __vexa_token: "",
+            __vexa_main_domain: "",
+            __vexa_chrome_domain: "",
+        });
+
+        let fetchOptions = {
+            method: action.toUpperCase(),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authData.__vexa_token}`,
+            }
+        };
+
+        if (['post', 'put', 'delete'].includes(action)) {
+            fetchOptions.body = JSON.stringify(data);
+        }
+
+
+        /*
+        setTimeout(() => {
+            sendResponse({success: null});
+        }, 10);
+        */
+
+        fetch(authData.__vexa_main_domain + url, fetchOptions)
+          .then(response => response.json())
+          .then(data => {
+              chrome.tabs.sendMessage(sender.tab.id, {
+                  messageId: message.messageId,
+                  data,
+              });
+          })
+          .catch(error => {
+              chrome.tabs.sendMessage(sender.tab.id, {
+                  messageId: message.messageId,
+                  data: {
+                      error: error.message,
+                  }
+              });
+          });
+    }
+
+    // Return true to indicate that we will respond asynchronously
+    return false;
+});
+
+
 MessageListenerService.registerMessageListener(MessageType.FETCH_REQUEST, async (message, sender, sendResponse) => {
     console.log({message});
     const { action, url, data } = message;

@@ -9,6 +9,10 @@ import { MessageType } from '~lib/services/message-listener.service';
 import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
 import { StorageService, StoreKeys } from '~lib/services/storage.service';
 
+// TODO: place in correct place (it is placed here to keep static fields on)
+import AsyncMessengerService from "~lib/services/async-messenger.service";
+const asyncMessengerService = new AsyncMessengerService();
+
 export interface MainContentViewProps {
   [key: string]: any;
 }

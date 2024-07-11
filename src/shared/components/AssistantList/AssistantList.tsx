@@ -2,22 +2,27 @@ import React, {type FormEvent, useCallback, useEffect, useRef, useState} from 'r
 
 import './AssistantList.scss';
 import '../AssistantInput/AssistantInput.scss';
-import { AssistantEntry } from '../AssistantEntry';
-import { AssistantInput } from '../AssistantInput';
-import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
-import { MessageSenderService } from '~lib/services/message-sender.service';
-import { getIdFromUrl } from '~shared/helpers/meeting.helper';
-import { StorageService, StoreKeys } from '~lib/services/storage.service';
-import { BouncingDots } from '../BouncingDots/BouncingDots';
-import { CustomSelect, type Option } from '../CustomSelect';
+import {AssistantEntry} from '../AssistantEntry';
+import {AssistantInput} from '../AssistantInput';
+import {MessageListenerService, MessageType} from '~lib/services/message-listener.service';
+import {MessageSenderService} from '~lib/services/message-sender.service';
+import {getIdFromUrl} from '~shared/helpers/meeting.helper';
+import {StorageService, StoreKeys} from '~lib/services/storage.service';
+import {BouncingDots} from '../BouncingDots/BouncingDots';
+import {CustomSelect, type Option} from '../CustomSelect';
 import threadIcon from "data-base64:~assets/images/svg/git-branch-01.svg";
 import copyIcon from "data-base64:~assets/images/svg/copy-07.svg";
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg";
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg";
-import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
+import {onMessage, sendMessage} from '~shared/helpers/in-content-messaging.helper';
 import {ThreeCircles} from "react-loader-spinner";
 import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
 import {ThreadDeletePromptModal} from "~shared/components/ThreadDeletePromptModal";
+import AsyncMessengerService from "~lib/services/async-messenger.service";
+
+// TODO: place in correct place
+const asyncMessengerService = new AsyncMessengerService();
+
 
 export interface AssistantEntryData {
   current_chain?: number;
@@ -112,24 +117,14 @@ class Thread implements Option {
   }
 }
 
+// TODO: move it inside messenger
 function sendFetchRequest(method: string, url: string, data: object = null): Promise<object> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      {
-        type: MessageType.FETCH_REQUEST,
-        action: method,
-        url: "/api/v1" + url,
-        data: data
-      },
-      (response) => {
-        if (response.success) {
-          resolve(response.data);
-        } else {
-          reject(response.error);
-        }
-      }
-    );
-  });
+  return asyncMessengerService.sendMessageToServiceWorker({
+    type: MessageType.FETCH_REQUEST,
+    action: method,
+    url: "/api/v1" + url,
+    data: data
+  })
 }
 
 function getRequest(url: string): Promise<object> {
@@ -149,7 +144,6 @@ function deleteRequest(url: string, data: object = null): Promise<object> {
 }
 
 
-
 export interface AssistantListProps {
   className?: string;
 }
@@ -161,18 +155,19 @@ export function AssistantList({className = ''}: AssistantListProps) {
   const [userMessagePending, setUserMessagePending] = useState<ThreadMessage | null>(null);
   const userMessagePendingRef = useRef(userMessagePending);
 
-  const threadsLoadedRef = useRef(false);
-  const [threads, setThreads] = useState<(Thread)[]>([]);
-  const [selectedThread, setSelectedThread] = useState<(Thread & Option) | undefined>();
-  const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>([]);
+  const [threads, setThreads] = useState<(Thread)[]>(AsyncMessengerService.threads);
+  const [selectedThread, setSelectedThread] = useState<(Thread & Option) | undefined>(AsyncMessengerService.selectedThread);
+  const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>(AsyncMessengerService.threadMessages);
 
-  const threadsRef = useRef(threads);
-  const selectedThreadRef = useRef(selectedThread);
-  const threadMessagesRef = useRef(threadMessages);
-
-  useEffect(() => { threadsRef.current = threads; }, [threads]);
-  useEffect(() => { threadMessagesRef.current = threadMessages; }, [threadMessages]);
-  useEffect(() => { selectedThreadRef.current = selectedThread; }, [selectedThread]);
+  useEffect(() => {
+    AsyncMessengerService.threads = threads;
+  }, [threads]);
+  useEffect(() => {
+    AsyncMessengerService.threadMessages = threadMessages;
+  }, [threadMessages]);
+  useEffect(() => {
+    AsyncMessengerService.selectedThread = selectedThread;
+  }, [selectedThread]);
 
   const [isPrompting, setIsPrompting] = useState(false);
   // const [isThreadsOpen, setIsOpen] = useState(false);
@@ -219,7 +214,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
     selectedThread && selectedThread.id && loadThreadMessages(selectedThread);
   }, [loadThreadMessages, selectedThread])
 
-  const onStartNewThread = (callback?: (createdThread:  Thread & Option) => void) => {
+  const onStartNewThread = (callback?: (createdThread: Thread & Option) => void) => {
     const emptyThread = threads.find(t => !t.id);
     if (emptyThread) {
       setSelectedThread(emptyThread);
@@ -284,7 +279,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
     })
       .then(() => {
         onThreadDeleted(thread)
-        sendMessage(MessageType.DELETE_THREAD_COMPLETE, { });
+        sendMessage(MessageType.DELETE_THREAD_COMPLETE, {});
       }, error => {
         alert('Thread delete failed. Try again.');
         // toast('Failed to delete thread. Try again.', { type: 'error' });
@@ -303,7 +298,6 @@ export function AssistantList({className = ''}: AssistantListProps) {
       return threads;
     });
   }
-
 
 
   const sendUserMessage = useCallback(async (event: FormEvent) => {
@@ -373,7 +367,6 @@ export function AssistantList({className = ''}: AssistantListProps) {
   }, [userMessagePending, userMessage])
 
 
-
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -417,18 +410,18 @@ export function AssistantList({className = ''}: AssistantListProps) {
 
     {threadMessages?.length || userMessagePending ? <div className="flex-grow overflow-y-auto" ref={messagedContainerRef}>
       {threadMessages?.map((entry: ThreadMessage, index) => (
-        <div>
-          {entry.isUser && <AssistantEntry key={entry.id} onTextUpdated={updateThreadFromUserEdit} entryData={entry}/>}
-          {entry.isAssistant && <AssistantEntry key={entry.id} entryData={entry}/>}
+        <div key={index}>
+          {entry.isUser && <AssistantEntry onTextUpdated={updateThreadFromUserEdit} entryData={entry}/>}
+          {entry.isAssistant && <AssistantEntry entryData={entry}/>}
         </div>
       ))}
+
       {userMessagePending && <AssistantEntry key={"pending"} entryData={userMessagePending} pending/>}
 
 
       {isPrompting && <div className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${selectedThread?.messages.length ? '' : 'mt-2'}`}>
         <BouncingDots/>
-      </div>
-      }
+      </div>}
 
       <div ref={bottomDiv}/>
     </div> : (
@@ -475,11 +468,9 @@ export function AssistantList({className = ''}: AssistantListProps) {
       </form>
     </div>
 
-    <ThreadDeletePromptModal deleteThread={deleteThread} />
+    <ThreadDeletePromptModal deleteThread={deleteThread}/>
   </div>;
 }
-
-
 
 
 const ThreadNoOption: React.FC = () => (
@@ -502,12 +493,12 @@ const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
   </div>
 );
 
-const ThreadOption: React.FC<{ option: Option; options: Option[]; selected: boolean; onClick: () => void }> = ({ option, options, selected, onClick }) => {
+const ThreadOption: React.FC<{ option: Option; options: Option[]; selected: boolean; onClick: () => void }> = ({option, options, selected, onClick}) => {
   const newFromThread = () => {
     // sendMessage(MessageType.DELETE_THREAD_START, { thread: option });
   };
   const deleteThread = () => {
-    sendMessage(MessageType.DELETE_THREAD_START, { thread: option });
+    sendMessage(MessageType.DELETE_THREAD_START, {thread: option});
   };
 
   return <div className={`flex gap-2 ${selected ? 'bg-[#333741]' : 'bg-[#1F242F]'} py-2 px-2 group hover:bg-[#333741] text-[#CECFD2] text-sm font-semibold rounded-lg`}>
@@ -516,11 +507,11 @@ const ThreadOption: React.FC<{ option: Option; options: Option[]; selected: bool
     </p>
     <div className="flex gap-2">
       <button onClick={newFromThread} className="bg-transparent h-5 w-5 hidden">
-        <img src={copyIcon} alt="Copy thread" />
+        <img src={copyIcon} alt="Copy thread"/>
       </button>
 
       {options.length > 1 && <button onClick={deleteThread} className="bg-transparent h-5 w-5 hidden group-hover:block">
-        <img src={trashIcon} alt="Delete thread" />
+        <img src={trashIcon} alt="Delete thread"/>
       </button>}
     </div>
   </div>

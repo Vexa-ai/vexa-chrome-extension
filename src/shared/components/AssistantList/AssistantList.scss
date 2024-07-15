@@ -1,5 +1,7 @@
 .AssistantList {
 
+  max-height: calc(100vh - 145px) !important;
+
   .CustomSelect {
     @apply h-full;
     max-width: 275px !important;

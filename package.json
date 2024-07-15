@@ -1,8 +1,8 @@
 {
   "name": "vexa",
   "displayName": "Vexa",
-  "version": "8.02",
-  "description": "Vexa - AI video call recording and summary",
+  "version": "8.9",
+  "description": "VEXA.AI - Free meeting transcription and ChatGPT prompting in real-time",
   "author": "Vexa",
   "scripts": {
     "dev": "plasmo dev",
@@ -55,7 +55,6 @@
   },
   "manifest": {
     "permissions": [
-      "scripting",
       "offscreen",
       "tabs",
       "tabCapture",

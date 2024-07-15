@@ -25,7 +25,7 @@ const dataCollectFn = async () => {
         messageSender.sendBackgroundMessage({ type: MessageType.AUTH_SAVED });
     }
     const pageUrl = new URL(window.location.href);
-    if (pageUrl.searchParams.has('caller') && pageUrl.searchParams.get('caller') === 'vexa-ext' && authData.__vexa_token?.trim()) {
+    if (pageUrl.searchParams.has('caller') && pageUrl.searchParams.get('caller') === 'vexa-ext' && pageUrl.searchParams.get('action') !== 'configure' && authData.__vexa_token?.trim()) {
         try {
             window.close();
         } catch (e) {

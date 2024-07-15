@@ -1,21 +1,18 @@
-import React, {type FormEvent, useCallback, useEffect, useRef, useState} from 'react';
+import React, {type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
 
 import './AssistantList.scss';
 import '../AssistantInput/AssistantInput.scss';
 import {AssistantEntry} from '../AssistantEntry';
-import {AssistantInput} from '../AssistantInput';
-import {MessageListenerService, MessageType} from '~lib/services/message-listener.service';
+import {MessageType} from '~lib/services/message-listener.service';
 import {MessageSenderService} from '~lib/services/message-sender.service';
 import {getIdFromUrl} from '~shared/helpers/meeting.helper';
-import {StorageService, StoreKeys} from '~lib/services/storage.service';
 import {BouncingDots} from '../BouncingDots/BouncingDots';
 import {CustomSelect, type Option} from '../CustomSelect';
 import threadIcon from "data-base64:~assets/images/svg/git-branch-01.svg";
 import copyIcon from "data-base64:~assets/images/svg/copy-07.svg";
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg";
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg";
-import {onMessage, sendMessage} from '~shared/helpers/in-content-messaging.helper';
-import {ThreeCircles} from "react-loader-spinner";
+import {sendMessage} from '~shared/helpers/in-content-messaging.helper';
 import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
 import {ThreadDeletePromptModal} from "~shared/components/ThreadDeletePromptModal";
 import AsyncMessengerService from "~lib/services/async-messenger.service";
@@ -183,7 +180,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagedContainerRef = useRef<HTMLDivElement>(null);
   const bottomDiv = useRef<HTMLDivElement>(null);
-  const userMessageInputRef = useRef<HTMLInputElement>(null);
+  const userMessageInputRef = useRef<HTMLTextAreaElement>(null);
 
   const isSendingMessageRef = useRef(false);
 
@@ -275,9 +272,14 @@ export function AssistantList({className = ''}: AssistantListProps) {
     ;
   }
 
-  const deleteThread = () => {
-    console.log("Delete");
-    const thread = selectedThread;
+  const deleteThread = (thread: Thread) => {
+    if (!thread.id) {
+      onThreadDeleted(thread)
+      sendMessage(MessageType.DELETE_THREAD_COMPLETE, {});
+
+      return;
+    }
+
     deleteRequest(`/assistant/threads/delete`, {
       ids: [thread.id],
     })
@@ -389,6 +391,13 @@ export function AssistantList({className = ''}: AssistantListProps) {
     userMessageInputRef?.current?.focus();
   }, [threadMessages]);
 
+  useEffect(() => {
+    const element = userMessageInputRef?.current;
+
+    element.style.height = '5px';
+    element.style.height = (element.scrollHeight + 5) + 'px';
+  }, [userMessage]);
+
 
   const fetchThreads = function () {
     getRequest(`/assistant/threads/all?meeting_id=${MEETING_ID}`)
@@ -456,7 +465,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
         <BouncingDots/>
       </div>}
 
-      <div ref={bottomDiv}/>
+      <div style={{height: '10px'}} ref={bottomDiv}/>
     </div> : (
       <div className='flex items-center justify-center flex-grow overflow-hidden'>
         <span>{isLoadingMessages && !isPolling ? 'Loading your chat history...' : 'Type your message. E.g. "What action points were on the call?"'}</span>
@@ -464,17 +473,18 @@ export function AssistantList({className = ''}: AssistantListProps) {
     )
     }
 
-    <div className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1 absolute bottom-3`}>
+    <div className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1`} style={{marginTop: '3px'}}>
       {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
       <form autoComplete="off" onSubmit={sendUserMessage} className="flex gap-1">
-        <input
+        <textarea
+          ref={userMessageInputRef}
           disabled={isPrompting}
           value={userMessage}
+          onKeyDown={(e: KeyboardEvent) => {if (e.key === 'Enter' && !e.shiftKey) sendUserMessage(e) }}
           onChange={e => setUserMessage(e.target.value)}
-          type="text"
           placeholder='Start typing...'
           className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2"
-          style={{color: 'white'}}
+          style={{color: 'white', resize: 'none', maxHeight: '180px', minHeight: '39px'}}
           name='assistant-input'
         />
 

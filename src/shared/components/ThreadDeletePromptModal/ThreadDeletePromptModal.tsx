@@ -72,7 +72,7 @@ export function ThreadDeletePromptModal({ deleteThread }: ThreadDeletePromptModa
                 </div> */}
                 <div className="flex flex-col w-full gap-2">
                   <button
-                    onClick={() => deleteThread()}
+                    onClick={() => deleteThread(threadData)}
                     className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#F04438] disabled:text-[#85888E] text-white text-center font-semibold text-base"
                   >
                     {isDeletingThread ? <BouncingDots className='py-[10px]' /> : 'Delete Thread'}

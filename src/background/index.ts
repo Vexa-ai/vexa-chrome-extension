@@ -86,6 +86,7 @@ const extensionInstallHandler = async () => {
 const resetRecordingState = () => {
     StorageService.set(StoreKeys.CAPTURED_TAB_ID, null);
     StorageService.set(StoreKeys.CAPTURING_STATE, false);
+    StorageService.set(StoreKeys.WINDOW_STATE, true);
     StorageService.set(StoreKeys.RECORD_START_TIME, 0);
 }
 

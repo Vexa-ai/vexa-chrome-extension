@@ -91,15 +91,18 @@ class Thread implements Option {
   id: string | null
   title: string | null
   messages?: ThreadMessage[] = []
+  created_timestamp?: string
 
   constructor({
     id = null,
     title = null,
     messages = [],
-  } = {}) {
+    created_timestamp = null,
+  }) {
     this.id = id;
     this.title = title;
     this.messages = messages.map(m => new ThreadMessage(m));
+    this.created_timestamp = created_timestamp;
   }
 
   get label() {
@@ -404,9 +407,16 @@ export function AssistantList({className = ''}: AssistantListProps) {
       .then((response: ThreadsResponse) => {
         console.log(response);
 
-        const responseThreads = response.threads.map(t => new Thread(t));
-        setThreads(responseThreads);
-        responseThreads && setSelectedThread(responseThreads[0])
+        const responseThreads = response.threads
+          .map(t => new Thread(t))
+          .sort((a, b) => a.created_timestamp?.localeCompare(b.created_timestamp) || 0);
+
+        if (responseThreads?.length) {
+          setThreads(responseThreads);
+
+          const thread = responseThreads.find(t => t.id === AsyncMessengerService.selectedThread?.id)
+          setSelectedThread(thread || responseThreads[0])
+        }
       })
       .catch(err => {
       })

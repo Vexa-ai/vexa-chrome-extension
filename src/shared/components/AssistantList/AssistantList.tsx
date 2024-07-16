@@ -312,13 +312,14 @@ export function AssistantList({className = ''}: AssistantListProps) {
   const sendUserMessage = useCallback(async (event: FormEvent) => {
     event.preventDefault();
 
-    if (userMessage?.trim()?.length === 0) {
+    let content = userMessage?.trim();
+    if (content?.length === 0) {
       return;
     }
 
     userMessagePendingRef.current = new ThreadMessage({
       id: null,
-      text: userMessage,
+      text: content,
       role: "user",
     });
     setUserMessagePending(userMessagePendingRef.current);
@@ -329,7 +330,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
       // post message in thread
       postRequest('/assistant/copilot', {
         thread_id: selectedThread.id,
-        content: userMessage,
+        content,
       })
         .then((response: AssistantEntryData) => {
           setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
@@ -346,7 +347,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
     } else {
       postRequest('/assistant/threads/create', {
         meeting_id: MEETING_ID,
-        prompt: userMessage,
+        prompt: content,
       })
         .then((response: Thread) => {
           if (selectedThread) {
@@ -380,9 +381,14 @@ export function AssistantList({className = ''}: AssistantListProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      const target = event.target as HTMLElement;
+
+      // Ignore clicking special places
+      if (target.closest('div.ThreadSelected') || target.closest('div.ThreadOption')) {
+        return;
       }
+
+      setIsOpen(false);
     }
     document.addEventListener("click", handleClickOutside);
     return () => {
@@ -523,7 +529,7 @@ const ThreadPlaceholder: React.FC = () => (
 );
 
 const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
-  <div className='flex w-full gap-1 overflow-hidden'>
+  <div className='flex w-full gap-1 overflow-hidden ThreadSelected'>
     <img alt='' className='w-5' src={threadIcon}/>
     <p className='text-[#F5F5F6] min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm' title={values.label}>{values.label}</p>
   </div>
@@ -537,7 +543,7 @@ const ThreadOption: React.FC<{ option: Option; options: Option[]; selected: bool
     sendMessage(MessageType.DELETE_THREAD_START, {thread: option});
   };
 
-  return <div className={`flex gap-2 ${selected ? 'bg-[#333741]' : 'bg-[#1F242F]'} py-2 px-2 group hover:bg-[#333741] text-[#CECFD2] text-sm font-semibold rounded-lg`}>
+  return <div className={`flex gap-2 ${selected ? 'bg-[#333741]' : 'bg-[#1F242F]'} py-2 px-2 group hover:bg-[#333741] text-[#CECFD2] text-sm font-semibold rounded-lg ThreadOption`}>
     <p onClick={onClick} className='mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full flex-grow text-left' title={option.label}>
       {option.label}
     </p>
@@ -546,9 +552,9 @@ const ThreadOption: React.FC<{ option: Option; options: Option[]; selected: bool
         <img src={copyIcon} alt="Copy thread"/>
       </button>
 
-      {options.length > 1 && <button onClick={deleteThread} className="bg-transparent h-5 w-5 hidden group-hover:block">
+      <button onClick={deleteThread} className="bg-transparent h-5 w-5 hidden group-hover:block">
         <img src={trashIcon} alt="Delete thread"/>
-      </button>}
+      </button>
     </div>
   </div>
 };

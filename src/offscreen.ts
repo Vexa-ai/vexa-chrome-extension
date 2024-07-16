@@ -103,6 +103,9 @@ let micCheckStopper = () => {
 
 
 MessageListenerService.registerMessageListener(MessageType.START_MIC_LEVEL_STREAMING, async (evtData, sender) => {
+  // TODO: fix mic levels
+  return;
+
   try {
     const micLabel: string = evtData.data.micLabel;
     micCheckStopper();

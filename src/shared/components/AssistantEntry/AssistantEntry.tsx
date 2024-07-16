@@ -121,7 +121,6 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
                 }}
                 >{entry.text}</Markdown></div>
               }
-              {/* <MDXEditor markdown='Hello world' /> */}
             </div>
 
           </div>

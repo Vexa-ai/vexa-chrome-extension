@@ -39,7 +39,7 @@ export default class AsyncMessengerService {
   }
 
   // Function to send message to service worker and return a promise
-  sendMessageToServiceWorker(message: any, timeout = 15000): Promise<object> {
+  sendMessageToServiceWorker(message: any, timeout = 25000): Promise<object> {
     return new Promise((resolve, reject) => {
       const messageId = AsyncMessengerService.generateMessageId();
 

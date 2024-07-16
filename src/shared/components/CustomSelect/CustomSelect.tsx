@@ -63,19 +63,11 @@ export function CustomSelect({
   }, [initialValue]);
 
   const handleInputClick = () => {
-      setShowMenu(true);
-      return;
+      setShowMenu(prev => !prev);
   };
 
   const removeOption = (option: Option) => {
     return selectedValues.filter(o => o.value !== option.value);
-  };
-
-  const onTagRemove = (e: React.MouseEvent, option: Option) => {
-    e.stopPropagation();
-    const newValue = removeOption(option);
-    setSelectedValues(newValue);
-    onChange(newValue);
   };
 
   const onItemClick = (option: Option) => {
@@ -89,6 +81,7 @@ export function CustomSelect({
     } else {
       newValue = [option];
     }
+    setShowMenu(false)
     setSelectedValues(newValue);
     onChange(newValue);
   };

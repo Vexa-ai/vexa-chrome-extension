@@ -21,7 +21,7 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
   const [isPending, setIsPending] = useState(pending);
 
   const copyText = () => {
-    navigator.clipboard.writeText(entryData.text);
+    navigator.clipboard.writeText(entryData.label);
   };
 
   const showEditor = () => {
@@ -67,7 +67,7 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
                 isEditing ? (
                   <button
                     onClick={handleTextUpdate}
-                    disabled={!entry.text?.trim()}
+                    disabled={!entry.label?.trim()}
                     className='bg-[#121824] border border-[#333741] hover:bg-[#7F56D9] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white'>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <g id="check">
@@ -107,7 +107,7 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
                 ? <textarea
                   ref={editorRef}
                   onChange={handleInputChange}
-                  value={entry.text}
+                  value={entry.label}
                   className='w-full bg-[#121824] border border-[#333741] p-2 flex rounded-lg font-medium text-white'
                   name="editor" id="editor" cols={5}></textarea>
                 : <div className='markdown'><Markdown options={{
@@ -119,7 +119,7 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
                     },
                   },
                 }}
-                >{entry.text}</Markdown></div>
+                >{entry.label}</Markdown></div>
               }
             </div>
 

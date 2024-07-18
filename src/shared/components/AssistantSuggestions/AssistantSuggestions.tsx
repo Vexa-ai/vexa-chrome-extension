@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 
 import './AssistantSuggestions.scss';
+import type {ActionButton} from "~shared/components/TranscriptList";
 
 export interface AssistantSuggestionsProps {
-  suggestions?: string[];
-  selectSuggestion: (index: number) => void;
+  suggestions?: ActionButton[];
+  selectSuggestion: (suggestion: ActionButton) => void;
 }
 
 export function AssistantSuggestions({ suggestions = [], selectSuggestion }: AssistantSuggestionsProps) {
@@ -56,9 +57,9 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
     suggestionsRef.current!.scrollLeft = scrollLeft - walk;
   };
 
-  const handleClick = (index: number) => {
+  const handleClick = (suggestion: ActionButton) => {
     if (!dragged) {
-      selectSuggestion(index);
+      selectSuggestion(suggestion);
     }
   };
 
@@ -77,13 +78,13 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
       <div className='flex gap-2 min-w-[180%] overflow-x-auto mb-2'>
         {suggestions.map((suggestion, key) => (
           <div
-            onClick={() => handleClick(key)}
+            onClick={() => handleClick(suggestion)}
             className={`suggestion select-none p-1 w-[66.66%] border border-[#333741] rounded font-medium text-[#F5F5F6] ${
               isDragging ? 'cursor-grabbing' : 'cursor-pointer'
             } ${key === suggestions.length - 1 ? 'mr-7' : ''}`}
             key={key}
           >
-            {suggestion}
+            {suggestion.name}
           </div>
         ))}
       </div>

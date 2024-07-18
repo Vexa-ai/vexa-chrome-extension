@@ -1,25 +1,51 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import './TranscriptList.scss';
-import { TranscriptEntry, type TranscriptionEntryData } from '../TranscriptEntry';
-import { MessageListenerService, MessageType } from '~lib/services/message-listener.service';
-import { sendMessage } from '~shared/helpers/in-content-messaging.helper';
-import { MessageSenderService } from '~lib/services/message-sender.service';
-import { getIdFromUrl } from '~shared/helpers/meeting.helper';
-import { TranscriptionCopyButton } from '../TranscriptionCopyButton';
-import { StorageService, StoreKeys } from '~lib/services/storage.service';
-import { BouncingDots } from '../BouncingDots';
+import {TranscriptEntry, type TranscriptionEntryData} from '../TranscriptEntry';
+import {MessageListenerService, MessageType} from '~lib/services/message-listener.service';
+import {sendMessage} from '~shared/helpers/in-content-messaging.helper';
+import {MessageSenderService} from '~lib/services/message-sender.service';
+import {getIdFromUrl} from '~shared/helpers/meeting.helper';
+import {AssistantSuggestions, TranscriptionCopyButton} from '~shared/components';
+import {StorageService, StoreKeys} from '~lib/services/storage.service';
+import {BouncingDots} from '../BouncingDots';
+import AsyncMessengerService from "~lib/services/async-messenger.service";
+
+const MEETING_ID = getIdFromUrl(window.location.href);
+const asyncMessengerService = new AsyncMessengerService();
+
+
+export interface ActionButtonsResponse {
+  total: number
+  buttons?: ActionButton[]
+}
+
+export interface ActionButton {
+  name: string;
+  type: string;
+  prompt: string;
+}
+
 
 export interface TranscriptListProps {
   className?: string;
   transcriptList?: TranscriptionEntryData[];
   updatedTranscriptList?: (transcriptList: TranscriptionEntryData[]) => void;
+  onActionButtonClicked?: (ab: ActionButton) => void;
 }
 
-export function TranscriptList({ transcriptList = [], updatedTranscriptList = (transcriptList) => { console.log({ transcriptList }) }, className = '' }: TranscriptListProps) {
+export function TranscriptList({
+    transcriptList = [],
+    updatedTranscriptList = (transcriptList) => {
+      console.log({transcriptList})
+    },
+    className = '',
+    onActionButtonClicked = (ab: ActionButton) => {}
+}: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
   const [scrolledToTop, setScrolledToTop] = useState(true);
+  const [actionButtons, setActionButtons] = useState<(ActionButton)[]>();
   const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
   const transcriptListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
@@ -28,7 +54,7 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
   const messageSender = new MessageSenderService();
   const handleScroll = () => {
     if (scrollAreaRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+      const {scrollTop, scrollHeight, clientHeight} = scrollAreaRef.current;
       setIsAutoScroll(scrollTop + clientHeight >= scrollHeight - 10);
       setScrolledToTop(scrollTop === 0);
 
@@ -36,12 +62,13 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
         clearTimeout(scrollTimeoutRef.current);
       }
 
-      scrollTimeoutRef.current = setTimeout(() => { }, 150);
+      scrollTimeoutRef.current = setTimeout(() => {
+      }, 150);
     }
   };
 
   const getMeetingTranscriptHistory = () => {
-    messageSender.sendBackgroundMessage({ type: MessageType.TRANSCRIPTION_HISTORY_REQUEST, data: { meetingId: getIdFromUrl(window.location.href) } })
+    messageSender.sendBackgroundMessage({type: MessageType.TRANSCRIPTION_HISTORY_REQUEST, data: {meetingId: getIdFromUrl(window.location.href)}})
   }
 
   useEffect(() => {
@@ -68,11 +95,29 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
     }
   });
 
+  const fetchActionButtons = function () {
+    asyncMessengerService.getRequest(`/assistant/buttons?meeting_id=${MEETING_ID}`)
+      .then((response: ActionButtonsResponse) => {
+        setActionButtons(response.buttons);
+      });
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchActionButtons();
+    }, 10000);
+
+    fetchActionButtons();
+
+    return () => clearInterval(interval);
+  })
+
+
   useEffect(() => {
     if (isAutoScroll && lastEntryRef.current) {
-      lastEntryRef.current.scrollIntoView({ behavior: 'smooth' });
+      lastEntryRef.current.scrollIntoView({behavior: 'smooth'});
     }
-    sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory: true });
+    sendMessage(MessageType.HAS_RECORDING_HISTORY, {hasRecordingHistory: true});
     updatedTranscriptList(transcripts);
   }, [transcripts]);
 
@@ -94,16 +139,19 @@ export function TranscriptList({ transcriptList = [], updatedTranscriptList = (t
     <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full overflow-hidden group/transcript-container ${className}`}>
       <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
-          <TranscriptionCopyButton className='rounded-lg' />
+          <TranscriptionCopyButton className='rounded-lg'/>
         </div>}
         {transcripts.map((transcript, index) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
-            <TranscriptEntry speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker} />
+            <TranscriptEntry speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker}/>
           </div>
         ))}
+
         {isCapturing && <div className="flex flex-grow-0 p-3 mt-1 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26]">
-          <BouncingDots />
+          <BouncingDots/>
         </div>}
+
+        <AssistantSuggestions suggestions={actionButtons} selectSuggestion={onActionButtonClicked} />
       </div>
     </div>
   );

@@ -58,7 +58,7 @@ export function ThreadDeletePromptModal({ deleteThread }: ThreadDeletePromptModa
                     <img src={closeIcon} alt="Close modal" />
                   </button>
                 </div>
-                <p className="font-semibold text-lg text-[#F5F5F6] mb-5 mt-3">Are you sure you want to delete thread <span className='font-normal'>"{threadData.label}"</span>?</p>
+                <p className="font-semibold text-lg text-[#F5F5F6] mb-5 mt-3">Are you sure you want to delete thread <span className='font-normal'>"{threadData.label.substring(0, 50)}"</span>?</p>
                 {/* <div className="flex flex-col gap-2 mb-6">
                   <label htmlFor="name" className='text-[#CECFD2]'>Name</label>
                   <input

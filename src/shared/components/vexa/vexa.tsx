@@ -8,6 +8,9 @@ import { NotificationContainer, NotificationManager } from 'react-notifications'
 import { sendMessage } from "~shared/helpers/in-content-messaging.helper";
 import { MessageType } from "~lib/services/message-listener.service";
 import { ThreadDeletePromptModal } from "../ThreadDeletePromptModal";
+import AsyncMessengerService from "~lib/services/async-messenger.service";
+
+const asyncMessengerService = new AsyncMessengerService();
 
 const messageSender = new MessageSenderService();
 
@@ -20,6 +23,8 @@ const Vexa = () => {
     const vexaToolbarRef = useRef(null);
     const defaultPosition = { x: 0, y: 0 };
     const [position, setPosition] = useState(defaultPosition);
+    const [outdated, setOutdated] = useState(false);
+    const [latestVersion, setLatestVersion] = useState(0);
 
     const handleDrag = (e: DraggableEvent, data: DraggableData) => {
         setPosition({ x: data.x, y: data.y });
@@ -33,6 +38,17 @@ const Vexa = () => {
             setPosition(defaultPosition);
         }
     };
+
+    useEffect(() => {
+        asyncMessengerService.putRequest(`/user-applications/check-version`, {
+            app_version: chrome.runtime.getManifest()?.version,
+        }).then(data => {
+            if (false === data['is_actual']) {
+                setOutdated(true);
+                setLatestVersion(data['actual_version']);
+            }
+        });
+    }, []);
 
     useEffect(() => {
         if (isCapturing) {
@@ -75,6 +91,11 @@ const Vexa = () => {
                         <AudioCaptureContext.Provider value={audioCapture}>
                             <NotificationContainer />
                             <VexaToolbar onDragHandleMouseOut={() => setIsDraggableDisabled(true)} onDragHandleMouseUp={() => setIsDraggableDisabled(true)} onDragHandleMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
+
+                            {outdated && <div style={{backgroundColor: 'red', color: 'white', fontWeight: 'bold', padding: '5px 15px', borderRadius: '3px', marginBottom: '5px'}}>
+                                Your version ({chrome.runtime.getManifest()?.version}) is outdated, please update plugin version to the latest version ({latestVersion})
+                            </div>}
+
                             {isCapturing || hasRecorded
                                 ? <>
                                     {!isCapturing && <MicrophoneOptions />}

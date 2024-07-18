@@ -1,3 +1,5 @@
+import {MessageType} from "~lib/services/message-listener.service";
+
 export default class AsyncMessengerService {
   private static readonly pendingPromises = new Map()
   private static currentMessageId = 0;
@@ -58,4 +60,31 @@ export default class AsyncMessengerService {
       });
     });
   }
+
+  sendFetchRequest(method: string, url: string, data: object = null): Promise<object> {
+    return this.sendMessageToServiceWorker({
+      type: MessageType.FETCH_REQUEST,
+      action: method,
+      url: "/api/v1" + url,
+      data: data
+    })
+  }
+
+  getRequest(url: string): Promise<object> {
+    return this.sendFetchRequest('get', url);
+  }
+
+  postRequest(url: string, data: object = null): Promise<object> {
+    return this.sendFetchRequest('post', url, data);
+  }
+
+  putRequest(url: string, data: object = null): Promise<object> {
+    return this.sendFetchRequest('put', url, data);
+  }
+
+  deleteRequest(url: string, data: object = null): Promise<object> {
+    return this.sendFetchRequest('delete', url, data);
+  }
+
+
 }

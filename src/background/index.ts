@@ -207,7 +207,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         };
 
         if (['post', 'put', 'delete'].includes(action)) {
-            fetchOptions.body = JSON.stringify(data);
+            fetchOptions['body'] = JSON.stringify(data);
         }
 
 
@@ -239,36 +239,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     return false;
 });
 
-
-MessageListenerService.registerMessageListener(MessageType.FETCH_REQUEST, async (message, sender, sendResponse) => {
-    console.log({message});
-    const { action, url, data } = message;
-
-    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
-        __vexa_token: "",
-        __vexa_main_domain: "",
-        __vexa_chrome_domain: "",
-    });
-
-    let fetchOptions = {
-        method: action.toUpperCase(),
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authData.__vexa_token}`,
-        }
-    };
-
-    if (['post', 'put', 'delete'].includes(action)) {
-        fetchOptions.body = JSON.stringify(data);
-    }
-
-    fetch(authData.__vexa_main_domain + url, fetchOptions)
-      .then(response => response.json())
-      .then(data => sendResponse({ success: true, data: data }))
-      .catch(error => sendResponse({ success: false, error: error }));
-
-    return true; // Indicate that response will be sent asynchronously
-});
 
 MessageListenerService.registerMessageListener(MessageType.ASSISTANT_HISTORY_REQUEST, async (message, sender) => {
     const chainId = message?.data?.chain || 1;

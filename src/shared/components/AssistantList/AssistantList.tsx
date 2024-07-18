@@ -16,6 +16,7 @@ import {sendMessage} from '~shared/helpers/in-content-messaging.helper';
 import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
 import {ThreadDeletePromptModal} from "~shared/components/ThreadDeletePromptModal";
 import AsyncMessengerService from "~lib/services/async-messenger.service";
+import type {ActionButton} from "~shared/components/TranscriptList";
 
 // TODO: place in correct place
 const asyncMessengerService = new AsyncMessengerService();
@@ -50,6 +51,7 @@ export class ThreadMessage implements AssistantMessageUnit {
   user_id?: string;
   meeting_id: string | null;
   text: string;
+  meta: object;
   role: 'user' | 'assistant';
   timestamp: string | null;
 
@@ -58,6 +60,8 @@ export class ThreadMessage implements AssistantMessageUnit {
     user_id = null,
     meeting_id = null,
     text = null,
+    label = null,
+    meta = {},
     role = null,
     timestamp = null,
   }) {
@@ -65,8 +69,19 @@ export class ThreadMessage implements AssistantMessageUnit {
     this.user_id = user_id;
     this.meeting_id = meeting_id;
     this.text = text;
+    this.meta = meta || {};
     this.role = role;
     this.timestamp = timestamp;
+
+    this.label = label;
+  }
+
+  get label(): string {
+    return this.meta['label'] || this.text;
+  }
+
+  set label(value: string) {
+    this.meta['label'] = value;
   }
 
   get isUser() {
@@ -78,7 +93,7 @@ export class ThreadMessage implements AssistantMessageUnit {
   }
 
   cloneWithText(text: string) {
-    return new ThreadMessage({...this, text: text});
+    return new ThreadMessage({...this, text: text, label: text});
   }
 }
 
@@ -98,7 +113,7 @@ class Thread implements Option {
     title = null,
     messages = [],
     created_timestamp = null,
-  }) {
+  } = {}) {
     this.id = id;
     this.title = title;
     this.messages = messages.map(m => new ThreadMessage(m));
@@ -122,38 +137,12 @@ class Thread implements Option {
   }
 }
 
-// TODO: move it inside messenger
-function sendFetchRequest(method: string, url: string, data: object = null): Promise<object> {
-  return asyncMessengerService.sendMessageToServiceWorker({
-    type: MessageType.FETCH_REQUEST,
-    action: method,
-    url: "/api/v1" + url,
-    data: data
-  })
-}
-
-function getRequest(url: string): Promise<object> {
-  return sendFetchRequest('get', url);
-}
-
-function postRequest(url: string, data: object = null): Promise<object> {
-  return sendFetchRequest('post', url, data);
-}
-
-function putRequest(url: string, data: object = null): Promise<object> {
-  return sendFetchRequest('put', url, data);
-}
-
-function deleteRequest(url: string, data: object = null): Promise<object> {
-  return sendFetchRequest('delete', url, data);
-}
-
-
 export interface AssistantListProps {
   className?: string;
+  actionButtonClicked?: ActionButton
 }
 
-export function AssistantList({className = ''}: AssistantListProps) {
+export function AssistantList({className = '', actionButtonClicked = null}: AssistantListProps) {
   const MEETING_ID = getIdFromUrl(window.location.href);
 
   const [userMessage, setUserMessage] = useState<string>('');
@@ -164,15 +153,9 @@ export function AssistantList({className = ''}: AssistantListProps) {
   const [selectedThread, setSelectedThread] = useState<(Thread & Option) | undefined>(AsyncMessengerService.selectedThread);
   const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>(AsyncMessengerService.threadMessages);
 
-  useEffect(() => {
-    AsyncMessengerService.threads = threads;
-  }, [threads]);
-  useEffect(() => {
-    AsyncMessengerService.threadMessages = threadMessages;
-  }, [threadMessages]);
-  useEffect(() => {
-    AsyncMessengerService.selectedThread = selectedThread;
-  }, [selectedThread]);
+  useEffect(() => {AsyncMessengerService.threads = threads;}, [threads]);
+  useEffect(() => {AsyncMessengerService.threadMessages = threadMessages;}, [threadMessages]);
+  useEffect(() => {AsyncMessengerService.selectedThread = selectedThread;}, [selectedThread]);
 
   const [isPrompting, setIsPrompting] = useState(false);
   // const [isThreadsOpen, setIsOpen] = useState(false);
@@ -204,7 +187,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
   };
 
   const loadThreadMessages = useCallback((thread: Thread) => {
-    getRequest(`/assistant/messages?thread_id=${thread.id}`)
+    asyncMessengerService.getRequest(`/assistant/messages?thread_id=${thread.id}`)
       .then((messages: ThreadMessage[]) => {
         // Ignore result if the thread changed
         if (selectedThread.id !== thread.id) return;
@@ -256,7 +239,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
       return messages;
     })
 
-    postRequest(`/assistant/messages/edit`, {
+    asyncMessengerService.postRequest(`/assistant/messages/edit`, {
       thread_id: selectedThread.id,
       message_id: message.id,
       content: message.text,
@@ -283,7 +266,7 @@ export function AssistantList({className = ''}: AssistantListProps) {
       return;
     }
 
-    deleteRequest(`/assistant/threads/delete`, {
+    asyncMessengerService.deleteRequest(`/assistant/threads/delete`, {
       ids: [thread.id],
     })
       .then(() => {
@@ -309,6 +292,13 @@ export function AssistantList({className = ''}: AssistantListProps) {
   }
 
 
+  useEffect(() => {
+    if (actionButtonClicked) {
+      createThread(actionButtonClicked.prompt, actionButtonClicked.name);
+    }
+  }, [actionButtonClicked])
+
+
   const sendUserMessage = useCallback(async (event: FormEvent) => {
     event.preventDefault();
 
@@ -317,66 +307,89 @@ export function AssistantList({className = ''}: AssistantListProps) {
       return;
     }
 
+    setUserMessage('');
+
+    if (selectedThread?.id) {
+      return sendMessageIntoThread(content);
+    }
+
+    return createThread(content);
+  }, [userMessagePending, userMessage]);
+
+
+  function sendMessageIntoThread(content: string) {
     userMessagePendingRef.current = new ThreadMessage({
-      id: null,
-      text: content,
+      text: prompt,
       role: "user",
     });
+
+    // post message in thread
+    return asyncMessengerService.postRequest('/assistant/copilot', {
+      thread_id: selectedThread.id,
+      content,
+    })
+      .then((response: AssistantEntryData) => {
+        setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+      })
+      .catch(err => {
+        setUserMessage(userMessagePendingRef.current.text)
+      })
+      .finally(() => {
+        setUserMessagePending(null)
+        userMessagePendingRef.current = null
+        setIsPrompting(false)
+        isSendingMessageRef.current = false;
+      })
+  }
+
+  const createThread = (prompt: string, label = null) => {
+    userMessagePendingRef.current = new ThreadMessage({
+      text: prompt,
+      role: "user",
+      label,
+    });
+
     setUserMessagePending(userMessagePendingRef.current);
     setIsPrompting(true)
     isSendingMessageRef.current = true;
 
-    if (selectedThread?.id) {
-      // post message in thread
-      postRequest('/assistant/copilot', {
-        thread_id: selectedThread.id,
-        content,
-      })
-        .then((response: AssistantEntryData) => {
-          setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
-        })
-        .catch(err => {
-          setUserMessage(userMessagePendingRef.current.text)
-        })
-        .finally(() => {
-          setUserMessagePending(null)
-          userMessagePendingRef.current = null
-          setIsPrompting(false)
-          isSendingMessageRef.current = false;
-        })
-    } else {
-      postRequest('/assistant/threads/create', {
-        meeting_id: MEETING_ID,
-        prompt: content,
-      })
-        .then((response: Thread) => {
-          if (selectedThread) {
-            selectedThread.id = response.id;
-            selectedThread.title = response.title;
-          } else {
-            const thread = new Thread({
-              id: response.id,
-              title: response.title,
-            })
-            setSelectedThread(thread);
-            setThreads(prev => [...prev, thread]);
-          }
 
-          setThreadMessages(prev => [...prev, ...response.messages?.map(m => new ThreadMessage(m))])
-        })
-        .catch(err => {
-          setUserMessage(userMessagePendingRef.current.text)
-        })
-        .finally(() => {
-          setUserMessagePending(null)
-          userMessagePendingRef.current = null
-          setIsPrompting(false)
-          isSendingMessageRef.current = false;
-        })
-    }
+    const thread = (() => {
+      if (selectedThread && !selectedThread.id) {
+        return selectedThread;
+      }
 
-    setUserMessage('')
-  }, [userMessagePending, userMessage])
+      const thread = new Thread({
+        title: 'Starting thread...',
+      });
+      setThreads(prev => [...prev, thread]);
+      setSelectedThread(thread);
+
+      return thread;
+    })();
+
+    return asyncMessengerService.postRequest('/assistant/threads/create', {
+      meeting_id: MEETING_ID,
+      prompt: prompt,
+      meta: {label},
+    })
+      .then((response: Thread) => {
+        thread.id = response.id;
+        thread.title = response.title;
+        setSelectedThread(thread);
+
+        setThreadMessages(prev => [...prev, ...response.messages?.map(m => new ThreadMessage(m))])
+      })
+      .catch(err => {
+        setUserMessage(userMessagePendingRef.current.text)
+      })
+      .finally(() => {
+        setUserMessagePending(null)
+        userMessagePendingRef.current = null
+        setIsPrompting(false)
+        isSendingMessageRef.current = false;
+      })
+  }
 
 
   useEffect(() => {
@@ -396,10 +409,13 @@ export function AssistantList({className = ''}: AssistantListProps) {
     };
   }, []);
 
+  // keep cursor in input fields
   useEffect(() => {
     userMessageInputRef?.current?.focus();
   }, [threadMessages]);
 
+
+  // Auto resize textarea
   useEffect(() => {
     const element = userMessageInputRef?.current;
 
@@ -407,9 +423,8 @@ export function AssistantList({className = ''}: AssistantListProps) {
     element.style.height = (element.scrollHeight + 5) + 'px';
   }, [userMessage]);
 
-
   const fetchThreads = function () {
-    getRequest(`/assistant/threads/all?meeting_id=${MEETING_ID}`)
+    asyncMessengerService.getRequest(`/assistant/threads/all?meeting_id=${MEETING_ID}`)
       .then((response: ThreadsResponse) => {
         console.log(response);
 

@@ -30,6 +30,7 @@ export default class AsyncMessengerService {
           const { resolve } = AsyncMessengerService.pendingPromises.get(message.messageId);
           console.log("ASYNC", {message});
           AsyncMessengerService.pendingPromises.delete(message.messageId);
+          // TODO: add status, data params
           resolve(message.data);
         }
       });

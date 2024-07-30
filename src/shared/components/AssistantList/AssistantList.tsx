@@ -73,7 +73,7 @@ export class ThreadMessage implements AssistantMessageUnit {
     this.role = role;
     this.timestamp = timestamp;
 
-    this.label = label;
+    this.label = null !== label ? label : this.meta['label'];
   }
 
   get label(): string {
@@ -221,7 +221,7 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
 
   const updateThreadFromUserEdit = (message: ThreadMessage) => {
     setUserMessagePending(new ThreadMessage({
-      text: message.text || '',
+      text: message.text?.trim() || '',
     }))
 
     setIsPrompting(true);
@@ -318,10 +318,13 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
 
 
   function sendMessageIntoThread(content: string) {
+    content = content.trim();
     userMessagePendingRef.current = new ThreadMessage({
-      text: prompt,
+      text: content,
       role: "user",
     });
+
+    setUserMessagePending(userMessagePendingRef.current);
 
     // post message in thread
     return asyncMessengerService.postRequest('/assistant/copilot', {
@@ -422,6 +425,10 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
     element.style.height = '5px';
     element.style.height = (element.scrollHeight + 5) + 'px';
   }, [userMessage]);
+
+  useEffect(() => {
+    bottomDiv?.current?.scrollIntoView({ behavior: 'instant' });
+  }, [userMessagePendingRef.current, threadMessages]);
 
   const fetchThreads = function () {
     asyncMessengerService.getRequest(`/assistant/threads/all?meeting_id=${MEETING_ID}`)

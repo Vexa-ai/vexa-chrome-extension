@@ -34,6 +34,7 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
   }
 
   const handleTextUpdate = () => {
+    entry.text = entry.text.trim();
     onTextUpdated?.(entry);
     hideEditor();
   }
@@ -119,7 +120,7 @@ export function AssistantEntry({ entryData, onTextUpdated, pending }: AssistantE
                     },
                   },
                 }}
-                >{entry.label}</Markdown></div>
+                >{entry.label?.trim()}</Markdown></div>
               }
             </div>
 

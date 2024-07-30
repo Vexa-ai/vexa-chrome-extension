@@ -146,7 +146,10 @@ export const useAudioCapture = (): AudioCapture => {
         try {
             const deviceId = await getMicDeviceIdByLabel(micLabel);
             const combinedStream = await getCombinedStream(deviceId, isVideoDebug);
-            const thisRecorder = new MediaRecorder(combinedStream);
+            const thisRecorder = new MediaRecorder(combinedStream, {
+                // mimeType: "video/webm;codecs=vp9",
+                mimeType: 'audio/webm;codecs=opus',
+            });
             let countIndex = 0;
 
             thisRecorder.ondataavailable = async (event: BlobEvent) => {
@@ -283,6 +286,8 @@ export const useAudioCapture = (): AudioCapture => {
         const microphoneStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
         });
+
+        // deviceStream.getVideoTracks().forEach(t => t.stop());
 
         globalStreamsToClose = [deviceStream, microphoneStream];
         const deviceAudoTracks = deviceStream.getAudioTracks();

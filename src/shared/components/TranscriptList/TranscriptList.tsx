@@ -6,7 +6,7 @@ import {sendMessage} from '~shared/helpers/in-content-messaging.helper';
 import {MessageSenderService} from '~lib/services/message-sender.service';
 import {getIdFromUrl} from '~shared/helpers/meeting.helper';
 import {AssistantSuggestions, TranscriptionCopyButton} from '~shared/components';
-import {StorageService, StoreKeys} from '~lib/services/storage.service';
+import {type AuthorizationData, StorageService, StoreKeys} from '~lib/services/storage.service';
 import {BouncingDots} from '../BouncingDots';
 import AsyncMessengerService from "~lib/services/async-messenger.service";
 
@@ -43,14 +43,27 @@ export function TranscriptList({
 }: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
+  const [lastTranscriptTimestamp, setLastTranscriptTimestamp] = useState<Date|null>();
   const [isAutoScroll, setIsAutoScroll] = useState(true);
   const [scrolledToTop, setScrolledToTop] = useState(true);
   const [actionButtons, setActionButtons] = useState<(ActionButton)[]>();
   const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+
   const transcriptListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const transcriptsRef = useRef<TranscriptionEntryData[]>();
+  useEffect(() => {
+    transcriptsRef.current = transcripts;
+  }, [transcripts])
+
+  const lastTranscriptTimestampRef = useRef<Date|null>(null);
+  useEffect(() => {
+    lastTranscriptTimestampRef.current = lastTranscriptTimestamp;
+  }, [lastTranscriptTimestamp])
+
   const messageSender = new MessageSenderService();
   const handleScroll = () => {
     if (scrollAreaRef.current) {
@@ -85,6 +98,7 @@ export function TranscriptList({
     };
   }, [scrollAreaRef]);
 
+  /*
   MessageListenerService.unRegisterMessageListener(MessageType.TRANSCRIPTION_RESULT);
   MessageListenerService.registerMessageListener(MessageType.TRANSCRIPTION_RESULT, (message) => {
     const transcription: TranscriptionEntryData[] = message.data?.transcripts || [];
@@ -94,6 +108,48 @@ export function TranscriptList({
       setTranscripts([...previousTranscripts.splice(0, cursorIndex), ...transcription]);
     }
   });
+  */
+
+  let lastValidTranscriptTimestamp = null;
+  useEffect(() => {
+    let interval: number|any = 0;
+    const MEETING_ID = getIdFromUrl(window.location.href);
+
+    StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+      __vexa_token: "",
+      __vexa_main_domain: "",
+      __vexa_chrome_domain: "",
+    }).then(authData => {
+      interval = setInterval(async () => {
+        // const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
+        const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
+        asyncMessengerService.getRequest(transcriptionURL).then(async (response: TranscriptionEntryData[]) => {
+          console.log({ response });
+
+          if (response && response.length) {
+            const dateBackBy5Minute = new Date(response[response.length - 1].timestamp);
+            dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
+            lastValidTranscriptTimestamp = dateBackBy5Minute;
+            setLastTranscriptTimestamp(dateBackBy5Minute);
+          }
+
+          if (response && response.length) {
+            const previousTranscripts = [...transcriptsRef.current];
+            const cursorIndex = previousTranscripts.findLastIndex(prevTranscript => prevTranscript.timestamp === response[0].timestamp);
+
+            console.log({cursorIndex});
+            setTranscripts([...previousTranscripts.splice(0, cursorIndex), ...response]);
+          }
+        }, error => {
+        });
+      }, 1500)
+    });
+
+    return () => {
+      clearInterval(interval);
+    }
+  }, [])
+
 
   const fetchActionButtons = function () {
     asyncMessengerService.getRequest(`/assistant/buttons?meeting_id=${MEETING_ID}`)
@@ -110,8 +166,7 @@ export function TranscriptList({
     fetchActionButtons();
 
     return () => clearInterval(interval);
-  })
-
+  }, [])
 
   useEffect(() => {
     if (isAutoScroll && lastEntryRef.current) {
@@ -136,7 +191,7 @@ export function TranscriptList({
   }, []);
 
   return (
-    <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full overflow-hidden group/transcript-container ${className}`}>
+    <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full h-full overflow-hidden group/transcript-container ${className}`}>
       <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
           <TranscriptionCopyButton className='rounded-lg'/>
@@ -151,8 +206,8 @@ export function TranscriptList({
           <BouncingDots/>
         </div>}
 
-        <AssistantSuggestions suggestions={actionButtons} selectSuggestion={onActionButtonClicked} />
       </div>
+      <AssistantSuggestions suggestions={actionButtons} selectSuggestion={onActionButtonClicked} />
     </div>
   );
 }

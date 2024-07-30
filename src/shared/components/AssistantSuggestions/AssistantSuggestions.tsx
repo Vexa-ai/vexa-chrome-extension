@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, {useRef, useState} from 'react';
 
 import './AssistantSuggestions.scss';
 import type {ActionButton} from "~shared/components/TranscriptList";
@@ -8,7 +8,7 @@ export interface AssistantSuggestionsProps {
   selectSuggestion: (suggestion: ActionButton) => void;
 }
 
-export function AssistantSuggestions({ suggestions = [], selectSuggestion }: AssistantSuggestionsProps) {
+export function AssistantSuggestions({suggestions = [], selectSuggestion}: AssistantSuggestionsProps) {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [startX, setStartX] = useState<number>(0);
@@ -59,35 +59,23 @@ export function AssistantSuggestions({ suggestions = [], selectSuggestion }: Ass
 
   const handleClick = (suggestion: ActionButton) => {
     if (!dragged) {
-      selectSuggestion(suggestion);
+      selectSuggestion({...suggestion} as ActionButton);
     }
   };
 
   return (
-    <div
-      className='AssistantSuggestions flex w-full overflow-x-hidden'
-      ref={suggestionsRef}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onMouseMove={handleMouseMove}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
-    >
-      <div className='flex gap-2 min-w-[180%] overflow-x-auto mb-2'>
-        {suggestions.map((suggestion, key) => (
-          <div
-            onClick={() => handleClick(suggestion)}
-            className={`suggestion select-none p-1 w-[66.66%] border border-[#333741] rounded font-medium text-[#F5F5F6] ${
-              isDragging ? 'cursor-grabbing' : 'cursor-pointer'
-            } ${key === suggestions.length - 1 ? 'mr-7' : ''}`}
+    <div className={"bottom"}>
+      {suggestions.map((suggestion, key) => (
+          <button
             key={key}
+            onClick={() => handleClick(suggestion)}
+            type="button"
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded text-xs px-2.5 py-2 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
           >
             {suggestion.name}
-          </div>
-        ))}
-      </div>
+          </button>
+        )
+      )}
     </div>
   );
 }

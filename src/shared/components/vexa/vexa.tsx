@@ -24,6 +24,7 @@ const Vexa = () => {
     const defaultPosition = { x: 0, y: 0 };
     const [position, setPosition] = useState(defaultPosition);
     const [outdated, setOutdated] = useState(false);
+    const [outdatedClosed, setOutdatedClosed] = useState(false);
     const [latestVersion, setLatestVersion] = useState(0);
 
     const handleDrag = (e: DraggableEvent, data: DraggableData) => {
@@ -38,6 +39,11 @@ const Vexa = () => {
             setPosition(defaultPosition);
         }
     };
+
+    const closeAlert = (e: MouseEvent|any) => {
+        e.preventDefault();
+        setOutdatedClosed(true)
+    }
 
     useEffect(() => {
         asyncMessengerService.putRequest(`/user-applications/check-version`, {
@@ -92,8 +98,8 @@ const Vexa = () => {
                             <NotificationContainer />
                             <VexaToolbar onDragHandleMouseOut={() => setIsDraggableDisabled(true)} onDragHandleMouseUp={() => setIsDraggableDisabled(true)} onDragHandleMouseOver={() => setIsDraggableDisabled(false)} toolbarRef={vexaToolbarRef} />
 
-                            {outdated && <div style={{backgroundColor: 'red', color: 'white', fontWeight: 'bold', padding: '5px 15px', borderRadius: '3px', marginBottom: '5px'}}>
-                                Your version ({chrome.runtime.getManifest()?.version}) is outdated, please update plugin version to the latest version ({latestVersion})
+                            {outdated && !outdatedClosed && !isCapturing && <div style={{backgroundColor: 'red', color: 'white', padding: '5px 15px', borderRadius: '3px', marginBottom: '5px'}}>
+                                Your version ({chrome.runtime.getManifest()?.version}) is outdated, please <a href={"https://chromewebstore.google.com/detail/vexa/ihibgadfkbefnclpbhdlpahfiejhfibl?hl=en&authuser=0&utm_medium=extension&utm_source=update"} target={'_blank'} style={{color: 'white', fontWeight: 'bold'}}>update extension</a> to the latest version. <a href="#" onClick={closeAlert} style={{color: 'white', fontWeight: 'bold'}}>Close</a>
                             </div>}
 
                             {isCapturing || hasRecorded

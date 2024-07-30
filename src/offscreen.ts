@@ -236,7 +236,7 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
       });
     }, error => {
     });
-  }, 1500);
+  }, 10000);
 
 }
 

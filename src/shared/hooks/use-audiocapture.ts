@@ -287,7 +287,7 @@ export const useAudioCapture = (): AudioCapture => {
             audio: { echoCancellation: true, deviceId: deviceId ? { exact: deviceId } : undefined }
         });
 
-        // deviceStream.getVideoTracks().forEach(t => t.stop());
+        deviceStream.getVideoTracks().forEach(t => t.stop());
 
         globalStreamsToClose = [deviceStream, microphoneStream];
         const deviceAudoTracks = deviceStream.getAudioTracks();

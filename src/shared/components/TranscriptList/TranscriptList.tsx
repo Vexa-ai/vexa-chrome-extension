@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import './TranscriptList.scss';
-import {TranscriptEntry, type TranscriptionEntryData} from '../TranscriptEntry';
+import {TranscriptEntry, TranscriptionEntry, type TranscriptionEntryData, TranscriptionEntryMode} from '../TranscriptEntry';
 import {MessageListenerService, MessageType} from '~lib/services/message-listener.service';
 import {sendMessage} from '~shared/helpers/in-content-messaging.helper';
 import {MessageSenderService} from '~lib/services/message-sender.service';
@@ -42,24 +42,33 @@ export function TranscriptList({
     onActionButtonClicked = (ab: ActionButton) => {}
 }: TranscriptListProps) {
 
-  const [transcripts, setTranscripts] = useState<TranscriptionEntryData[]>([]);
-  const [lastTranscriptTimestamp, setLastTranscriptTimestamp] = useState<Date|null>();
+  const [transcripts, setTranscripts] = useState<TranscriptionEntryData[] | TranscriptionEntry[]>([]);
+  // const [transcriptMode, setTranscriptMode] = useState<TranscriptionEntryMode>(TranscriptionEntryMode.HtmlContentShort);
+  const [lastTranscriptTimestamp, setLastTranscriptTimestamp] = useState<Date | null>();
   const [isAutoScroll, setIsAutoScroll] = useState(true);
   const [scrolledToTop, setScrolledToTop] = useState(true);
   const [actionButtons, setActionButtons] = useState<(ActionButton)[]>();
   const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
+  const [transcriptMode] = StorageService.useHookStorage<TranscriptionEntryMode>(StoreKeys.TRANSCRIPT_MODE, TranscriptionEntryMode.HtmlContentShort);
 
   const transcriptListRef = useRef<HTMLDivElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const transcriptsRef = useRef<TranscriptionEntryData[]>();
+
   useEffect(() => {
     transcriptsRef.current = transcripts;
   }, [transcripts])
 
-  const lastTranscriptTimestampRef = useRef<Date|null>(null);
+  /*
+  useEffect(() => {
+    console.log({transcriptMode});
+    StorageService.set(StoreKeys.TRANSCRIPT_MODE, transcriptMode);
+  }, [transcriptMode])
+  */
+
+  const lastTranscriptTimestampRef = useRef<Date | null>(null);
   useEffect(() => {
     lastTranscriptTimestampRef.current = lastTranscriptTimestamp;
   }, [lastTranscriptTimestamp])
@@ -79,10 +88,6 @@ export function TranscriptList({
       }, 150);
     }
   };
-
-  const getMeetingTranscriptHistory = () => {
-    messageSender.sendBackgroundMessage({type: MessageType.TRANSCRIPTION_HISTORY_REQUEST, data: {meetingId: getIdFromUrl(window.location.href)}})
-  }
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -110,40 +115,47 @@ export function TranscriptList({
   });
   */
 
-  let lastValidTranscriptTimestamp = null;
-  useEffect(() => {
-    let interval: number|any = 0;
-    const MEETING_ID = getIdFromUrl(window.location.href);
+  const copyTranscription = async () => {
+    const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
+    const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
+    return asyncMessengerService.getRequest(transcriptionURL).then(async (response: TranscriptionEntryData[]) => {
+      const mergedTranscripts = response.map(transcript => {
+        return `${transcript.speaker}: ${transcript.content}`;
+      }).join('\n');
 
-    StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
-      __vexa_token: "",
-      __vexa_main_domain: "",
-      __vexa_chrome_domain: "",
-    }).then(authData => {
-      interval = setInterval(async () => {
-        // const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastValidTranscriptTimestamp ? '&last_msg_timestamp=' + lastValidTranscriptTimestamp.toISOString() : ''}`;
-        const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
-        asyncMessengerService.getRequest(transcriptionURL).then(async (response: TranscriptionEntryData[]) => {
-          console.log({ response });
-
-          if (response && response.length) {
-            const dateBackBy5Minute = new Date(response[response.length - 1].timestamp);
-            dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
-            lastValidTranscriptTimestamp = dateBackBy5Minute;
-            setLastTranscriptTimestamp(dateBackBy5Minute);
-          }
-
-          if (response && response.length) {
-            const previousTranscripts = [...transcriptsRef.current];
-            const cursorIndex = previousTranscripts.findLastIndex(prevTranscript => prevTranscript.timestamp === response[0].timestamp);
-
-            console.log({cursorIndex});
-            setTranscripts([...previousTranscripts.splice(0, cursorIndex), ...response]);
-          }
-        }, error => {
-        });
-      }, 1500)
+      navigator.clipboard.writeText(mergedTranscripts);
     });
+  }
+
+  useEffect(() => {
+    const MEETING_ID = getIdFromUrl(window.location.href);
+    let counter = 0;
+    let interval = setInterval(async () => {
+      if (counter++ % 50) {
+        // reload whole history every X cycles
+        lastTranscriptTimestampRef.current = null;
+      }
+
+      const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
+      const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
+      asyncMessengerService.getRequest(transcriptionURL).then(async (response: TranscriptionEntryData[]) => {
+        response = response.map(entry => new TranscriptionEntry(entry))
+
+        console.log({response});
+
+        if (response && response.length) {
+          const dateBackBy5Minute = new Date(response[response.length - 1].timestamp);
+          dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
+          setLastTranscriptTimestamp(dateBackBy5Minute);
+
+          const previousTranscripts = [...transcriptsRef.current];
+          const cursorIndex = previousTranscripts.findLastIndex(prevTranscript => prevTranscript.timestamp === response[0].timestamp);
+
+          console.log({cursorIndex});
+          setTranscripts([...previousTranscripts.splice(0, cursorIndex), ...response]);
+        }
+      });
+    }, 3000)
 
     return () => {
       clearInterval(interval);
@@ -178,7 +190,6 @@ export function TranscriptList({
 
   useEffect(() => {
     setTranscripts(transcriptList);
-    // getMeetingTranscriptHistory();
 
     MessageListenerService.unRegisterMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT);
     MessageListenerService.registerMessageListener(MessageType.UPDATE_SPEAKER_NAME_RESULT, (message) => {
@@ -192,13 +203,29 @@ export function TranscriptList({
 
   return (
     <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full h-full overflow-hidden group/transcript-container ${className}`}>
+      {[
+        {name: 'short', mode: TranscriptionEntryMode.HtmlContentShort},
+        {name: 'original', mode: TranscriptionEntryMode.HtmlContent},
+        // {name: 'Original', mode: TranscriptionEntryMode.Content},
+      ].map(({name, mode}) => (
+        (mode !== transcriptMode && <a
+          key={name}
+          href="#"
+          onClickCapture={(e) => {
+            e.preventDefault();
+            StorageService.set(StoreKeys.TRANSCRIPT_MODE, mode);
+          }}
+          className={`TranscriptEntry ${mode === transcriptMode ? 'EntityModeActive' : ''}`}>Show {name}</a>)
+      ))}
+
       <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
-          <TranscriptionCopyButton className='rounded-lg'/>
+          <TranscriptionCopyButton className='rounded-lg' onCopyTranscriptClicked={copyTranscription}/>
         </div>}
-        {transcripts.map((transcript, index) => (
+
+        {transcripts.map((transcript: TranscriptionEntry, index: number) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
-            <TranscriptEntry speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker}/>
+            <TranscriptEntry entry={transcript} globalMode={transcriptMode} speaker_id={transcript.speaker_id} timestamp={transcript.timestamp} text={transcript.content} speaker={transcript.speaker}/>
           </div>
         ))}
 
@@ -207,7 +234,7 @@ export function TranscriptList({
         </div>}
 
       </div>
-      <AssistantSuggestions suggestions={actionButtons} selectSuggestion={onActionButtonClicked} />
+      <AssistantSuggestions suggestions={actionButtons} selectSuggestion={onActionButtonClicked}/>
     </div>
   );
 }

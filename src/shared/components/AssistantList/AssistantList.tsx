@@ -152,6 +152,7 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
   const [threads, setThreads] = useState<(Thread)[]>(AsyncMessengerService.threads);
   const [selectedThread, setSelectedThread] = useState<(Thread & Option) | undefined>(AsyncMessengerService.selectedThread);
   const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>(AsyncMessengerService.threadMessages);
+  const [lastErrorMessage, setLastErrorMessage] = useState<String|null>();
 
   useEffect(() => {AsyncMessengerService.threads = threads;}, [threads]);
   useEffect(() => {AsyncMessengerService.threadMessages = threadMessages;}, [threadMessages]);
@@ -169,6 +170,7 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
   const userMessageInputRef = useRef<HTMLTextAreaElement>(null);
 
   const isSendingMessageRef = useRef(false);
+  const lastErrorMessageTimeoutRef = useRef<number|any>(null);
 
   const messageSender = new MessageSenderService();
   const [isOpen, setIsOpen] = useState(false);
@@ -245,7 +247,9 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
       content: message.text,
     })
       .then((response: AssistantEntryData) => {
-        setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message]?.map(m => new ThreadMessage(m))])
+        if (response.user_message && response.assistant_message) {
+          setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+        }
       })
       .catch(err => {
         setUserMessage(userMessagePendingRef.current.text)
@@ -332,7 +336,11 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
       content,
     })
       .then((response: AssistantEntryData) => {
-        setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+        if (response.user_message && response.assistant_message) {
+          setThreadMessages(prev => [...prev, ...[response.user_message, response.assistant_message].map(m => new ThreadMessage(m))])
+        } else {
+          setLastErrorMessage("Ooops... can't send message to selected thread. Try again later.");
+        }
       })
       .catch(err => {
         setUserMessage(userMessagePendingRef.current.text)
@@ -371,12 +379,30 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
       return thread;
     })();
 
+    const showErrorMessage = (message: string) => {
+      if (lastErrorMessageTimeoutRef.current) {
+        clearTimeout(lastErrorMessageTimeoutRef.current);
+      }
+
+      setLastErrorMessage(message);
+
+      lastErrorMessageTimeoutRef.current = setTimeout(() => {
+        setLastErrorMessage(null);
+      }, 4000);
+    }
+
     return asyncMessengerService.postRequest('/assistant/threads/create', {
       meeting_id: MEETING_ID,
       prompt: prompt,
       meta: {label},
     })
       .then((response: Thread) => {
+        if (!response.id || !response.title || !response.messages) {
+          // TODO: show error
+          showErrorMessage("Ooops... can't create thread. Try again later.");
+          return;
+        }
+
         thread.id = response.id;
         thread.title = response.title;
         setSelectedThread(thread);
@@ -464,6 +490,11 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
 
 
   return <div ref={assistantListRef} className={`AssistantList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
+    {lastErrorMessage && <div style={{backgroundColor: 'red', color: 'white', padding: '5px 15px', borderRadius: '3px', margin: '5px 0'}}>
+      {lastErrorMessage}
+    </div>}
+
+
     {<div className="flex py-2 gap-3 w-full max-w-[368px]">
       <div className='flex-grow' ref={dropdownRef}>
         <CustomSelect

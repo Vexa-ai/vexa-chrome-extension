@@ -1,3 +1,11 @@
 .TranscriptList {
-  
+
+  .TranscriptEntry {
+    display: inline;
+    margin-right: 5px;
+  }
+
+  .EntityModeActive {
+    font-weight: bolder;
+  }
 }

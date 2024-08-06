@@ -51,10 +51,13 @@ let queueInterval = setInterval(() => {
         'Content-Type': 'application/octet-stream'
       }
     }).then((res) => {
-
       if (!(res.status < 400)) {
         stopRecording();
         messageSender.sendBackgroundMessage({ type: MessageType.USER_UNAUTHORIZED, data: { code: res.status } });
+
+        queue.unshift(currentChunkBeingSent);
+        currentChunkBeingSent = null;
+
         return;
       }
       currentChunkBeingSent = null;
@@ -65,10 +68,12 @@ let queueInterval = setInterval(() => {
     }).catch(() => {
       queue.unshift(currentChunkBeingSent);
       currentChunkBeingSent = null;
+    }).finally(() => {
+      currentChunkBeingSent = null;
     });
   }
   sentNextChunk();
-}, 1000);
+}, 10000);
 
 MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
@@ -224,7 +229,7 @@ async function pollTranscript(main_domain: string, meetingId: string, token: str
       console.log({ transcripts });
       if (transcripts && transcripts.length) {
         const dateBackBy5Minute = new Date(transcripts[transcripts.length - 1].timestamp);
-        dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() - 5);
+        dateBackBy5Minute.setMinutes(dateBackBy5Minute.getMinutes() + 1);
         lastValidTranscriptTimestamp = dateBackBy5Minute;
       }
       messageSender.sendBackgroundMessage({

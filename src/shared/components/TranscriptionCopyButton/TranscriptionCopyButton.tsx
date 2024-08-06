@@ -9,19 +9,20 @@ import { ClipboardButton } from '../ClipboardButton';
 
 export interface TranscriptionCopyButtonProps {
   className?: string;
+  onCopyTranscriptClicked: () => Promise<void>,
 }
 
-export function TranscriptionCopyButton({ className = '' }: TranscriptionCopyButtonProps) {
+export function TranscriptionCopyButton({ className = '', onCopyTranscriptClicked }: TranscriptionCopyButtonProps) {
   const [isCapturingStore] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
   const [hasRecordingHistory, setHasRecordingHistory] = useState(false);
   const [copied, setCopied] = useState(false);
   const clipboardBtnRef = useRef(null);
 
-  const copyTranscription = () => {
-    clipboardBtnRef?.current?.click();
+  const copyTranscription = async () => {
+    await onCopyTranscriptClicked();
+
     setCopied(true);
-    sendMessage(MessageType.COPY_TRANSCRIPTION);
     setTimeout(() => {
       setCopied(false);
   }, 1000);

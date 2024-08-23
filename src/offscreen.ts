@@ -18,12 +18,16 @@ export interface AudioChunkEntry {
   countIndex: number;
   tab: chrome.tabs.Tab;
   chunkBufferBlob: Blob;
+  ts: number;
+  l: number;
 }
 
 const queue: AudioChunkEntry[] = [];
 let messagesCounter = 1;
 let currentChunkBeingSent: AudioChunkEntry = null;
 let recordingStopped = true;
+let currentDate = null;
+
 let queueInterval = setInterval(() => {
   if (currentChunkBeingSent) {
     return;
@@ -37,12 +41,13 @@ let queueInterval = setInterval(() => {
     currentChunkBeingSent = queue.shift();
 
     if (!currentChunkBeingSent) return;
-    const { chunkBufferBlob, chunkType, connectionId, chrome_domain, token, main_domain, meetingId, countIndex, isDebug, tab } = currentChunkBeingSent;
+    const { chunkBufferBlob, chunkType, connectionId, chrome_domain, token, main_domain, meetingId, countIndex, isDebug, tab, ts, l } = currentChunkBeingSent;
     if (chunkBufferBlob.size === 0) {
       currentChunkBeingSent = null;
       return;
     }
-    const audioURL = `${chrome_domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}`;
+
+    const audioURL = `${chrome_domain}/api/v1/extension/audio?meeting_id=${meetingId}&connection_id=${connectionId}&token=${token}&i=${countIndex}&ts=${ts}&l=${l}`;
     messageSender.sendBackgroundMessage({ type: MessageType.BACKGROUND_DEBUG_MESSAGE, data: { url: audioURL, destinationTabId: tab.id } });
     fetch(audioURL, {
       method: 'PUT',
@@ -72,8 +77,9 @@ let queueInterval = setInterval(() => {
       currentChunkBeingSent = null;
     });
   }
+
   sentNextChunk();
-}, 10000);
+}, 100);
 
 MessageListenerService.initializeListenerService();
 const messageSender = new MessageSenderService();
@@ -194,6 +200,8 @@ MessageListenerService.registerMessageListener(MessageType.ON_MEDIA_CHUNK_RECEIV
     return;
   }
 
+  // TODO: move to audiocapture
+  message.data['ts'] = Math.floor((currentDate = new Date()).getTime() / 1000);
   message.data['tab'] = sender.tab;
   message.data['chunkBufferBlob'] = chunkBufferBlob;
   if(recordingStopped) {

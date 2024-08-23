@@ -124,10 +124,7 @@ export function TranscriptEntry({entry, speaker, text, speaker_id, timestamp, gl
         </span>
         <div className='flex gap-2 mb-1 break-words items-center'>
           <span className='flex gap-2 group/speaker-name'>
-            <span className={`font-semibold text-[#94969C] select-text break-words ${speaker !== 'TBD' && 'cursor-pointer'}`}>{speaker === 'TBD'
-              ? <BouncingDots />
-              : speaker}
-            </span>
+            <span className={`font-semibold text-[#94969C] select-text break-words ${speaker !== 'TBD' && 'cursor-pointer'}`}>{speaker === 'TBD' ? '' : speaker}</span>
             {speaker !== 'TBD' && <EditPenButton onClick={editSpeaker} className='hidden group-hover/speaker-name:inline-block stroke-[#94969C]' />}
           </span>
           <span className='items-center text-[#94969C] text-xs select-text break-words ml-auto'>{formattedTimestamp}</span>

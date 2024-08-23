@@ -8,6 +8,8 @@ import { StorageService, StoreKeys } from '~lib/services/storage.service';
 import { getIdFromUrl } from '~shared/helpers/meeting.helper';
 import { consoleDebug } from '~shared/helpers/utils.helper';
 import { sendMessage } from '~shared/helpers/in-content-messaging.helper';
+import AsyncMessengerService from "~lib/services/async-messenger.service";
+const asyncMessengerService = new AsyncMessengerService();
 
 export interface VexaPlayButtonProps {
   [key: string]: any;
@@ -27,17 +29,18 @@ export function VexaPlayButton({ ...rest }: VexaPlayButtonProps) {
   const [selectedMicrophone] = StorageService.useHookStorage(StoreKeys.SELECTED_MICROPHONE);
   const [callTrulyStarted, setCallTrulyStarted] = useState(false);
   const meetingId = getIdFromUrl(location.href);
-  const startCapture = (evt) => {
+
+  const startCapture = async (evt) => {
     if (evt.ctrlKey && evt.shiftKey) {
       console.debug('%c Debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
-      return audioCapture.startAudioCapture(true);
+      AsyncMessengerService.connectionId = await audioCapture.startAudioCapture(true);
     }
     if (evt.ctrlKey && evt.altKey) {
       console.debug('%c Video debug recording started', "color: red; font-weight: bold; font-size: 1.4rem;");
-      return audioCapture.startAudioCapture(false, true);
+      AsyncMessengerService.connectionId = await audioCapture.startAudioCapture(false, true);
     }
     consoleDebug('Recording started');
-    audioCapture.startAudioCapture();
+    AsyncMessengerService.connectionId = await audioCapture.startAudioCapture();
   }
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
+import vexaSendIcon from "data-base64:~assets/images/svg/send.svg";
 import './AssistantInput.scss';
 import { AssistantSuggestions } from '../AssistantSuggestions';
 
@@ -60,7 +60,7 @@ export function AssistantInput({ className = '', onEnter, clearField, setClearFi
         }}
       ></textarea> */}
       <button ref={submitBtnRef} disabled={!!promptInputRef.current?.value?.trim()} type='submit'>
-        <img src={vexaLogoIcon} alt="" />
+        <img src={vexaSendIcon} alt="" />
       </button>
     </form>
   </div>;

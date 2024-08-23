@@ -9,10 +9,15 @@ import { sendMessage } from "~shared/helpers/in-content-messaging.helper";
 import { MessageType } from "~lib/services/message-listener.service";
 import { ThreadDeletePromptModal } from "../ThreadDeletePromptModal";
 import AsyncMessengerService from "~lib/services/async-messenger.service";
+import {getIdFromUrl} from "~shared/helpers/meeting.helper";
+import ChatManager from "~lib/services/chat-manager";
+
+const chatManager = new ChatManager();
 
 const asyncMessengerService = new AsyncMessengerService();
 
 const messageSender = new MessageSenderService();
+const MEETING_ID = getIdFromUrl(window.location.href);
 
 const Vexa = () => {
     const audioCapture = useAudioCapture();
@@ -26,6 +31,12 @@ const Vexa = () => {
     const [outdated, setOutdated] = useState(false);
     const [outdatedClosed, setOutdatedClosed] = useState(false);
     const [latestVersion, setLatestVersion] = useState(0);
+
+    useEffect(() => {
+        if (isCapturing) {
+            chatManager.sendChatMessage("Hi everyone, this is an automated message to let you know my Vexa extension: https://vexa.ai is transcribing this meeting for me so I can give my full attention to you.");
+        }
+    }, [isCapturing])
 
     const handleDrag = (e: DraggableEvent, data: DraggableData) => {
         setPosition({ x: data.x, y: data.y });
@@ -83,6 +94,84 @@ const Vexa = () => {
             window.removeEventListener("resize", handleResize);
         };
     }, [isMaximized]);
+
+    const micPollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    useEffect(() => {
+        if (!isCapturing) {
+            clearInterval(micPollingIntervalRef.current);
+
+            return;
+        }
+
+        let counter = 1;
+        let i = 0;
+
+        let nodes = [];
+        let callName;
+        let currentDate = null;
+
+        micPollingIntervalRef.current = setInterval(() => {
+            // Re-read nodes every 5 seconds
+            if (1 === counter % 50) {
+                nodes = [];
+
+                callName = (document.querySelector('[jscontroller=yEvoid]') as HTMLDivElement|null)?.innerText
+                Array.from(document.querySelectorAll('[data-participant-id]')).map((el: HTMLDivElement) => {
+                    const nameNode: HTMLDivElement = el.querySelector('[data-self-name]');
+                    const micNode: HTMLDivElement = el.querySelector('[jscontroller=ES310d]');
+                    if (!micNode || !nameNode) {
+                        return null;
+                    }
+
+                    const name = nameNode.innerText?.split('\n').pop();
+                    nodes.push({id: el.dataset.participantId, name, el, micNode, mic: []});
+                })
+            }
+
+            nodes.forEach(node => {
+                if (node && node.micNode) {
+                    node.mic.push(node.micNode.classList.contains('gjg47c') ? 0 : 1);
+                }
+            });
+
+            if (0 === counter++ % 10) {
+                const ts = Math.floor((currentDate = new Date()).getTime() / 1000);
+                asyncMessengerService.sendFetchRequestAndForget(
+                  'put',
+                  `/api/v1/extension/speakers?meeting_id=${MEETING_ID}&call_name=${callName}&ts=${ts}&l=1`,
+                  nodes.map(n => [n.name, n.mic.join('')]),
+                  'stream',
+                  true,
+                );
+
+                i++;
+
+                nodes.forEach(n => n.mic = []);
+            }
+        }, 100)
+
+        return () => {
+            clearInterval(micPollingIntervalRef.current);
+        }
+    }, [isCapturing])
+
+
+    useEffect(() => {}, [isMaximized])
+    /*
+    let originalWidthGetter = Object.getOwnPropertyDescriptor(window, "innerWidth")?.get;
+    window.__defineGetter__("innerWidth", function () {
+        let s = originalWidthGetter && originalWidthGetter();
+        console.log("innerWidth called", {s, isMaximized});
+        return isMaximized ? s - 400 : s
+    });
+    document.documentElement?.__defineGetter__("clientWidth", function () {
+        return window.innerWidth
+    });
+    document.body?.__defineGetter__("clientWidth", function () {
+        return window.innerWidth
+    })
+    */
+
 
     return (
         <>

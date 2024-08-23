@@ -25,7 +25,7 @@ export interface AudioCapture {
     isCapturing: boolean;
     state: typeof initialState;
     selectedAudioInput?: MediaDeviceInfo;
-    startAudioCapture: (isDebug?: boolean, isVideoDebug?: boolean) => void;
+    startAudioCapture: (isDebug?: boolean, isVideoDebug?: boolean) => Promise<string>;
     stopAudioCapture: () => void;
     captureTime: number;
     pauseAudioCapture: () => void;
@@ -76,8 +76,10 @@ export const useAudioCapture = (): AudioCapture => {
         return uuid;
     }
 
-    const startAudioCapture = async (isDebug = false, isVideoDebug = false) => {
+    const startAudioCapture = async (isDebug = false, isVideoDebug = false): Promise<string> => {
         const connectionId = await getConnectionId();
+        console.log('cs', {connectionId});
+
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
             __vexa_token: "",
             __vexa_main_domain: "",
@@ -104,6 +106,8 @@ export const useAudioCapture = (): AudioCapture => {
         startRecording(selectedMicrophone.label, connectionId, meetingId, token, chrome_domain, main_domain, isDebug, isVideoDebug);
         globalMediaRecorder = recorderRef.current;
         consoleDebug('Recording started');
+
+        return connectionId;
     };
 
     const setSelectedAudioInputDevice = async (device: MediaDeviceInfo) => {
@@ -142,6 +146,7 @@ export const useAudioCapture = (): AudioCapture => {
         return devices;
     };
 
+    const CHUNK_LENGTH = 1;
     async function startRecording(micLabel, connectionId, meetingId, token, chrome_domain, main_domain, isDebug = false, isVideoDebug = false) {
         try {
             const deviceId = await getMicDeviceIdByLabel(micLabel);
@@ -179,6 +184,7 @@ export const useAudioCapture = (): AudioCapture => {
                                 main_domain,
                                 meetingId,
                                 isDebug,
+                                l: CHUNK_LENGTH,
                                 countIndex: countIndex++,
                             }
                         });
@@ -200,7 +206,7 @@ export const useAudioCapture = (): AudioCapture => {
             if (isDebug) {
                 thisRecorder.start();
             } else {
-                thisRecorder.start(5000);
+                thisRecorder.start(CHUNK_LENGTH * 1000);
             }
 
             recorderRef.current = thisRecorder;

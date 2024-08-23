@@ -13,7 +13,7 @@ import copyIcon from "data-base64:~assets/images/svg/copy-07.svg";
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg";
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg";
 import {sendMessage} from '~shared/helpers/in-content-messaging.helper';
-import vexaLogoIcon from "data-base64:~assets/images/svg/vexa-logo.svg";
+import vexaSendIcon from "data-base64:~assets/images/svg/send.svg";
 import {ThreadDeletePromptModal} from "~shared/components/ThreadDeletePromptModal";
 import AsyncMessengerService from "~lib/services/async-messenger.service";
 import type {ActionButton} from "~shared/components/TranscriptList";
@@ -140,9 +140,10 @@ class Thread implements Option {
 export interface AssistantListProps {
   className?: string;
   actionButtonClicked?: ActionButton
+  assistantMessage?: string
 }
 
-export function AssistantList({className = '', actionButtonClicked = null}: AssistantListProps) {
+export function AssistantList({className = '', actionButtonClicked = null, assistantMessage = null}: AssistantListProps) {
   const MEETING_ID = getIdFromUrl(window.location.href);
 
   const [userMessage, setUserMessage] = useState<string>('');
@@ -301,6 +302,12 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
       createThread(actionButtonClicked.prompt, actionButtonClicked.name);
     }
   }, [actionButtonClicked])
+
+  useEffect(() => {
+    if (assistantMessage) {
+      createThread(assistantMessage, assistantMessage);
+    }
+  }, [assistantMessage])
 
 
   const sendUserMessage = useCallback(async (event: FormEvent) => {
@@ -558,7 +565,7 @@ export function AssistantList({className = '', actionButtonClicked = null}: Assi
         />
 
         <button disabled={isPrompting || userMessage?.trim()?.length === 0} type='submit'>
-          <img src={vexaLogoIcon} alt=""/>
+          <img src={vexaSendIcon} alt=""/>
         </button>
       </form>
     </div>

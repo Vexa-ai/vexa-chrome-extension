@@ -10,6 +10,7 @@ export default class AsyncMessengerService {
   public static threads = [];
   public static selectedThread = null
   public static threadMessages = []
+  public static connectionId: string = null
 
   constructor() {
     if (!AsyncMessengerService.intervalHandler) {
@@ -42,16 +43,18 @@ export default class AsyncMessengerService {
   }
 
   // Function to send message to service worker and return a promise
-  sendMessageToServiceWorker(message: any, timeout = 25000): Promise<object> {
+  sendMessageToServiceWorker(message: any, sendAndForget = false, timeout = 25000): Promise<object> {
     return new Promise((resolve, reject) => {
       const messageId = AsyncMessengerService.generateMessageId();
 
-      // Store the promise callbacks and expiration time
-      AsyncMessengerService.pendingPromises.set(messageId, {
-        resolve,
-        reject,
-        expirationTime: Date.now() + timeout
-      });
+      if (!sendAndForget) {
+        // Store the promise callbacks and expiration time
+        AsyncMessengerService.pendingPromises.set(messageId, {
+          resolve,
+          reject,
+          expirationTime: Date.now() + timeout
+        });
+      }
 
       // Send message to service worker
       chrome.runtime.sendMessage({
@@ -69,6 +72,19 @@ export default class AsyncMessengerService {
       url: "/api/v1" + url,
       data: data
     })
+  }
+
+  sendFetchRequestAndForget(method: string, url: string, data: object = null, domain = 'main', includeLastConnectionId = false): Promise<object> {
+    if (includeLastConnectionId && AsyncMessengerService.connectionId) {
+      url += `&connection_id=${AsyncMessengerService.connectionId}`;
+    }
+    return this.sendMessageToServiceWorker({
+      type: MessageType.FETCH_REQUEST,
+      action: method,
+      url,
+      data,
+      domain,
+    }, true)
   }
 
   getRequest(url: string): Promise<object> {

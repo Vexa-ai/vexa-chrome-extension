@@ -3,14 +3,10 @@ import React, {useEffect, useState} from 'react';
 import './MainContentView.scss';
 import {type ActionButton, TranscriptList} from '../TranscriptList';
 import {AssistantList} from '../AssistantList';
-import type { TranscriptionEntryData } from '../TranscriptEntry';
-import { MessageType } from '~lib/services/message-listener.service';
-import { onMessage, sendMessage } from '~shared/helpers/in-content-messaging.helper';
-import { StorageService, StoreKeys } from '~lib/services/storage.service';
-
-// TODO: place in correct place (it is placed here to keep static fields on)
-import AsyncMessengerService from "~lib/services/async-messenger.service";
-const asyncMessengerService = new AsyncMessengerService();
+import type {TranscriptionEntryData} from '../TranscriptEntry';
+import {MessageType} from '~lib/services/message-listener.service';
+import {onMessage, sendMessage} from '~shared/helpers/in-content-messaging.helper';
+import {StorageService, StoreKeys} from '~lib/services/storage.service';
 
 export interface MainContentViewProps {
   [key: string]: any;
@@ -26,6 +22,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
   const [hasRecordingHistory, setHasRecordingHistory] = useState(false);
 
   const [actionButtonClicked, setActionButtonClicked] = useState<ActionButton>(null);
+  const [assistantMessage, setAssistantMessage] = useState<string>(null);
 
   const copyTranscriptions = () => {
     const mergedTranscripts = transcriptList.map(transcript => {
@@ -74,6 +71,12 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
     setSelectedTabIndex(1);
   }
 
+  function onAssistantMessage(message: string) {
+    setAssistantMessage(message);
+
+    setSelectedTabIndex(1);
+  }
+
   return (
     <div {...rest} className={`MainContentView flex flex-col flex-grow overflow-hidden h-auto ${className}`}>
       <ul className="flex text-gray-300 z-10 w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm" role="tablist">
@@ -92,9 +95,10 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
         transcriptList={transcriptList}
         updatedTranscriptList={(list) => onListUpdated(list)}
         onActionButtonClicked={onActionButtonClicked}
+        onAssistantRequest={onAssistantMessage}
       />
       <div className={`${selectedTabIndex === 1 ? 'flex h-full' : 'hidden'}`}>
-        <AssistantList actionButtonClicked={actionButtonClicked} />
+        <AssistantList actionButtonClicked={actionButtonClicked} assistantMessage={assistantMessage}  />
       </div>
     </div>
   );

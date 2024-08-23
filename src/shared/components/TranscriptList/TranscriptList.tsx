@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState} from 'react';
 import './TranscriptList.scss';
 import {TranscriptEntry, TranscriptionEntry, type TranscriptionEntryData, TranscriptionEntryMode} from '../TranscriptEntry';
 import {MessageListenerService, MessageType} from '~lib/services/message-listener.service';
@@ -9,6 +9,7 @@ import {AssistantSuggestions, TranscriptionCopyButton} from '~shared/components'
 import {type AuthorizationData, StorageService, StoreKeys} from '~lib/services/storage.service';
 import {BouncingDots} from '../BouncingDots';
 import AsyncMessengerService from "~lib/services/async-messenger.service";
+import vexaSendButton from "data-base64:~assets/images/svg/send.svg";
 
 const MEETING_ID = getIdFromUrl(window.location.href);
 const asyncMessengerService = new AsyncMessengerService();
@@ -31,6 +32,7 @@ export interface TranscriptListProps {
   transcriptList?: TranscriptionEntryData[];
   updatedTranscriptList?: (transcriptList: TranscriptionEntryData[]) => void;
   onActionButtonClicked?: (ab: ActionButton) => void;
+  onAssistantRequest?: (message: string) => void,
 }
 
 export function TranscriptList({
@@ -39,7 +41,8 @@ export function TranscriptList({
       console.log({transcriptList})
     },
     className = '',
-    onActionButtonClicked = (ab: ActionButton) => {}
+    onActionButtonClicked = (ab: ActionButton) => {},
+    onAssistantRequest = (message: string) => {},
 }: TranscriptListProps) {
 
   const [transcripts, setTranscripts] = useState<TranscriptionEntryData[] | TranscriptionEntry[]>([]);
@@ -49,13 +52,18 @@ export function TranscriptList({
   const [scrolledToTop, setScrolledToTop] = useState(true);
   const [actionButtons, setActionButtons] = useState<(ActionButton)[]>();
   const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
-  const [transcriptMode] = StorageService.useHookStorage<TranscriptionEntryMode>(StoreKeys.TRANSCRIPT_MODE, TranscriptionEntryMode.HtmlContentShort);
+  const [transcriptMode] = StorageService.useHookStorage<TranscriptionEntryMode>(StoreKeys.TRANSCRIPT_MODE, TranscriptionEntryMode.HtmlContent);
+  const [isShortTranscript, setIsShortTranscript] = useState<boolean>(false);
+
+  const [userMessage, setUserMessage] = useState<string>('');
 
   const transcriptListRef = useRef<HTMLDivElement>(null);
+  const copyTranscriptionRef = useRef<HTMLButtonElement>(null);
   const lastEntryRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const transcriptsRef = useRef<TranscriptionEntryData[]>();
+  const userMessageInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     transcriptsRef.current = transcripts;
@@ -124,9 +132,15 @@ export function TranscriptList({
       }).join('\n');
 
       navigator.clipboard.writeText(mergedTranscripts);
+
+      copyTranscriptionRef.current.innerText = 'copied ✓';
+      setTimeout(() => {
+        copyTranscriptionRef.current.innerText = 'Copy transcription';
+      }, 2000);
     });
   }
 
+  // Polling transcription
   useEffect(() => {
     const MEETING_ID = getIdFromUrl(window.location.href);
     let counter = 0;
@@ -201,27 +215,52 @@ export function TranscriptList({
     };
   }, []);
 
+  /*
+  useEffect(() => {
+    StorageService.set(StoreKeys.TRANSCRIPT_MODE, isShortTranscript ? TranscriptionEntryMode.HtmlContentShort : TranscriptionEntryMode.HtmlContent)
+  }, [isShortTranscript]);
+  */
+
+  const sendUserMessage = useCallback(async (event: FormEvent) => {
+    event.preventDefault();
+
+    let content = userMessage?.trim();
+    if (content?.length === 0) {
+      return;
+    }
+
+    onAssistantRequest(content);
+    setUserMessage('');
+  }, [userMessage]);
+
+  const clickedInsideTranscriptList = (e) => {
+    if ((e.target as HTMLElement).tagName === 'B') {
+      onAssistantRequest(e.target.innerText);
+    }
+  }
+
+
   return (
-    <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full h-full overflow-hidden group/transcript-container ${className}`}>
-      {[
-        {name: 'short', mode: TranscriptionEntryMode.HtmlContentShort},
-        {name: 'original', mode: TranscriptionEntryMode.HtmlContent},
-        // {name: 'Original', mode: TranscriptionEntryMode.Content},
-      ].map(({name, mode}) => (
-        (mode !== transcriptMode && <a
-          key={name}
-          href="#"
-          onClickCapture={(e) => {
-            e.preventDefault();
-            StorageService.set(StoreKeys.TRANSCRIPT_MODE, mode);
-          }}
-          className={`TranscriptEntry ${mode === transcriptMode ? 'EntityModeActive' : ''}`}>Show {name}</a>)
-      ))}
+    <div ref={transcriptListRef} className={`TranscriptList flex flex-col max-h-full w-full h-full overflow-hidden group/transcript-container ${className}`} onClick={clickedInsideTranscriptList}>
+      <div className="shortToggle">
+        <button onClick={copyTranscription} ref={copyTranscriptionRef} style={{color: 'white'}}>Copy transcription</button>
+        {/*
+        <label className="inline-flex items-center cursor-pointer float-end">
+          <input type="checkbox" checked={!!isShortTranscript} onChange={e => setIsShortTranscript(e.target.checked)} className="sr-only peer"/>
+          <div
+            title={"This is experimental mode. Please let us know if something does not work for you."}
+            className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-black after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+        </label>
+        <span className="text-white float-end pr-4">Show short</span>
+        */}
+      </div>
 
       <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
+        {/*
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
           <TranscriptionCopyButton className='rounded-lg' onCopyTranscriptClicked={copyTranscription}/>
         </div>}
+        */}
 
         {transcripts.map((transcript: TranscriptionEntry, index: number) => (
           <div key={index} ref={transcripts.length - 1 === index ? lastEntryRef : null}>
@@ -235,6 +274,28 @@ export function TranscriptList({
 
       </div>
       <AssistantSuggestions suggestions={actionButtons} selectSuggestion={onActionButtonClicked}/>
+
+      <div className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1`} style={{marginTop: '3px'}}>
+        <form autoComplete="off" onSubmit={sendUserMessage} className="flex gap-1">
+        <textarea
+          ref={userMessageInputRef}
+          value={userMessage}
+          onKeyDown={(e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) sendUserMessage(e)
+          }}
+          onChange={e => setUserMessage(e.target.value)}
+          placeholder='Start typing...'
+          className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2"
+          style={{color: 'white', resize: 'none', maxHeight: '180px', minHeight: '39px'}}
+          name='assistant-input'
+        />
+
+          <button disabled={userMessage?.trim()?.length === 0} type='submit'>
+            <img src={vexaSendButton} alt=""/>
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }

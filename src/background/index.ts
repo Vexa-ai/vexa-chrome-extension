@@ -190,7 +190,7 @@ MessageListenerService.registerMessageListener(MessageType.BACKGROUND_DEBUG_MESS
 // TODO: make it prettier
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.type === 'ASYNC_MESSAGE') {
-        const { action, url, data } = message.message;
+        const { action, url, data, domain = 'main' } = message.message;
 
         const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
             __vexa_token: "",
@@ -217,7 +217,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         }, 10);
         */
 
-        fetch(authData.__vexa_main_domain + url, fetchOptions)
+        fetch((domain === 'main' ? authData.__vexa_main_domain : authData.__vexa_chrome_domain) + url, fetchOptions)
           .then(response => response.json())
           .then(data => {
               chrome.tabs.sendMessage(sender.tab.id, {

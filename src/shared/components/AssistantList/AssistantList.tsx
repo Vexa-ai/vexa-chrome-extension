@@ -190,7 +190,7 @@ export function AssistantList({className = '', actionButtonClicked = null, assis
   };
 
   const loadThreadMessages = useCallback((thread: Thread) => {
-    asyncMessengerService.getRequest(`/assistant/messages?thread_id=${thread.id}`)
+    asyncMessengerService.getRequest(`/api/v1/assistant/messages?thread_id=${thread.id}`)
       .then((messages: ThreadMessage[]) => {
         // Ignore result if the thread changed
         if (selectedThread.id !== thread.id) return;
@@ -242,7 +242,7 @@ export function AssistantList({className = '', actionButtonClicked = null, assis
       return messages;
     })
 
-    asyncMessengerService.postRequest(`/assistant/messages/edit`, {
+    asyncMessengerService.postRequest(`/api/v1/assistant/messages/edit`, {
       thread_id: selectedThread.id,
       message_id: message.id,
       content: message.text,
@@ -271,7 +271,7 @@ export function AssistantList({className = '', actionButtonClicked = null, assis
       return;
     }
 
-    asyncMessengerService.deleteRequest(`/assistant/threads/delete`, {
+    asyncMessengerService.deleteRequest(`/api/v1/assistant/threads/delete`, {
       ids: [thread.id],
     })
       .then(() => {
@@ -338,7 +338,7 @@ export function AssistantList({className = '', actionButtonClicked = null, assis
     setUserMessagePending(userMessagePendingRef.current);
 
     // post message in thread
-    return asyncMessengerService.postRequest('/assistant/copilot', {
+    return asyncMessengerService.postRequest('/api/v1/assistant/copilot', {
       thread_id: selectedThread.id,
       content,
     })
@@ -398,7 +398,7 @@ export function AssistantList({className = '', actionButtonClicked = null, assis
       }, 4000);
     }
 
-    return asyncMessengerService.postRequest('/assistant/threads/create', {
+    return asyncMessengerService.postRequest('/api/v1/assistant/threads/create', {
       meeting_id: MEETING_ID,
       prompt: prompt,
       meta: {label},
@@ -464,7 +464,7 @@ export function AssistantList({className = '', actionButtonClicked = null, assis
   }, [userMessagePendingRef.current, threadMessages]);
 
   const fetchThreads = function () {
-    asyncMessengerService.getRequest(`/assistant/threads/all?meeting_id=${MEETING_ID}`)
+    asyncMessengerService.getRequest(`/api/v1/assistant/threads/all?meeting_id=${MEETING_ID}`)
       .then((response: ThreadsResponse) => {
         console.log(response);
 

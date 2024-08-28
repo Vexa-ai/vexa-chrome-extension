@@ -5,19 +5,11 @@ export default class ChatManager {
   }
 
   findChatToggleButton() {
-    return Array.from(document.querySelectorAll("button i.google-material-icons"))
-      .find((icon: HTMLElement) => window.getComputedStyle(icon).display !== "none" && icon.innerText === "chat")
-      ?.parentElement;
+    return document.querySelector(`button[aria-label="Chat with everyone"]`)
   }
 
   findChatSendButton(): HTMLButtonElement {
-    let sendButton = document.querySelector(`button[aria-label="send"]`) as HTMLButtonElement;
-    if (!sendButton) {
-      const sendIcon = Array.from(document.querySelectorAll("button i.google-material-icons"))
-        .find((icon: HTMLElement) => window.getComputedStyle(icon).display !== "none" && icon.innerText === "send");
-
-      sendButton = sendIcon?.parentElement as HTMLButtonElement;
-    }
+    let sendButton = document.querySelector(`button[aria-label="Send a message"]`) as HTMLButtonElement;
 
     return sendButton;
   }
@@ -36,6 +28,7 @@ export default class ChatManager {
           console.log("No chat toggle button found, trying to find it by the icon");
           chatToggleButton = this.findChatToggleButton();
         }
+
         if (chatToggleButton) {
           chatToggleButton.click();
           chatInput = await this.getChatInput();
@@ -62,7 +55,7 @@ export default class ChatManager {
       console.log("Sending succeeded");
 
       const closeButton = this.findChatToggleButton();
-      if (closeButton && this.isElementVisible(closeButton)) {
+      if (closeButton) {
         closeButton.click();
       }
       return true;

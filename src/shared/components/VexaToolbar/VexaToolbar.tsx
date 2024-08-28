@@ -5,6 +5,7 @@ import { AudioRecordingControlButton } from '../AudioRecordingControlButton';
 import { VexaLogo } from '../VexaLogo';
 import { VexaMinimizeButton } from '../VexaMinimizeButton';
 import { VexaDragHandle } from '../VexaDragHandle';
+import {VexaSettingsButton} from "../VexaSettingsButton";
 
 export interface VexaToolbarProps {
   toolbarRef?: MutableRefObject<any>;
@@ -20,6 +21,7 @@ export function VexaToolbar({ toolbarRef, onDragHandleMouseOut = () => {}, onDra
     <VexaDragHandle className='items-center mr-1 cursor-move' onHandleMouseOut={onDragHandleMouseOut} onHandleMouseUp={onDragHandleMouseUp} onHandleMouseOver={onDragHandleMouseOver} />
     <VexaLogo />
     <div className='ml-auto gap-2 flex'>
+      <VexaSettingsButton />
       <VexaMinimizeButton />
       <AudioRecordingControlButton className='h-auto'/>
     </div>

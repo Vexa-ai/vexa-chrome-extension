@@ -1,13 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
-import { MainContentView, MicrophoneOptions, SpeakerEditorModal, VexaBuildInfo, VexaToolbar } from "~shared/components";
-import { AudioCaptureContext, useAudioCapture } from "~shared/hooks/use-audiocapture";
-import { MessageSenderService } from "~lib/services/message-sender.service";
-import { StorageService, StoreKeys } from "~lib/services/storage.service";
-import Draggable, { type DraggableData, type DraggableEvent } from "react-draggable";
-import { NotificationContainer, NotificationManager } from 'react-notifications';
-import { sendMessage } from "~shared/helpers/in-content-messaging.helper";
-import { MessageType } from "~lib/services/message-listener.service";
-import { ThreadDeletePromptModal } from "../ThreadDeletePromptModal";
+import React, {useEffect, useRef, useState} from "react";
+import {MainContentView, MicrophoneOptions, SpeakerEditorModal, VexaBuildInfo, VexaToolbar} from "~shared/components";
+import {AudioCaptureContext, useAudioCapture} from "~shared/hooks/use-audiocapture";
+import {type AuthorizationData, StorageService, StoreKeys} from "~lib/services/storage.service";
+import Draggable, {type DraggableData, type DraggableEvent} from "react-draggable";
+import {NotificationContainer} from 'react-notifications';
+import {sendMessage} from "~shared/helpers/in-content-messaging.helper";
+import {MessageType} from "~lib/services/message-listener.service";
 import AsyncMessengerService from "~lib/services/async-messenger.service";
 import {getIdFromUrl} from "~shared/helpers/meeting.helper";
 import ChatManager from "~lib/services/chat-manager";
@@ -16,7 +14,6 @@ const chatManager = new ChatManager();
 
 const asyncMessengerService = new AsyncMessengerService();
 
-const messageSender = new MessageSenderService();
 const MEETING_ID = getIdFromUrl(window.location.href);
 
 const Vexa = () => {
@@ -34,7 +31,41 @@ const Vexa = () => {
 
     useEffect(() => {
         if (isCapturing) {
-            chatManager.sendChatMessage("Hi everyone, this is an automated message to let you know my Vexa extension: https://vexa.ai is transcribing this meeting for me so I can give my full attention to you.");
+            StorageService
+              .get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {__vexa_token: "", __vexa_main_domain: "", __vexa_chrome_domain: ""})
+              .then(authData => {
+                  asyncMessengerService.getRequest(`/api/v1/users/me?token=${authData['__vexa_token']}`)
+                    .then(async res => {
+                        console.log({res});
+                        console.log({allowed: res['is_allowed_send_init_message']});
+
+                        if (true === res['is_allowed_send_init_message']) {
+                            console.log("Sending message");
+                            asyncMessengerService
+                              .getRequest(`/api/v1/meetings/initial-message?token=${authData['__vexa_token']}`)
+                              .then(async data => {
+                                const message = data['initial_message'] || "Hi everyone, this is an automated message to let you know my Vexa extension: https://vexa.ai is transcribing this meeting for me so I can give my full attention to you.";
+
+                                const i = setInterval(async () => {
+                                    console.log("Trying to send");
+                                    // It was set from other source
+                                    if (document.body.classList.contains("chat-message-sent")) {
+                                        clearInterval(i);
+                                        return;
+                                    }
+
+                                    // This part is not always works
+                                    if (true === await chatManager.sendChatMessage(message)) {
+                                        document.body.classList.add("chat-message-sent")
+                                        clearInterval(i);
+                                    }
+                                }, 1000);
+                            });
+                        }
+                    })
+                  ;
+              });
+
         }
     }, [isCapturing])
 
@@ -57,7 +88,7 @@ const Vexa = () => {
     }
 
     useEffect(() => {
-        asyncMessengerService.putRequest(`/user-applications/check-version`, {
+        asyncMessengerService.putRequest(`/api/v1/user-applications/check-version`, {
             app_version: chrome.runtime.getManifest()?.version,
         }).then(data => {
             if (false === data['is_actual']) {

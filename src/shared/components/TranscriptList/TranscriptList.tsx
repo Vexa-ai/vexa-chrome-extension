@@ -125,7 +125,7 @@ export function TranscriptList({
 
   const copyTranscription = async () => {
     const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
-    const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
+    const transcriptionURL = `/api/v1/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
     return asyncMessengerService.getRequest(transcriptionURL).then(async (response: TranscriptionEntryData[]) => {
       const mergedTranscripts = response.map(transcript => {
         return `${transcript.speaker}: ${transcript.content}`;
@@ -145,13 +145,13 @@ export function TranscriptList({
     const MEETING_ID = getIdFromUrl(window.location.href);
     let counter = 0;
     let interval = setInterval(async () => {
-      if (counter++ % 50) {
+      if (0 === counter++ % 50) {
         // reload whole history every X cycles
         lastTranscriptTimestampRef.current = null;
       }
 
       const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA);
-      const transcriptionURL = `/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
+      const transcriptionURL = `/api/v1/transcription?meeting_id=${MEETING_ID}&token=${authData.__vexa_token}${lastTranscriptTimestampRef.current ? '&last_msg_timestamp=' + lastTranscriptTimestampRef.current.toISOString() : ''}`;
       asyncMessengerService.getRequest(transcriptionURL).then(async (response: TranscriptionEntryData[]) => {
         response = response.map(entry => new TranscriptionEntry(entry))
 
@@ -178,7 +178,7 @@ export function TranscriptList({
 
 
   const fetchActionButtons = function () {
-    asyncMessengerService.getRequest(`/assistant/buttons?meeting_id=${MEETING_ID}`)
+    asyncMessengerService.getRequest(`/api/v1/assistant/buttons?meeting_id=${MEETING_ID}`)
       .then((response: ActionButtonsResponse) => {
         setActionButtons(response.buttons);
       });

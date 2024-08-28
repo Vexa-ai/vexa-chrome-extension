@@ -69,7 +69,7 @@ export default class AsyncMessengerService {
     return this.sendMessageToServiceWorker({
       type: MessageType.FETCH_REQUEST,
       action: method,
-      url: "/api/v1" + url,
+      url,
       data: data
     })
   }

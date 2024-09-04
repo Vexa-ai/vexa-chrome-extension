@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+}
+
+/* @layer components {
+  .markdown {
+    @apply mx-auto max-w-3xl;
+  }
+
+  .markdown h1 {
+    @apply text-3xl font-bold mt-8 mb-4;
+  }
+
+  .markdown h2 {
+    @apply text-2xl font-semibold mt-6 mb-3;
+  }
+
+  .markdown h3 {
+    @apply text-xl font-medium mt-5 mb-2;
+  }
+
+  .markdown h4 {
+    @apply text-lg font-medium mt-4 mb-2;
+  }
+
+  .markdown h5 {
+    @apply text-base font-medium mt-3 mb-1;
+  }
+
+  .markdown h6 {
+    @apply text-sm font-medium mt-2 mb-1;
+  }
+
+  .markdown p {
+    @apply mt-2 mb-4 leading-relaxed;
+  }
+
+  .markdown a {
+    @apply text-blue-600 underline hover:text-blue-800;
+  }
+
+  .markdown blockquote {
+    @apply border-l-4 border-gray-300 pl-4 italic text-gray-600;
+  }
+
+  .markdown ul,
+  .markdown ol {
+    @apply mt-4 mb-4 ml-8;
+  }
+
+  .markdown ul li {
+    @apply list-disc list-inside;
+  }
+
+  .markdown ol li {
+    @apply list-decimal list-inside;
+  }
+
+  .markdown pre {
+    @apply bg-gray-100 p-4 rounded-md overflow-x-auto;
+  }
+
+  .markdown code {
+    @apply bg-gray-100 px-2 py-1 rounded-md;
+  }
+
+  .markdown table {
+    @apply w-full border-collapse my-4;
+  }
+
+  .markdown th,
+  .markdown td {
+    @apply border border-gray-300 px-4 py-2;
+  }
+
+  .markdown th {
+    @apply bg-gray-200 font-semibold;
+  }
+
+  .markdown hr {
+    @apply border-t border-gray-300 my-6;
+  }
+
+  .markdown img {
+    @apply mx-auto;
+  }
+} */
+
+#plasmo-shadow-container > div {
+  left: unset !important;
+  right: 0 !important;
+}

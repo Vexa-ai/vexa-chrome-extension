@@ -1,23 +1,23 @@
-export {AudioRecordingControlButton} from './AudioRecordingControlButton';
-export {VexaPlayButton} from './VexaPlayButton';
-export {VexaPauseButton} from './VexaPauseButton';
-export {VexaToolbar} from './VexaToolbar';
-export {VexaLogo} from './VexaLogo';
-export {MicrophoneOptions} from './MicrophoneOptions';
-export {MicrophoneSelector} from './MicrophoneSelector';
-export {MicrophoneHints} from './MicrophoneHints';
-export {MicrophoneLevelIndicator} from './MicrophoneLevelIndicator';
-export {TranscriptList} from './TranscriptList';
-export {MainContentView} from './MainContentView';
-export {TranscriptEntry} from './TranscriptEntry';
-export {AssistantEntry} from './AssistantEntry';
-export {AssistantList} from './AssistantList';
-export {AssistantInput} from './AssistantInput';
-export {AssistantSuggestions} from './AssistantSuggestions';
-export {CustomSelect} from './CustomSelect';
-export {VexaMinimizeButton} from './VexaMinimizeButton';
-export {VexaBuildInfo} from './VexaBuildInfo';
-export {TranscriptionCopyButton} from './TranscriptionCopyButton';
-export {VexaDragHandle} from './VexaDragHandle';
-export {BouncingDots} from './BouncingDots';
-export {SpeakerEditorModal} from './SpeakerEditorModal';
+export { AudioRecordingControlButton } from "./AudioRecordingControlButton"
+export { VexaPlayButton } from "./VexaPlayButton"
+export { VexaPauseButton } from "./VexaPauseButton"
+export { ExtensionToolbar } from "./ExtensionToolbar"
+export { VexaLogo } from "./VexaLogo"
+export { MicrophoneOptions } from "./MicrophoneOptions"
+export { MicrophoneSelector } from "./MicrophoneSelector"
+export { MicrophoneHints } from "./MicrophoneHints"
+export { MicrophoneLevelIndicator } from "./MicrophoneLevelIndicator"
+export { TranscriptList } from "./TranscriptList"
+export { MainContentView } from "./MainContentView"
+export { TranscriptEntry } from "./TranscriptEntry"
+export { AssistantEntry } from "./AssistantEntry"
+export { AssistantList } from "./AssistantList"
+export { AssistantInput } from "./AssistantInput"
+export { AssistantSuggestions } from "./AssistantSuggestions"
+export { CustomSelect } from "./CustomSelect"
+export { VexaMinimizeButton } from "./VexaMinimizeButton"
+export { VexaBuildInfo } from "./VexaBuildInfo"
+export { TranscriptionCopyButton } from "./TranscriptionCopyButton"
+export { VexaDragHandle } from "./VexaDragHandle"
+export { BouncingDots } from "./BouncingDots"
+export { SpeakerEditorModal } from "./SpeakerEditorModal"

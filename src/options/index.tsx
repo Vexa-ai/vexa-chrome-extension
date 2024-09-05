@@ -6,6 +6,7 @@ import googleMeetLogo from "data-base64:~assets/images/svg/google-meet-logo.svg"
 import messageChat from "data-base64:~assets/images/svg/message-chat-circle.svg"
 import vexaPermissionsImage from "data-base64:~assets/images/svg/permissions-popup.png"
 import searchIcon from "data-base64:~assets/images/svg/search.svg"
+import { MessageCircle, Search } from "lucide-react"
 
 import {
   StorageService,
@@ -160,7 +161,7 @@ const OptionsIndex = () => {
 
   return (
     <div className="dark w-full h-screen flex bg-background text-foreground overflow-hidden">
-      {!hasMediaPermissions || isClosed ? (
+      {hasMediaPermissions || isClosed ? (
         <></>
       ) : (
         <>
@@ -172,11 +173,7 @@ const OptionsIndex = () => {
               <Card className="bg-card border-none">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <img
-                      src={messageChat}
-                      alt="Chat icon"
-                      className="w-6 h-6"
-                    />
+                    <MessageCircle className="w-6 h-6 text-muted-foreground" />
                     Real-Time Transcription and Analysis
                   </CardTitle>
                 </CardHeader>
@@ -199,11 +196,7 @@ const OptionsIndex = () => {
               <Card className="bg-card border-none">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <img
-                      src={searchIcon}
-                      alt="Search icon"
-                      className="w-6 h-6"
-                    />
+                    <Search className="w-6 h-6 text-muted-foreground" />
                     AI-Powered Search & Prompts
                   </CardTitle>
                 </CardHeader>

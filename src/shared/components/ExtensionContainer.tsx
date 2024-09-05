@@ -5,6 +5,8 @@ import Draggable, {
 } from "react-draggable"
 import { NotificationContainer } from "react-notifications"
 
+import "~global.css"
+
 import AsyncMessengerService from "~lib/services/async-messenger.service"
 import ChatManager from "~lib/services/chat-manager"
 import { MessageType } from "~lib/services/message-listener.service"
@@ -14,11 +16,11 @@ import {
   type AuthorizationData
 } from "~lib/services/storage.service"
 import {
+  ExtensionToolbar,
   MainContentView,
   MicrophoneOptions,
   SpeakerEditorModal,
-  VexaBuildInfo,
-  VexaToolbar
+  VexaBuildInfo
 } from "~shared/components"
 import { sendMessage } from "~shared/helpers/in-content-messaging.helper"
 import { getIdFromUrl } from "~shared/helpers/meeting.helper"
@@ -267,10 +269,10 @@ const Vexa = () => {
           disabled={isDraggableDisabled}>
           <div
             id="vexa-content-div"
-            className="flex flex-col w-[400px] min-h-[500px] top-0 left-0 bg-slate-950 m-4 p-4 rounded-lg overflow-y-auto overflow-x-hidden">
+            className="flex flex-col w-[380px] max-h-[800px] bg-background p-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
             <AudioCaptureContext.Provider value={audioCapture}>
               <NotificationContainer />
-              <VexaToolbar
+              <ExtensionToolbar
                 onDragHandleMouseOut={() => setIsDraggableDisabled(true)}
                 onDragHandleMouseUp={() => setIsDraggableDisabled(true)}
                 onDragHandleMouseOver={() => setIsDraggableDisabled(false)}

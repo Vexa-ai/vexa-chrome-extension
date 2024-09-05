@@ -2,7 +2,7 @@ import customSelectCss from "data-text:../shared/components/CustomSelect/CustomS
 import mainContentViewCss from "data-text:../shared/components/MainContentView/MainContentView.scss"
 import microphoneSelectCss from "data-text:../shared/components/MicrophoneSelector/MicrophoneSelector.scss"
 import transcriptListCss from "data-text:../shared/components/TranscriptList/TranscriptList.scss"
-import globalCssText from "data-text:~global.css"
+import globalCssText from "data-text:global.css"
 import type { PlasmoCSConfig } from "plasmo"
 import React, { useEffect, useRef, useState } from "react"
 import { createRoot } from "react-dom/client"
@@ -15,7 +15,7 @@ import {
   Platform
 } from "~shared/helpers/is-recordable-platform.helper"
 
-import Vexa from "../shared/components/vexa/vexa"
+import ExtensionContainer from "../shared/components/ExtensionContainer"
 
 StorageService.set(
   StoreKeys.TRANSCRIPT_MODE,
@@ -61,12 +61,12 @@ const VexaInMeetContext = ({ onMaximizedChanged = (isMax: boolean) => {} }) => {
     matchesUrl && (
       <div
         id="vexa-content-ui"
-        className="fixed  z-10"
+        className="fixed dark z-10 right-8 top-1/2 -translate-y-1/2"
         style={{
           position: "fixed",
           zIndex: 99999999
         }}>
-        {platform === Platform.MEET ? <Vexa /> : <></>}
+        {platform === Platform.MEET ? <ExtensionContainer /> : <></>}
       </div>
     )
   )

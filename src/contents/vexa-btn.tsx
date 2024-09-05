@@ -94,25 +94,27 @@ const VexaBtn = () => {
 
   return (
     <>
-      {
-        // (platform === Platform.YOUTUBE && isYoutubeEnabled || platform === Platform.MEET) && isReady && !isMaximized && (
-        platform === Platform.MEET && isReady && !isMaximized && (
-          <div
-            onMouseOver={() => setIsDragging(false)}
-            onMouseOut={() => setIsDragging(false)}>
-            <Draggable
-              position={position}
-              onDrag={handleDrag}
-              onStop={handleStop}>
+      {platform === Platform.MEET && isReady && !isMaximized && (
+        <div
+          onMouseOver={() => setIsDragging(false)}
+          onMouseOut={() => setIsDragging(false)}>
+          <Draggable
+            position={position}
+            onDrag={handleDrag}
+            onStop={handleStop}>
+            <div className="fixed dark right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
+              <div className="w-16 h-2 bg-handle shadow-md absolute top-0 right-0 -rotate-[30deg] z-10 rounded-sm"></div>
               <button
                 onClick={onClickHandler}
-                className="fixed right-4 top-1/2 -translate-y-1/2 rounded-full size-12 p-4 flex items-center justify-center bg-card shadow-md">
-                <VexaIcon strokeColor="white" />
+                className="vinyl-disk w-full h-full rounded-full p-8 flex items-center justify-center bg-secondary shadow-xl">
+                <div className="vinyl-label flex items-center justify-center p-2 bg-card rounded-full">
+                  <VexaIcon strokeColor="white" />
+                </div>
               </button>
-            </Draggable>
-          </div>
-        )
-      }
+            </div>
+          </Draggable>
+        </div>
+      )}
     </>
   )
 }
@@ -129,6 +131,29 @@ export const getStyle = () => {
   const style = document.createElement("style")
   style.textContent = `
         ${globalCssText}
+        .vinyl-disk {
+          background: 
+            repeating-radial-gradient(circle at center, 
+              #000000 0, 
+              #000000 2px, 
+              #555 3px, 
+              #555 4px
+            ),
+            radial-gradient(circle, #000000 0%, #555 70%, #000000 100%);
+          animation: rotate 5s linear infinite;
+        }
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .bg-handle {
+          background: radial-gradient(circle, #d4d4d4 0%, #a0a0a0 100%);
+        }
     `
   return style
 }

@@ -261,7 +261,7 @@ const Vexa = () => {
     */
 
   const containerVariants = {
-    hidden: { opacity: 0, scale: 0.9, x: "20%" },
+    hidden: { opacity: 0, scale: 0.8, x: "20%" },
     visible: {
       opacity: 1,
       scale: 1,
@@ -269,7 +269,7 @@ const Vexa = () => {
     },
     exit: {
       opacity: 0,
-      scale: 0.9,
+      scale: 0.8,
       x: "20%"
     }
   }
@@ -277,76 +277,77 @@ const Vexa = () => {
   return (
     <AnimatePresence>
       {isMaximized && (
-        <Draggable
-          position={position}
-          onDrag={handleDrag}
-          onStop={handleStop}
-          disabled={isDraggableDisabled}>
-          <motion.div
-            id="vexa-content-div"
-            className="flex flex-col w-[380px] min-h-[300px] max-h-[800px] bg-background p-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            style={{ originX: 1, originY: 0.5 }}>
-            <AudioCaptureContext.Provider value={audioCapture}>
-              <NotificationContainer />
-              <Toolbar
-                onDragHandleMouseOut={() => setIsDraggableDisabled(true)}
-                onDragHandleMouseUp={() => setIsDraggableDisabled(true)}
-                onDragHandleMouseOver={() => setIsDraggableDisabled(false)}
-                toolbarRef={vexaToolbarRef}
-              />
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          style={{ originX: 1, originY: 0.5 }}>
+          <Draggable
+            position={position}
+            onDrag={handleDrag}
+            onStop={handleStop}
+            disabled={isDraggableDisabled}>
+            <div
+              id="vexa-content-div"
+              className="flex flex-col w-[380px] min-h-[300px] max-h-[800px] bg-background p-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
+              <AudioCaptureContext.Provider value={audioCapture}>
+                <NotificationContainer />
+                <Toolbar
+                  onDragHandleMouseOut={() => setIsDraggableDisabled(true)}
+                  onDragHandleMouseUp={() => setIsDraggableDisabled(true)}
+                  onDragHandleMouseOver={() => setIsDraggableDisabled(false)}
+                  toolbarRef={vexaToolbarRef}
+                />
+                {outdated && !outdatedClosed && !isCapturing && (
+                  <div
+                    style={{
+                      backgroundColor: "red",
+                      color: "white",
+                      padding: "5px 15px",
+                      borderRadius: "3px",
+                      marginBottom: "5px"
+                    }}>
+                    Your version ({chrome.runtime.getManifest()?.version}) is
+                    outdated, please{" "}
+                    <a
+                      href={
+                        "https://chromewebstore.google.com/detail/vexa/ihibgadfkbefnclpbhdlpahfiejhfibl?hl=en&authuser=0&utm_medium=extension&utm_source=update"
+                      }
+                      target={"_blank"}
+                      style={{ color: "white", fontWeight: "bold" }}>
+                      update extension
+                    </a>{" "}
+                    to the latest version.{" "}
+                    <a
+                      href="#"
+                      onClick={closeAlert}
+                      style={{ color: "white", fontWeight: "bold" }}>
+                      Close
+                    </a>
+                  </div>
+                )}
 
-              {outdated && !outdatedClosed && !isCapturing && (
-                <div
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    padding: "5px 15px",
-                    borderRadius: "3px",
-                    marginBottom: "5px"
-                  }}>
-                  Your version ({chrome.runtime.getManifest()?.version}) is
-                  outdated, please{" "}
-                  <a
-                    href={
-                      "https://chromewebstore.google.com/detail/vexa/ihibgadfkbefnclpbhdlpahfiejhfibl?hl=en&authuser=0&utm_medium=extension&utm_source=update"
-                    }
-                    target={"_blank"}
-                    style={{ color: "white", fontWeight: "bold" }}>
-                    update extension
-                  </a>{" "}
-                  to the latest version.{" "}
-                  <a
-                    href="#"
-                    onClick={closeAlert}
-                    style={{ color: "white", fontWeight: "bold" }}>
-                    Close
-                  </a>
-                </div>
-              )}
-
-              {isCapturing || hasRecorded ? (
-                <>
-                  {!isCapturing && <MicrophoneOptions />}
-                  <MainContentView
-                    className={hasRecorded ? "hasRecordingHistory" : ""}
-                    onMouseOut={() => setIsDraggableDisabled(true)}
-                  />
-                </>
-              ) : (
-                <>
-                  <MicrophoneOptions />
-                  <BuildInfo className="mt-auto" />
-                </>
-              )}
-              <SpeakerEditorModal />
-              {/*<ThreadDeletePromptModal />*/}
-            </AudioCaptureContext.Provider>
-          </motion.div>
-        </Draggable>
+                {isCapturing || hasRecorded ? (
+                  <>
+                    {!isCapturing && <MicrophoneOptions />}
+                    <MainContentView
+                      className={hasRecorded ? "hasRecordingHistory" : ""}
+                      onMouseOut={() => setIsDraggableDisabled(true)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <MicrophoneOptions />
+                    <BuildInfo className="mt-auto" />
+                  </>
+                )}
+                <SpeakerEditorModal />
+                {/*<ThreadDeletePromptModal />*/}
+              </AudioCaptureContext.Provider>
+            </div>
+          </Draggable>
+        </motion.div>
       )}
     </AnimatePresence>
   )

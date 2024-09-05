@@ -13,8 +13,8 @@ import {
   StoreKeys,
   type AuthorizationData
 } from "~lib/services/storage.service"
-import { VexaBuildInfo, VexaLogo } from "~shared/components"
-import { VexaIcon } from "~shared/components/VexaLogo/VexaIcon"
+import { BuildInfo, Logo } from "~shared/components"
+import { VexaIcon } from "~shared/components/VexaIcon"
 
 import { Button } from "../components/ui/Button"
 import {

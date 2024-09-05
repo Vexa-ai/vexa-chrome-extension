@@ -20,6 +20,7 @@
     "@types/audioworklet": "^0.0.55",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "framer-motion": "^11.5.4",
     "lucide-react": "^0.438.0",
     "markdown-to-jsx": "^7.4.7",
     "plasmo": "0.86.1",

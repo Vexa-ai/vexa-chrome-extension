@@ -1,5 +1,6 @@
 import { platform } from "os"
 import globalCssText from "data-text:~global.css"
+import { motion } from "framer-motion"
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo"
 import React, { useEffect, useState, type MouseEventHandler } from "react"
 import { createRoot } from "react-dom/client"
@@ -8,7 +9,7 @@ import Draggable, {
   type DraggableEvent
 } from "react-draggable"
 
-import { VexaIcon } from "~shared/components/VexaLogo/VexaIcon"
+import { VexaIcon } from "~shared/components/VexaIcon"
 import {
   getPlatform,
   Platform
@@ -102,16 +103,19 @@ const VexaBtn = () => {
             position={position}
             onDrag={handleDrag}
             onStop={handleStop}>
-            <div className="fixed dark right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
-              <div className="w-16 h-2 bg-handle shadow-md absolute top-0 right-0 -rotate-[30deg] z-10 rounded-sm"></div>
-              <button
+            <motion.div
+              className="fixed dark right-4 top-1/2 group -translate-y-1/2 flex items-center justify-center"
+              whileHover={{ scale: 1.1 }}>
+              <div className="w-16 h-2 bg-handle shadow-md absolute -bottom-3 right-0 rotate-[72deg] group-hover:rotate-[90deg] z-10 rounded-sm origin-right transition-all duration-300 ease-in-out"></div>
+              <motion.button
                 onClick={onClickHandler}
-                className="vinyl-disk w-full h-full rounded-full p-8 flex items-center justify-center bg-secondary shadow-xl">
+                className="vinyl-disk w-full h-full rounded-full p-8 flex items-center justify-center bg-secondary shadow-xl"
+                whileTap={{ scale: 0.95 }}>
                 <div className="vinyl-label flex items-center justify-center p-2 bg-card rounded-full">
                   <VexaIcon strokeColor="white" />
                 </div>
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </Draggable>
         </div>
       )}

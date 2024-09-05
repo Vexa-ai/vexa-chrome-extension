@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion"
 import React, { useEffect, useRef, useState } from "react"
 import Draggable, {
   type DraggableData,
@@ -16,11 +17,11 @@ import {
   type AuthorizationData
 } from "~lib/services/storage.service"
 import {
-  ExtensionToolbar,
+  BuildInfo,
   MainContentView,
   MicrophoneOptions,
   SpeakerEditorModal,
-  VexaBuildInfo
+  Toolbar
 } from "~shared/components"
 import { sendMessage } from "~shared/helpers/in-content-messaging.helper"
 import { getIdFromUrl } from "~shared/helpers/meeting.helper"
@@ -259,20 +260,39 @@ const Vexa = () => {
     })
     */
 
+  const containerVariants = {
+    hidden: { opacity: 0, scale: 0.9, x: "20%" },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      x: 0
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      x: "20%"
+    }
+  }
+
   return (
-    <>
+    <AnimatePresence>
       {isMaximized && (
         <Draggable
           position={position}
           onDrag={handleDrag}
           onStop={handleStop}
           disabled={isDraggableDisabled}>
-          <div
+          <motion.div
             id="vexa-content-div"
-            className="flex flex-col w-[380px] max-h-[800px] bg-background p-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
+            className="flex flex-col w-[380px] min-h-[300px] max-h-[800px] bg-background p-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{ originX: 1, originY: 0.5 }}>
             <AudioCaptureContext.Provider value={audioCapture}>
               <NotificationContainer />
-              <ExtensionToolbar
+              <Toolbar
                 onDragHandleMouseOut={() => setIsDraggableDisabled(true)}
                 onDragHandleMouseUp={() => setIsDraggableDisabled(true)}
                 onDragHandleMouseOver={() => setIsDraggableDisabled(false)}
@@ -319,16 +339,16 @@ const Vexa = () => {
               ) : (
                 <>
                   <MicrophoneOptions />
-                  <VexaBuildInfo className="mx-auto mt-auto" />
+                  <BuildInfo className="mt-auto" />
                 </>
               )}
               <SpeakerEditorModal />
               {/*<ThreadDeletePromptModal />*/}
             </AudioCaptureContext.Provider>
-          </div>
+          </motion.div>
         </Draggable>
       )}
-    </>
+    </AnimatePresence>
   )
 }
 

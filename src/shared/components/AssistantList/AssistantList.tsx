@@ -620,8 +620,7 @@ export function AssistantList({
           )}
 
           {isPrompting && (
-            <div
-              className={`flex flex-grow-0 p-3 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] ${selectedThread?.messages.length ? "" : "mt-2"}`}>
+            <div className="flex flex-grow-0 p-2 w-[fit-content] text-muted-foreground">
               <BouncingDots />
             </div>
           )}

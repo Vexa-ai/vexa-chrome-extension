@@ -75,7 +75,7 @@ export function AssistantEntry({
     <div className="px-4">
       {entry ? (
         <motion.div
-          className="my-0.5"
+          className="my-1"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, ease: "easeOut" }}>
@@ -114,7 +114,7 @@ export function AssistantEntry({
             </span>
             <div className="flex gap-2 mb-1 break-words items-center">
               <span className="font-medium text-primary select-text break-words">
-                {entry.role}
+                {entry.role === "user" ? "You" : "Vexa"}
               </span>
             </div>
             <div className="select-text break-words">
@@ -128,7 +128,7 @@ export function AssistantEntry({
                   id="editor"
                   cols={5}></textarea>
               ) : (
-                <div className="markdown text-sm text-primary">
+                <div className="markdown text-sm text-primary/90">
                   <Markdown
                     options={{
                       overrides: {

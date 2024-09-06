@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState } from "react"
 
 import "../global.css"
 
+import vexaBackround from "data-base64:~assets/images/background/vexa-background.png"
 import googleMeetLogo from "data-base64:~assets/images/svg/google-meet-logo.svg"
 import messageChat from "data-base64:~assets/images/svg/message-chat-circle.svg"
 import vexaPermissionsImage from "data-base64:~assets/images/svg/permissions-popup.png"
 import searchIcon from "data-base64:~assets/images/svg/search.svg"
+import vexaUI from "data-base64:~assets/images/ui/vexa-ui.png"
 import { MessageCircle, Search } from "lucide-react"
 
 import {
@@ -15,6 +17,7 @@ import {
 } from "~lib/services/storage.service"
 import { BuildInfo, Logo } from "~shared/components"
 import { VexaIcon } from "~shared/components/VexaIcon"
+import { VexaLogo } from "~shared/components/VexaLogo"
 
 import { Button } from "../components/ui/Button"
 import {
@@ -161,7 +164,7 @@ const OptionsIndex = () => {
 
   return (
     <div className="dark w-full h-screen flex bg-background text-foreground overflow-hidden">
-      {hasMediaPermissions || isClosed ? (
+      {!hasMediaPermissions || isClosed ? (
         <></>
       ) : (
         <>
@@ -169,10 +172,10 @@ const OptionsIndex = () => {
           <div className="w-1/2 p-12 flex flex-col justify-between overflow-y-hidden">
             <VexaLogo className="mb-8" />
 
-            <div className="space-y-8">
+            <div className="space-y-8 max-w-md w-full">
               <Card className="bg-card border-none">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     <MessageCircle className="w-6 h-6 text-muted-foreground" />
                     Real-Time Transcription and Analysis
                   </CardTitle>
@@ -182,20 +185,18 @@ const OptionsIndex = () => {
                     Automatically transcribe meetings and analyze conversations
                     in real-time to capture key points and action items.
                   </CardDescription>
-                  <Button onClick={goToGooleMeet} className="w-full">
-                    <img
-                      src={googleMeetLogo}
-                      alt="Google Meet"
-                      className="mr-2"
-                    />
-                    Go to Google Meet
+                  <Button
+                    onClick={goToGooleMeet}
+                    className="w-full flex items-center">
+                    <img src={googleMeetLogo} alt="Google Meet" />
+                    <span className="text-sm ml-1">Go to Google Meet</span>
                   </Button>
                 </CardContent>
               </Card>
 
               <Card className="bg-card border-none">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     <Search className="w-6 h-6 text-muted-foreground" />
                     AI-Powered Search & Prompts
                   </CardTitle>
@@ -205,9 +206,11 @@ const OptionsIndex = () => {
                     Quickly find relevant information from past meetings and
                     communications using AI-powered search capabilities.
                   </CardDescription>
-                  <Button onClick={goToVexaDashboard} className="w-full">
-                    <VexaIcon className="mr-2" />
-                    Go to Vexa Dashboard
+                  <Button
+                    onClick={goToVexaDashboard}
+                    className="w-full flex items-center">
+                    <VexaIcon fillColor="#000000" size="18" />
+                    <span className="text-sm ml-2">Go to Vexa Dashboard</span>
                   </Button>
                 </CardContent>
               </Card>
@@ -230,18 +233,24 @@ const OptionsIndex = () => {
               )}
             </div>
 
-            <VexaBuildInfo className="text-muted-foreground mt-8" />
+            <BuildInfo className="text-muted-foreground mt-8" hideLogo />
           </div>
 
           {/* Right side */}
           <div className="w-1/2 relative">
-            <div className="absolute inset-0 bg-secondary"></div>
+            <div className="absolute inset-0 bg-secondary">
+              <img
+                src={vexaBackround}
+                alt="Vexa background"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              {/* <img
-                src="/path/to/ui-screenshot.png"
+              <img
+                src={vexaUI}
                 alt="Vexa UI"
                 className="max-w-[80%] max-h-[80%] rounded-lg shadow-2xl"
-              /> */}
+              />
             </div>
           </div>
 

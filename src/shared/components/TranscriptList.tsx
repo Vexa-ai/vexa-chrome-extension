@@ -342,7 +342,7 @@ export function TranscriptList({
           <div
             key={index}
             ref={transcripts.length - 1 === index ? lastEntryRef : null}
-            className="TranscriptEntry inline mr-1.5">
+            className="block">
             <TranscriptEntry
               entry={transcript}
               globalMode={transcriptMode}

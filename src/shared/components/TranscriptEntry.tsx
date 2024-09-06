@@ -140,7 +140,7 @@ export function TranscriptEntry({
         <div className="flex gap-2 mb-1 break-words items-center">
           <span className="flex gap-2">
             <span
-              className={`font-medium text-primary text-base select-text break-words ${speaker !== "TBD" && "cursor-pointer"}`}>
+              className={`font-medium text-primary select-text break-words ${speaker !== "TBD" && "cursor-pointer"}`}>
               {speaker === "TBD" || speaker === "" ? "Unknown" : speaker}
             </span>
             {speaker !== "TBD" && (
@@ -155,7 +155,7 @@ export function TranscriptEntry({
           </span> */}
         </div>
         <p
-          className="break-words select-text text-primary/90 text-sm"
+          className="break-words select-text text-primary/90"
           dangerouslySetInnerHTML={{
             __html: entry.getContentFor(globalMode)
           }}></p>

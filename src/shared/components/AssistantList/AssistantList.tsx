@@ -14,7 +14,7 @@ import threadIcon from "data-base64:~assets/images/svg/git-branch-01.svg"
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg"
 import vexaSendIcon from "data-base64:~assets/images/svg/send.svg"
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg"
-import { ArrowUp } from "lucide-react"
+import { ArrowUp, GitBranch, PlusCircle } from "lucide-react"
 
 import { Button } from "~components/ui/Button"
 import AsyncMessengerService from "~lib/services/async-messenger.service"
@@ -555,7 +555,7 @@ export function AssistantList({
   return (
     <div
       ref={assistantListRef}
-      className={`AssistantList flex flex-col max-h-full w-full overflow-hidden ${className}`}>
+      className={`AssistantList flex flex-col max-h-full w-full h-full overflow-hidden ${className}`}>
       {lastErrorMessage && (
         <div
           style={{
@@ -570,7 +570,7 @@ export function AssistantList({
       )}
 
       {
-        <div className="flex py-2 gap-3 w-full max-w-[368px]">
+        <div className="flex py-2 gap-3 w-full bg-[#1C1C1C]">
           <div className="flex-grow" ref={dropdownRef}>
             <CustomSelect
               placeholder={<ThreadPlaceholder />}
@@ -588,8 +588,11 @@ export function AssistantList({
             />
           </div>
 
-          <Button onClick={() => onStartNewThread()} variant="ghost">
-            New
+          <Button
+            onClick={() => onStartNewThread()}
+            variant="ghost"
+            size="icon">
+            <PlusCircle className="size-5 text-primary" />
           </Button>
         </div>
       }
@@ -636,7 +639,7 @@ export function AssistantList({
       )}
 
       <div
-        className={`AssistantInput mt-auto pb-2 pl-1`}
+        className={`AssistantInput mt-auto pb-2 w-full`}
         style={{ marginTop: "3px" }}>
         <form
           autoComplete="off"
@@ -678,8 +681,7 @@ export function AssistantList({
 }
 
 const ThreadNoOption: React.FC = () => (
-  <div
-    className={`flex gap-2 items-center bg-[#1F242F] py-1 px-2 text-primary rounded-lg`}>
+  <div className={`flex gap-2 items-center py-1 px-2 text-primary rounded-lg`}>
     <p className="min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full mx-auto text-sm flex items-center">
       No threads
     </p>
@@ -688,14 +690,14 @@ const ThreadNoOption: React.FC = () => (
 
 const ThreadPlaceholder: React.FC = () => (
   <div className="flex gap-2 text-[#CECFD2] font-semibold items-center w-full overflow-hidden">
-    <img alt="" className="w-5" src={threadIcon} />
+    <GitBranch className="size-5" />
     <p className="flex items-center justify-center min-h-6 text-sm">Threads</p>
   </div>
 )
 
 const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
   <div className="flex w-full gap-1 overflow-hidden ThreadSelected">
-    <img alt="" className="w-5" src={threadIcon} />
+    <GitBranch className="size-5" />
     <p
       className="text-primary min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm"
       title={values.label}>

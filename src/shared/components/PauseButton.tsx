@@ -1,7 +1,9 @@
 import pauseIcon from "data-base64:~assets/images/svg/pause-red.svg"
+import { Square } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { useStopwatch } from "react-timer-hook"
 
+import { Button } from "~components/ui/Button"
 import { StorageService, StoreKeys } from "~lib/services/storage.service"
 import { useAudioCapture } from "~shared/hooks/use-audiocapture"
 
@@ -49,19 +51,18 @@ export function PauseButton({ ...rest }: VexaPauseButtonProps) {
   }, [storedStartTime])
 
   return (
-    <div {...rest} className="VexaPauseButton">
-      <div
+    <div {...rest}>
+      <Button
         onClick={onStopClicked}
-        className="bg-[#F04438] hover:bg-[#d1807a] h-auto px-2 py-2 flex gap-2 items-center justify-center rounded-3xl font-medium text-white cursor-pointer">
+        variant="ghost"
+        className="flex gap-1 items-center justify-center">
+        <Square size={16} className="fill-red-500 text-red-500" />
         <span className={`${hours === 0 ? "w-12" : "w-16"} text-base`}>
           {hours < 1 ? "" : hours + ":"}
           {minutes < 10 ? "0" + minutes : minutes}:
           {seconds < 10 ? "0" + seconds : seconds}
         </span>
-        <button className="rounded-[50%] bg-black p-1">
-          <img alt="" className="w-3 h-3" src={pauseIcon} />
-        </button>
-      </div>
+      </Button>
     </div>
   )
 }

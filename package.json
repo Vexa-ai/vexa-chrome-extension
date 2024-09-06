@@ -17,6 +17,7 @@
     "@plasmohq/storage": "^1.10.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
     "@types/audioworklet": "^0.0.55",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

@@ -1,105 +1,128 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from "react"
 
-import './MainContentView.scss';
-import {type ActionButton, TranscriptList} from '../TranscriptList';
-import {AssistantList} from '../AssistantList';
-import type {TranscriptionEntryData} from '../TranscriptEntry';
-import {MessageType} from '~lib/services/message-listener.service';
-import {onMessage, sendMessage} from '~shared/helpers/in-content-messaging.helper';
-import {StorageService, StoreKeys} from '~lib/services/storage.service';
+import "./MainContentView.scss"
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/Tabs"
+import { MessageType } from "~lib/services/message-listener.service"
+import { StorageService, StoreKeys } from "~lib/services/storage.service"
+import {
+  onMessage,
+  sendMessage
+} from "~shared/helpers/in-content-messaging.helper"
+
+import { AssistantList } from "../AssistantList"
+import type { TranscriptionEntryData } from "../TranscriptEntry"
+import { TranscriptList, type ActionButton } from "../TranscriptList"
 
 export interface MainContentViewProps {
-  [key: string]: any;
+  [key: string]: any
 }
 
-let transcriptList: TranscriptionEntryData[] = [];
-let activeTabIndex = 0;
+let transcriptList: TranscriptionEntryData[] = []
+let activeTabIndex = 0
 
 export function MainContentView({ className, ...rest }: MainContentViewProps) {
-  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
-  const [hasTranscripts, setHasTranscripts] = useState(false);
-  const [isCapturing] = StorageService.useHookStorage<boolean>(StoreKeys.CAPTURING_STATE);
-  const [hasRecordingHistory, setHasRecordingHistory] = useState(false);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0)
+  const [hasTranscripts, setHasTranscripts] = useState(false)
+  const [isCapturing] = StorageService.useHookStorage<boolean>(
+    StoreKeys.CAPTURING_STATE
+  )
+  const [hasRecordingHistory, setHasRecordingHistory] = useState(false)
 
-  const [actionButtonClicked, setActionButtonClicked] = useState<ActionButton>(null);
-  const [assistantMessage, setAssistantMessage] = useState<string>(null);
+  const [actionButtonClicked, setActionButtonClicked] =
+    useState<ActionButton>(null)
+  const [assistantMessage, setAssistantMessage] = useState<string>(null)
 
   const copyTranscriptions = () => {
-    const mergedTranscripts = transcriptList.map(transcript => {
-      return `${transcript.speaker}: ${transcript.content}`;
-    }).join('\n');
-    navigator.clipboard.writeText(mergedTranscripts);
+    const mergedTranscripts = transcriptList
+      .map((transcript) => {
+        return `${transcript.speaker}: ${transcript.content}`
+      })
+      .join("\n")
+    navigator.clipboard.writeText(mergedTranscripts)
   }
 
   const onListUpdated = (list: TranscriptionEntryData[]) => {
-    transcriptList = list;
-    setHasTranscripts(!!transcriptList.length);
+    transcriptList = list
+    setHasTranscripts(!!transcriptList.length)
   }
 
   const onTabChanged = (currentTabIndex: number) => {
-    activeTabIndex = currentTabIndex;
-    setSelectedTabIndex(currentTabIndex);
-    sendMessage(MessageType.TAB_CHANGED, { activeTabIndex: currentTabIndex });
+    activeTabIndex = currentTabIndex
+    setSelectedTabIndex(currentTabIndex)
+    sendMessage(MessageType.TAB_CHANGED, { activeTabIndex: currentTabIndex })
   }
 
   useEffect(() => {
-    sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory });
-  }, [hasRecordingHistory]);
+    sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory })
+  }, [hasRecordingHistory])
 
   useEffect(() => {
-    const transcriptionCleanupFn = onMessage(MessageType.COPY_TRANSCRIPTION, () => {
-      copyTranscriptions();
-      sendMessage(MessageType.COPY_TRANSCRIPTION_SUCCESS);
-    });
+    const transcriptionCleanupFn = onMessage(
+      MessageType.COPY_TRANSCRIPTION,
+      () => {
+        copyTranscriptions()
+        sendMessage(MessageType.COPY_TRANSCRIPTION_SUCCESS)
+      }
+    )
 
-    setSelectedTabIndex(activeTabIndex);
-    sendMessage(MessageType.TAB_CHANGED, { activeTabIndex: activeTabIndex });
-    sendMessage(MessageType.HAS_RECORDING_HISTORY, { hasRecordingHistory: !!transcriptList.length });
+    setSelectedTabIndex(activeTabIndex)
+    sendMessage(MessageType.TAB_CHANGED, { activeTabIndex: activeTabIndex })
+    sendMessage(MessageType.HAS_RECORDING_HISTORY, {
+      hasRecordingHistory: !!transcriptList.length
+    })
 
-    const hasRecordingHistoryCleanup = onMessage<{ hasRecordingHistory: boolean }>(MessageType.HAS_RECORDING_HISTORY, data => {
-      setHasRecordingHistory(data.hasRecordingHistory);
-    });
+    const hasRecordingHistoryCleanup = onMessage<{
+      hasRecordingHistory: boolean
+    }>(MessageType.HAS_RECORDING_HISTORY, (data) => {
+      setHasRecordingHistory(data.hasRecordingHistory)
+    })
     return () => {
-      transcriptionCleanupFn();
-      hasRecordingHistoryCleanup();
+      transcriptionCleanupFn()
+      hasRecordingHistoryCleanup()
     }
-  }, []);
+  }, [])
 
   function onActionButtonClicked(button: ActionButton) {
-    setActionButtonClicked(button);
+    setActionButtonClicked(button)
 
-    setSelectedTabIndex(1);
+    setSelectedTabIndex(1)
   }
 
   function onAssistantMessage(message: string) {
-    setAssistantMessage(message);
+    setAssistantMessage(message)
 
-    setSelectedTabIndex(1);
+    setSelectedTabIndex(1)
   }
 
   return (
-    <div {...rest} className={`MainContentView flex flex-col flex-grow overflow-hidden h-auto ${className}`}>
-      <ul className="flex text-gray-300 z-10 w-full bg-slate-950 border-b border-b-gray-700 rounded-b-sm" role="tablist">
-        <li onClick={() => onTabChanged(0)} className={`focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer${selectedTabIndex === 0 ? ' react-tabs__tab--selected' : ''}`} role="tab" id="tab:r0:0" aria-selected="true" aria-disabled="false"
-          aria-controls="panel:r0:0" data-rttab="true" tabIndex={0}>
-          Transcript
-        </li>
-
-        <li onClick={() => onTabChanged(1)} className={`focus-visible:outline-none flex-1 text-center py-2 rounded-none hover:bg-slate-800 cursor-pointer${selectedTabIndex === 1 ? ' react-tabs__tab--selected' : ''}`} role="tab" id="tab:r0:1" aria-selected="false" aria-disabled="false" aria-controls="panel:r0:1"
-          data-rttab="true" tabIndex={1}>
-          Assistant
-        </li>
-      </ul>
-      <TranscriptList
-        className={selectedTabIndex === 0 ? '' : `mt-[10px] hidden`}
-        transcriptList={transcriptList}
-        updatedTranscriptList={(list) => onListUpdated(list)}
-        onActionButtonClicked={onActionButtonClicked}
-        onAssistantRequest={onAssistantMessage}
-      />
-      <div className={`${selectedTabIndex === 1 ? 'flex h-full' : 'hidden'}`}>
-        <AssistantList actionButtonClicked={actionButtonClicked} assistantMessage={assistantMessage}  />
-      </div>
+    <div
+      {...rest}
+      className={`MainContentView flex flex-col flex-grow overflow-hidden h-auto ${className}`}>
+      <Tabs
+        value={selectedTabIndex.toString()}
+        onValueChange={(value) => onTabChanged(parseInt(value))}
+        className="h-[calc(100%-46px)]">
+        <TabsList className="grid w-full grid-cols-2 px-4">
+          <TabsTrigger value="0">Transcript</TabsTrigger>
+          <TabsTrigger value="1">Assistant</TabsTrigger>
+        </TabsList>
+        <TabsContent value="0" className="h-full">
+          <TranscriptList
+            className=""
+            transcriptList={transcriptList}
+            updatedTranscriptList={(list) => onListUpdated(list)}
+            onActionButtonClicked={onActionButtonClicked}
+            onAssistantRequest={onAssistantMessage}
+          />
+        </TabsContent>
+        <TabsContent value="1" className="h-full">
+          <AssistantList
+            actionButtonClicked={actionButtonClicked}
+            assistantMessage={assistantMessage}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
-  );
+  )
 }

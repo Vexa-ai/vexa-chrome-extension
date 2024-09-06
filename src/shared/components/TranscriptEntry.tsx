@@ -1,3 +1,4 @@
+import { motion } from "framer-motion"
 import React, { useEffect, useState } from "react"
 import { LineWave, RotatingLines } from "react-loader-spinner"
 
@@ -125,18 +126,22 @@ export function TranscriptEntry({
   }
 
   return (
-    <div className="TranscriptEntry my-2">
-      <div className="flex flex-col p-3 text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] relative group">
+    <motion.div
+      className="my-0.5"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}>
+      <div className="flex flex-col p-1 relative group">
         <span className="sticky top-2 z-10 group-hover:block hidden">
           <span className="absolute top-0 right-0">
             <CopyButton onClick={copyTranscript} />
           </span>
         </span>
         <div className="flex gap-2 mb-1 break-words items-center">
-          <span className="flex gap-2 group/speaker-name">
+          <span className="flex gap-2">
             <span
-              className={`font-semibold text-[#94969C] select-text break-words ${speaker !== "TBD" && "cursor-pointer"}`}>
-              {speaker === "TBD" ? "" : speaker}
+              className={`font-medium text-primary text-base select-text break-words ${speaker !== "TBD" && "cursor-pointer"}`}>
+              {speaker === "TBD" || speaker === "" ? "Unknown" : speaker}
             </span>
             {speaker !== "TBD" && (
               <EditPenButton
@@ -145,16 +150,16 @@ export function TranscriptEntry({
               />
             )}
           </span>
-          <span className="items-center text-[#94969C] text-xs select-text break-words ml-auto">
+          {/* <span className="items-center text-muted-foreground text-xs select-text break-words ml-auto">
             {formattedTimestamp}
-          </span>
+          </span> */}
         </div>
         <p
-          className="break-words select-text"
+          className="break-words select-text text-primary/90 text-sm"
           dangerouslySetInnerHTML={{
             __html: entry.getContentFor(globalMode)
           }}></p>
       </div>
-    </div>
+    </motion.div>
   )
 }

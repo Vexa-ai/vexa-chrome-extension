@@ -14,7 +14,9 @@ import threadIcon from "data-base64:~assets/images/svg/git-branch-01.svg"
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg"
 import vexaSendIcon from "data-base64:~assets/images/svg/send.svg"
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg"
+import { ArrowUp } from "lucide-react"
 
+import { Button } from "~components/ui/Button"
 import AsyncMessengerService from "~lib/services/async-messenger.service"
 import { MessageType } from "~lib/services/message-listener.service"
 import { MessageSenderService } from "~lib/services/message-sender.service"
@@ -586,12 +588,9 @@ export function AssistantList({
             />
           </div>
 
-          <button
-            onClick={() => onStartNewThread()}
-            className="flex gap-2 p-2 justify-center items-center rounded-md border border-[#333741] disabled:bg-[#1F242F] bg-[#161B26] text-[#CECFD2] text-center font-semibold text-base">
-            <img src={newMessageIcon} alt="New thread" />
+          <Button onClick={() => onStartNewThread()} variant="ghost">
             New
-          </button>
+          </Button>
         </div>
       }
 
@@ -637,37 +636,39 @@ export function AssistantList({
       )}
 
       <div
-        className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1`}
+        className={`AssistantInput mt-auto pb-2 pl-1`}
         style={{ marginTop: "3px" }}>
-        {/* <AssistantSuggestions suggestions={suggestions} selectSuggestion={handleSuggestionSelection}/> */}
         <form
           autoComplete="off"
           onSubmit={sendUserMessage}
           className="flex gap-1">
-          <textarea
-            ref={userMessageInputRef}
-            disabled={isPrompting}
-            value={userMessage}
-            onKeyDown={(e: KeyboardEvent) => {
-              if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
-            }}
-            onChange={(e) => setUserMessage(e.target.value)}
-            placeholder="Start typing..."
-            className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2"
-            style={{
-              color: "white",
-              resize: "none",
-              maxHeight: "180px",
-              minHeight: "39px"
-            }}
-            name="assistant-input"
-          />
-
-          <button
-            disabled={isPrompting || userMessage?.trim()?.length === 0}
-            type="submit">
-            <img src={vexaSendIcon} alt="" />
-          </button>
+          <div className="relative flex w-full px-4">
+            <textarea
+              ref={userMessageInputRef}
+              disabled={isPrompting}
+              value={userMessage}
+              onKeyDown={(e: KeyboardEvent) => {
+                if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
+              }}
+              onChange={(e) => setUserMessage(e.target.value)}
+              placeholder="Start typing..."
+              className="flex h-10 pr-5 w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                resize: "none",
+                maxHeight: "160px",
+                minHeight: "40px"
+              }}
+              name="assistant-input"
+            />
+            <Button
+              disabled={isPrompting || userMessage?.trim()?.length === 0}
+              type="submit"
+              variant="ghost"
+              className="absolute top-0 right-4"
+              size="icon">
+              <ArrowUp className="size-5 text-primary z-10" />
+            </Button>
+          </div>
         </form>
       </div>
 
@@ -678,7 +679,7 @@ export function AssistantList({
 
 const ThreadNoOption: React.FC = () => (
   <div
-    className={`flex gap-2 items-center bg-[#1F242F] py-1 px-2 text-[#F5F5F6] rounded-lg`}>
+    className={`flex gap-2 items-center bg-[#1F242F] py-1 px-2 text-primary rounded-lg`}>
     <p className="min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full mx-auto text-sm flex items-center">
       No threads
     </p>
@@ -696,7 +697,7 @@ const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
   <div className="flex w-full gap-1 overflow-hidden ThreadSelected">
     <img alt="" className="w-5" src={threadIcon} />
     <p
-      className="text-[#F5F5F6] min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm"
+      className="text-primary min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm"
       title={values.label}>
       {values.label}
     </p>

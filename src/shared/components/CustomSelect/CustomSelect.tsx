@@ -1,25 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './CustomSelect.scss';
+import React, { useEffect, useRef, useState } from "react"
+
+import "./CustomSelect.scss"
+
+import { ChevronsUpDown } from "lucide-react"
 
 export interface Option {
-  label: string;
-  value: any;
+  label: string
+  value: any
 }
 
 export interface CustomSelectProps {
-  placeholder: React.ReactNode;
-  selectedComponent: React.ComponentType<{ value: any, label: string }>;
-  noOptionsComponent?: React.ComponentType;
-  options: Option[];
-  selectedValue?: Option;
-  isMulti: boolean;
-  isSearchable: boolean;
-  keepOpen?: boolean;
-  onOpen?: (value: Option | Option[]) => void;
-  onChange: (value: Option | Option[]) => void;
-  onBlur?: () => void;
-  align: 'left' | 'right';
-  optionComponent: React.ComponentType<{ options?: Option[], option: Option; selected: boolean; onClick: () => void }>;
+  placeholder: React.ReactNode
+  selectedComponent: React.ComponentType<{ value: any; label: string }>
+  noOptionsComponent?: React.ComponentType
+  options: Option[]
+  selectedValue?: Option
+  isMulti: boolean
+  isSearchable: boolean
+  keepOpen?: boolean
+  onOpen?: (value: Option | Option[]) => void
+  onChange: (value: Option | Option[]) => void
+  onBlur?: () => void
+  align: "left" | "right"
+  optionComponent: React.ComponentType<{
+    options?: Option[]
+    option: Option
+    selected: boolean
+    onClick: () => void
+  }>
 }
 
 export function CustomSelect({
@@ -35,86 +43,100 @@ export function CustomSelect({
   onOpen,
   onBlur,
   align,
-  optionComponent: OptionComponent = ({ option, selected, onClick }) => <span onClick={onClick} className={selected && 'custom--dropdown-container'}>{option.label}</span>,
+  optionComponent: OptionComponent = ({ option, selected, onClick }) => (
+    <span
+      onClick={onClick}
+      className={selected && "custom--dropdown-container"}>
+      {option.label}
+    </span>
+  )
 }: CustomSelectProps) {
-  const [showMenu, setShowMenu] = useState<boolean>(false);
-  const [selectedValues, setSelectedValues] = useState<Option[]>([]);
-  const [searchValue, setSearchValue] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showMenu, setShowMenu] = useState<boolean>(false)
+  const [selectedValues, setSelectedValues] = useState<Option[]>([])
+  const [searchValue, setSearchValue] = useState("")
+  const searchRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setSearchValue("");
+    setSearchValue("")
     if (showMenu) {
-      onOpen?.(selectedValues);
+      onOpen?.(selectedValues)
       if (searchRef.current) {
-        searchRef.current.focus();
+        searchRef.current.focus()
       }
     }
-  }, [showMenu]);
+  }, [showMenu])
 
   useEffect(() => {
-    setShowMenu(keepOpen);
-  }, [keepOpen]);
+    setShowMenu(keepOpen)
+  }, [keepOpen])
 
   useEffect(() => {
-    setSelectedValues(initialValue ? [initialValue]: []);
-  }, [initialValue]);
+    setSelectedValues(initialValue ? [initialValue] : [])
+  }, [initialValue])
 
   const handleInputClick = () => {
-      setShowMenu(prev => !prev);
-  };
+    setShowMenu((prev) => !prev)
+  }
 
   const removeOption = (option: Option) => {
-    return selectedValues.filter(o => o.value !== option.value);
-  };
+    return selectedValues.filter((o) => o.value !== option.value)
+  }
 
   const onItemClick = (option: Option) => {
-    let newValue;
+    let newValue
     if (isMulti) {
-      if (selectedValues.some(o => o.value === option.value)) {
-        newValue = removeOption(option);
+      if (selectedValues.some((o) => o.value === option.value)) {
+        newValue = removeOption(option)
       } else {
-        newValue = [...selectedValues, option];
+        newValue = [...selectedValues, option]
       }
     } else {
-      newValue = [option];
+      newValue = [option]
     }
     setShowMenu(false)
-    setSelectedValues(newValue);
-    onChange(newValue);
-  };
+    setSelectedValues(newValue)
+    onChange(newValue)
+  }
 
   const isSelected = (option: Option) => {
-    return selectedValues.some(o => o.value === option.value);
-  };
+    return selectedValues.some((o) => o.value === option.value)
+  }
 
   const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
-  };
+    setSearchValue(e.target.value)
+  }
 
   const getOptions = () => {
     if (!searchValue) {
-      return options;
+      return options
     }
 
-    return options.filter(option =>
+    return options.filter((option) =>
       option.label.toLowerCase().includes(searchValue.toLowerCase())
-    );
-  };
+    )
+  }
 
   const renderNoOptions = () => {
-    return <>
-      {<NoOptionsComponent /> || <div>No options</div>}
-    </>
-  };
+    return <>{<NoOptionsComponent /> || <div>No options</div>}</>
+  }
 
   const renderPlaceholder = () => {
-    return <div className={`dropdown-selected-value w-full overflow-hidden ${!selectedValues ? 'placeholder' : ''}`}>
-      {selectedValues.length ? <SelectedComponent value={selectedValues[0].value} label={selectedValues[0].label} /> : placeholder}
-    </div>;
-  };
+    return (
+      <div
+        className={`dropdown-selected-value w-full overflow-hidden ${!selectedValues ? "placeholder" : ""}`}>
+        {selectedValues.length ? (
+          <SelectedComponent
+            value={selectedValues[0].value}
+            label={selectedValues[0].label}
+          />
+        ) : (
+          placeholder
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="CustomSelect">
@@ -122,17 +144,18 @@ export function CustomSelect({
         <div
           ref={inputRef}
           onClick={handleInputClick}
-          className="dropdown-input overflow-hidden"
-        >
+          className="dropdown-input">
           {renderPlaceholder()}
           <div className="dropdown-tools">
             <div className="dropdown-tool">
-              <Icon isOpen={showMenu} />
+              <ChevronsUpDown className="size-4 text-muted-foreground" />
             </div>
           </div>
         </div>
         {showMenu && (
-          <div ref={dropdownRef} className={`dropdown-menu !w-full alignment--${align || 'auto'}`}>
+          <div
+            ref={dropdownRef}
+            className={`dropdown-menu !w-full alignment--${align || "auto"}`}>
             {isSearchable && (
               <div className="search-box">
                 <input
@@ -144,8 +167,7 @@ export function CustomSelect({
               </div>
             )}
             {getOptions()?.length > 0
-              ? (
-                getOptions().map((option, key) => (
+              ? getOptions().map((option, key) => (
                   <OptionComponent
                     key={key}
                     option={option}
@@ -154,28 +176,10 @@ export function CustomSelect({
                     onClick={() => onItemClick(option)}
                   />
                 ))
-              ) : renderNoOptions()
-            }
+              : renderNoOptions()}
           </div>
         )}
       </div>
     </div>
-
-  );
+  )
 }
-
-const Icon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    viewBox="0 0 24 24"
-    width="18"
-    height="18"
-    stroke="#222"
-    strokeWidth="1.5"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={isOpen ? 'translate' : ''}
-  >
-    <polyline points="6 9 12 15 18 9"></polyline>
-  </svg>
-);

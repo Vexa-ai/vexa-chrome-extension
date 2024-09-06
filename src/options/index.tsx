@@ -299,7 +299,7 @@ const OptionsIndex = () => {
               <button
                 disabled={isCheckingToken}
                 onClick={saveToken}
-                className="p-3 text-white font-medium bg-blue-700 rounded-xl">
+                className="p-3 text-primary font-medium bg-blue-700 rounded-xl">
                 Save token
               </button>
 

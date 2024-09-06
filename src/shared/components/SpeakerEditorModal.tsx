@@ -72,11 +72,11 @@ export function SpeakerEditorModal({}: SpeakerEditorModalProps) {
         <div>
           <div className="ModalBackdrop top-0 left-0 fixed h-full w-full backdrop-blur">
             <div className="w-full h-full flex items-center justify-center">
-              <div className="ModalUi mx-3 p-4 rounded-lg w-full bg-[#0C111D]">
+              <div className="ModalUi mx-3 p-4 rounded-lg w-full bg-background">
                 <div className="flex items-start bg-transparent">
                   <EditPenButton
                     svgClassName="w-[18px] h-[18px]"
-                    className="border-[1.5px] border-[#333741] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white h-12 w-12"
+                    className="border-[1.5px] border-[#333741] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary h-12 w-12"
                   />
                   <button
                     onClick={closeModal}
@@ -84,7 +84,7 @@ export function SpeakerEditorModal({}: SpeakerEditorModalProps) {
                     <img src={closeIcon} alt="Close modal" />
                   </button>
                 </div>
-                <h1 className="font-semibold text-lg text-[#F5F5F6] mb-5 mt-3">
+                <h1 className="font-semibold text-lg text-primary mb-5 mt-3">
                   Change Speaker Name
                 </h1>
                 <div className="flex flex-col gap-2 mb-6">
@@ -96,7 +96,7 @@ export function SpeakerEditorModal({}: SpeakerEditorModalProps) {
                     onChange={handleInputChange}
                     type="text"
                     placeholder="Update speaker name"
-                    className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2 text-white"
+                    className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2 text-primary"
                     name="name"
                   />
                 </div>
@@ -108,7 +108,7 @@ export function SpeakerEditorModal({}: SpeakerEditorModalProps) {
                       !speakerData.speaker?.trim()
                     }
                     onClick={updateSpeakerName}
-                    className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#7F56D9] disabled:text-[#85888E] text-white text-center font-semibold text-base">
+                    className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#7F56D9] disabled:text-[#85888E] text-primary text-center font-semibold text-base">
                     {isUpdatingSpeakerName ? (
                       <BouncingDots className="py-[10px]" />
                     ) : (

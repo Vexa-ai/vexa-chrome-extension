@@ -11,7 +11,7 @@ export function BuildInfo({ className = "" }: VexaBuildInfoProps) {
 
   return (
     <div
-      className={`VexaBuildInfo text-gray-400 font-semibold text-center items-center flex justify-between ${className}`}>
+      className={`font-semibold text-center w-full px-4 items-center flex justify-between ${className}`}>
       <VexaLogo />
       <span className="text-sm font-medium text-muted-foreground">
         {versionNumber}

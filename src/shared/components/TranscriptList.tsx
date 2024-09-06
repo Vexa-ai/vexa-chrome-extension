@@ -1,4 +1,5 @@
 import vexaSendButton from "data-base64:~assets/images/svg/send.svg"
+import { ArrowUp, Copy, CopyCheck } from "lucide-react"
 import React, {
   useCallback,
   useEffect,
@@ -8,6 +9,7 @@ import React, {
   type KeyboardEvent
 } from "react"
 
+import { Button } from "~components/ui/Button"
 import AsyncMessengerService from "~lib/services/async-messenger.service"
 import {
   MessageListenerService,
@@ -94,6 +96,8 @@ export function TranscriptList({
   const transcriptsRef = useRef<TranscriptionEntryData[]>()
   const userMessageInputRef = useRef<HTMLTextAreaElement>(null)
 
+  const [copyState, setCopyState] = useState<"default" | "copied">("default")
+
   useEffect(() => {
     transcriptsRef.current = transcripts
   }, [transcripts])
@@ -167,9 +171,9 @@ export function TranscriptList({
 
         navigator.clipboard.writeText(mergedTranscripts)
 
-        copyTranscriptionRef.current.innerText = "copied ✓"
+        setCopyState("copied")
         setTimeout(() => {
-          copyTranscriptionRef.current.innerText = "Copy transcription"
+          setCopyState("default")
         }, 2000)
       })
   }
@@ -302,15 +306,20 @@ export function TranscriptList({
   return (
     <div
       ref={transcriptListRef}
-      className={`TranscriptList flex flex-col max-h-full w-full h-full overflow-hidden group/transcript-container ${className}`}
+      className={`flex flex-col max-h-full w-full h-full overflow-hidden group/transcript-container ${className}`}
       onClick={clickedInsideTranscriptList}>
-      <div className="shortToggle w-full py-1 border-b border-white">
-        <button
+      <div className="w-full px-2 bg-[#1C1C1C]">
+        <Button
           onClick={copyTranscription}
-          ref={copyTranscriptionRef}
-          style={{ color: "white" }}>
-          Copy transcription
-        </button>
+          variant="ghost"
+          className="flex gap-2">
+          {copyState === "default" ? (
+            <Copy className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <CopyCheck className="w-4 h-4 text-muted-foreground" />
+          )}
+          <span>{copyState === "default" ? "Copy Transcript" : "Copied"}</span>
+        </Button>
         {/*
         <label className="inline-flex items-center cursor-pointer float-end">
           <input type="checkbox" checked={!!isShortTranscript} onChange={e => setIsShortTranscript(e.target.checked)} className="sr-only peer"/>
@@ -318,11 +327,11 @@ export function TranscriptList({
             title={"This is experimental mode. Please let us know if something does not work for you."}
             className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-black after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
         </label>
-        <span className="text-white float-end pr-4">Show short</span>
+        <span className="text-primary float-end pr-4">Show short</span>
         */}
       </div>
 
-      <div ref={scrollAreaRef} className="flex-grow overflow-y-auto">
+      <div ref={scrollAreaRef} className="flex-grow px-4 py-2 overflow-y-auto">
         {/*
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
           <TranscriptionCopyButton className='rounded-lg' onCopyTranscriptClicked={copyTranscription}/>
@@ -346,7 +355,7 @@ export function TranscriptList({
         ))}
 
         {isCapturing && (
-          <div className="flex flex-grow-0 p-3 mt-1 w-[fit-content] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26]">
+          <div className="flex flex-grow-0 p-2 w-[fit-content] text-muted-foreground">
             <BouncingDots />
           </div>
         )}
@@ -357,33 +366,38 @@ export function TranscriptList({
       />
 
       <div
-        className={`AssistantInput mt-auto bg-slate-950 pb-2 pl-1`}
+        className={`AssistantInput mt-auto pb-2 pl-1`}
         style={{ marginTop: "3px" }}>
         <form
           autoComplete="off"
           onSubmit={sendUserMessage}
           className="flex gap-1">
-          <textarea
-            ref={userMessageInputRef}
-            value={userMessage}
-            onKeyDown={(e: KeyboardEvent) => {
-              if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
-            }}
-            onChange={(e) => setUserMessage(e.target.value)}
-            placeholder="Start typing..."
-            className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2"
-            style={{
-              color: "white",
-              resize: "none",
-              maxHeight: "180px",
-              minHeight: "39px"
-            }}
-            name="assistant-input"
-          />
-
-          <button disabled={userMessage?.trim()?.length === 0} type="submit">
-            <img src={vexaSendButton} alt="" />
-          </button>
+          <div className="relative flex w-full px-4">
+            <textarea
+              ref={userMessageInputRef}
+              value={userMessage}
+              onKeyDown={(e: KeyboardEvent) => {
+                if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
+              }}
+              onChange={(e) => setUserMessage(e.target.value)}
+              placeholder="Start typing..."
+              className="flex h-10 pr-5 w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                resize: "none",
+                maxHeight: "160px",
+                minHeight: "40px"
+              }}
+              name="assistant-input"
+            />
+            <Button
+              disabled={userMessage?.trim()?.length === 0}
+              type="submit"
+              variant="ghost"
+              className="absolute top-0 right-4"
+              size="icon">
+              <ArrowUp className="size-5 text-primary z-10" />
+            </Button>
+          </div>
         </form>
       </div>
     </div>

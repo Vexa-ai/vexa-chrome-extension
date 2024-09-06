@@ -1,3 +1,4 @@
+import { motion } from "framer-motion"
 import React, { useEffect, useRef, useState } from "react"
 
 import "@mdxeditor/editor/style.css"
@@ -71,92 +72,63 @@ export function AssistantEntry({
   }, [])
 
   return (
-    <div className="AssistantEntry">
+    <div className="px-4">
       {entry ? (
-        <div className="flex flex-col mt-4 mb-[18px] text-[#CECFD2] rounded-[10px] border border-[#1F242F] bg-[#161B26] relative group">
-          <div className="relative p-2">
-            <span className="absolute gap-2 bottom-[-12px]  right-3 z-10 group-hover:flex hidden">
-              {entry.role === "user" &&
-                (isEditing ? (
+        <motion.div
+          className="my-0.5"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}>
+          <div className="flex flex-col p-1 relative group">
+            <span className="sticky top-2 z-10 group-hover:block hidden">
+              <span className="absolute top-0 right-0">
+                {entry.role === "user" &&
+                  (isEditing ? (
+                    <button
+                      onClick={handleTextUpdate}
+                      disabled={!entry.label?.trim()}
+                      className="bg-[#121824] border border-[#333741] hover:bg-[#7F56D9] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
+                      {/* ... existing SVG ... */}
+                    </button>
+                  ) : (
+                    <span className="w-9 h-9 bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
+                      <EditPenButton
+                        svgClassName="w-[14px] h-[15.4px]"
+                        onClick={showEditor}
+                      />
+                    </span>
+                  ))}
+
+                {isEditing ? (
                   <button
-                    onClick={handleTextUpdate}
-                    disabled={!entry.label?.trim()}
-                    className="bg-[#121824] border border-[#333741] hover:bg-[#7F56D9] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg">
-                      <g id="check">
-                        <path
-                          id="Icon"
-                          d="M16.6668 5L7.50016 14.1667L3.3335 10"
-                          stroke="#FFF"
-                          strokeWidth="1.66667"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                    </svg>
+                    onClick={hideEditor}
+                    className="bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
+                    {/* ... existing SVG ... */}
                   </button>
                 ) : (
-                  <span className="w-9 h-9 bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white">
-                    <EditPenButton
-                      svgClassName="w-[14px] h-[15.4px]"
-                      onClick={showEditor}
-                    />
+                  <span className="w-9 h-9">
+                    <CopyButton onClick={copyText} />
                   </span>
-                ))}
-
-              {isEditing ? (
-                <button
-                  onClick={hideEditor}
-                  className="bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white">
-                  <svg
-                    className="font-medium text-white"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <g id="x-close">
-                      <path
-                        id="Icon"
-                        d="M15 5L5 15M5 5L15 15"
-                        stroke="#FFFFFF"
-                        strokeWidth="1.66667"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </g>
-                  </svg>
-                </button>
-              ) : (
-                <span className="w-9 h-9">
-                  <CopyButton onClick={copyText} />
-                </span>
-              )}
+                )}
+              </span>
             </span>
-            <p className="flex gap-2 mb-1 break-words">
-              <span className="font-semibold text-white select-text break-words">
+            <div className="flex gap-2 mb-1 break-words items-center">
+              <span className="font-medium text-primary select-text break-words">
                 {entry.role}
               </span>
-            </p>
+            </div>
             <div className="select-text break-words">
-              {/*{ isPending ? 'Sending: ' : '' }*/}
-
               {isEditing ? (
                 <textarea
                   ref={editorRef}
                   onChange={handleInputChange}
                   value={entry.label}
-                  className="w-full bg-[#121824] border border-[#333741] p-2 flex rounded-lg font-medium text-white"
+                  className="w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   name="editor"
                   id="editor"
                   cols={5}></textarea>
               ) : (
-                <div className="markdown">
+                <div className="markdown text-sm text-primary">
                   <Markdown
                     options={{
                       overrides: {
@@ -173,7 +145,7 @@ export function AssistantEntry({
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       ) : null}
     </div>
   )

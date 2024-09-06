@@ -53,6 +53,7 @@ const Vexa = () => {
   const [outdated, setOutdated] = useState(false)
   const [outdatedClosed, setOutdatedClosed] = useState(false)
   const [latestVersion, setLatestVersion] = useState(0)
+  const [extensionHeight, setExtensionHeight] = useState(300) // Initial height when not recording
 
   useEffect(() => {
     if (isCapturing) {
@@ -274,6 +275,14 @@ const Vexa = () => {
     }
   }
 
+  useEffect(() => {
+    if (isCapturing || hasRecorded) {
+      setExtensionHeight(Math.min(800, window.innerHeight - 20)) // 20px buffer
+    } else {
+      setExtensionHeight(300)
+    }
+  }, [isCapturing, hasRecorded])
+
   return (
     <AnimatePresence>
       {isMaximized && (
@@ -288,9 +297,16 @@ const Vexa = () => {
             onDrag={handleDrag}
             onStop={handleStop}
             disabled={isDraggableDisabled}>
-            <div
+            <motion.div
               id="vexa-content-div"
-              className="flex flex-col w-[380px] min-h-[300px] max-h-[800px] bg-background p-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
+              animate={{ height: extensionHeight }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              style={{
+                width: "380px",
+                minHeight: "300px",
+                maxHeight: "800px"
+              }}
+              className="flex flex-col bg-background py-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
               <AudioCaptureContext.Provider value={audioCapture}>
                 <NotificationContainer />
                 <Toolbar
@@ -345,7 +361,7 @@ const Vexa = () => {
                 <SpeakerEditorModal />
                 {/*<ThreadDeletePromptModal />*/}
               </AudioCaptureContext.Provider>
-            </div>
+            </motion.div>
           </Draggable>
         </motion.div>
       )}

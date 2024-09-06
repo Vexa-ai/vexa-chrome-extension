@@ -52,7 +52,7 @@ export function MicrophoneHints({ className = "" }: MicrophoneHintsProps) {
     <div className={`MicrophoneHints ${className}`}>
       {!selectedMicrophone && (
         <div className="flex flex-col py-5 px-4 rounded-lg bg-[#161B26]">
-          <div className="flex text-[#94969C]">
+          <div className="flex text-muted-foreground">
             {!selectedMicrophone && (
               <p>Please enable microphone permissions to choose a microphone</p>
             )}

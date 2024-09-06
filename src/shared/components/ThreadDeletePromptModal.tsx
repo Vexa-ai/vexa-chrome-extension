@@ -59,9 +59,9 @@ export function ThreadDeletePromptModal({
         <div>
           <div className="ModalBackdrop top-0 left-0 fixed h-full w-full backdrop-blur">
             <div className="w-full h-full flex items-center justify-center">
-              <div className="ModalUi mx-3 p-4 rounded-lg w-full bg-[#0C111D]">
+              <div className="ModalUi mx-3 p-4 rounded-lg w-full bg-background">
                 <div className="flex items-start bg-transparent">
-                  <button className="border-[1.5px] border-[#F04438] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-white h-12 w-12">
+                  <button className="border-[1.5px] border-[#F04438] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary h-12 w-12">
                     <svg
                       className="w-[24px] h-[24px]"
                       width="20"
@@ -84,7 +84,7 @@ export function ThreadDeletePromptModal({
                     <img src={closeIcon} alt="Close modal" />
                   </button>
                 </div>
-                <p className="font-semibold text-lg text-[#F5F5F6] mb-5 mt-3">
+                <p className="font-semibold text-lg text-primary mb-5 mt-3">
                   Are you sure you want to delete thread{" "}
                   <span className="font-normal">
                     "{threadData.label.substring(0, 50)}"
@@ -98,14 +98,14 @@ export function ThreadDeletePromptModal({
                     onChange={handleInputChange}
                     type="text"
                     placeholder='Update speaker name'
-                    className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2 text-white"
+                    className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2 text-primary"
                     name='name'
                   />
                 </div> */}
                 <div className="flex flex-col w-full gap-2">
                   <button
                     onClick={() => deleteThread(threadData)}
-                    className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#F04438] disabled:text-[#85888E] text-white text-center font-semibold text-base">
+                    className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#F04438] disabled:text-[#85888E] text-primary text-center font-semibold text-base">
                     {isDeletingThread ? (
                       <BouncingDots className="py-[10px]" />
                     ) : (

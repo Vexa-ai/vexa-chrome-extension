@@ -1,5 +1,4 @@
 .AssistantList {
-
   max-height: calc(100vh - 145px) !important;
 
   .CustomSelect {
@@ -7,10 +6,9 @@
     max-width: 275px !important;
 
     .custom--dropdown-container {
-      @apply rounded-md border-0 h-full disabled:bg-[#1F242F] bg-[#161B26] text-center font-semibold text-base;
+      @apply rounded-md border-0 h-full text-center font-semibold text-base;
 
       .dropdown-menu {
-        background-color: #1F242F;
         border: none;
         min-height: 0;
         padding: 0;

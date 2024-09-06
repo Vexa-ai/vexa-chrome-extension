@@ -12,7 +12,7 @@ export function VexaLogo({ ...rest }: VexaLogoProps) {
     <div {...rest} className="VexaLogo flex gap-1 items-center">
       <VexaIcon size="16" />
       <h2
-        className="font-semibold text-white"
+        className="font-semibold text-primary"
         onClick={() => open("https://dashboard.vexa.ai")}
         style={{ cursor: "pointer" }}>
         Vexa

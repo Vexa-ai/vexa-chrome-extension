@@ -106,13 +106,13 @@ const VexaBtn = () => {
             <motion.div
               className="fixed dark right-4 top-1/2 group -translate-y-1/2 flex items-center justify-center"
               whileHover={{ scale: 1.1 }}>
-              <div className="w-16 h-2 bg-handle shadow-md absolute -bottom-3 right-0 rotate-[72deg] group-hover:rotate-[90deg] z-10 rounded-sm origin-right transition-all duration-300 ease-in-out"></div>
+              <div className="w-12 h-1.5 bg-handle shadow-md absolute -bottom-3 right-0 rotate-[72deg] group-hover:rotate-[90deg] z-10 rounded-sm origin-right transition-all duration-300 ease-in-out"></div>
               <motion.button
                 onClick={onClickHandler}
-                className="vinyl-disk w-full h-full rounded-full p-8 flex items-center justify-center bg-secondary shadow-xl"
+                className="vinyl-disk w-full h-full rounded-full p-4 flex items-center justify-center bg-secondary shadow-xl"
                 whileTap={{ scale: 0.95 }}>
-                <div className="vinyl-label flex items-center justify-center p-2 bg-card rounded-full">
-                  <VexaIcon strokeColor="white" />
+                <div className="vinyl-label flex items-center justify-center p-1 bg-card rounded-full">
+                  <VexaIcon strokeColor="white" size="20" />
                 </div>
               </motion.button>
             </motion.div>

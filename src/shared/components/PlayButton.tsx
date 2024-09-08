@@ -121,7 +121,8 @@ export function PlayButton({ ...rest }: VexaPlayButtonProps) {
       <Button
         disabled={!callTrulyStarted && (!selectedMicrophone || !meetingId)}
         onClick={startCapture}
-        variant="ghost"
+        variant="default"
+        size="sm"
         className="flex gap-2 items-center justify-center">
         <Play size={16} className="fill-primary" />
         <span>Record</span>

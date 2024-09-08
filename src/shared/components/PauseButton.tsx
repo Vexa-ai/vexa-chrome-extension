@@ -54,7 +54,8 @@ export function PauseButton({ ...rest }: VexaPauseButtonProps) {
     <div {...rest}>
       <Button
         onClick={onStopClicked}
-        variant="ghost"
+        variant="default"
+        size="sm"
         className="flex gap-1 items-center justify-center">
         <Square size={16} className="fill-red-500 text-red-500" />
         <span className={`${hours === 0 ? "w-12" : "w-16"} text-base`}>

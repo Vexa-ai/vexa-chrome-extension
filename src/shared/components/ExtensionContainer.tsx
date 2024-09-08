@@ -276,10 +276,21 @@ const Vexa = () => {
   }
 
   useEffect(() => {
-    if (isCapturing || hasRecorded) {
-      setExtensionHeight(Math.min(800, window.innerHeight - 20)) // 20px buffer
-    } else {
-      setExtensionHeight(300)
+    const updateHeight = () => {
+      if (isCapturing || hasRecorded) {
+        const calculatedHeight = Math.max(300, window.innerHeight - 32)
+        setExtensionHeight(calculatedHeight)
+      } else {
+        setExtensionHeight(300)
+      }
+    }
+
+    updateHeight()
+
+    window.addEventListener("resize", updateHeight)
+
+    return () => {
+      window.removeEventListener("resize", updateHeight)
     }
   }, [isCapturing, hasRecorded])
 
@@ -303,8 +314,7 @@ const Vexa = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               style={{
                 width: "380px",
-                minHeight: "300px",
-                maxHeight: "800px"
+                minHeight: "300px"
               }}
               className="flex flex-col bg-background py-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
               <AudioCaptureContext.Provider value={audioCapture}>

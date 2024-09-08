@@ -33,9 +33,9 @@ export function Toolbar({
         onHandleMouseOver={onDragHandleMouseOver}
       />
       <div className="ml-auto flex">
-        <AudioRecordingControlButton className="h-auto" />
         <SettingsButton />
         <MinimizeButton />
+        <AudioRecordingControlButton className="h-auto" />
       </div>
     </div>
   )

@@ -1,23 +1,2 @@
 .AssistantList {
-  max-height: calc(100vh - 145px) !important;
-
-  .CustomSelect {
-    @apply h-full;
-    max-width: 275px !important;
-
-    .custom--dropdown-container {
-      @apply rounded-md border-0 h-full text-center font-semibold text-base;
-
-      .dropdown-menu {
-        border: none;
-        min-height: 0;
-        padding: 0;
-        @apply flex flex-col gap-2;
-      }
-
-      .dropdown-input {
-        @apply py-2 px-3;
-      }
-    }
-  }
 }

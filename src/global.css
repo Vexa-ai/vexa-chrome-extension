@@ -159,3 +159,7 @@
   left: unset !important;
   right: 0 !important;
 }
+
+.message-content > b {
+  @apply font-medium px-1.5 py-0.5 bg-primary/20 rounded-md;
+}

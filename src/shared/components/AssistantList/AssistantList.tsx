@@ -14,9 +14,25 @@ import threadIcon from "data-base64:~assets/images/svg/git-branch-01.svg"
 import newMessageIcon from "data-base64:~assets/images/svg/message-plus-square.svg"
 import vexaSendIcon from "data-base64:~assets/images/svg/send.svg"
 import trashIcon from "data-base64:~assets/images/svg/trash-03.svg"
-import { ArrowUp, GitBranch, PlusCircle } from "lucide-react"
+import {
+  ArrowUp,
+  Copy,
+  GitBranch,
+  MessageCircleWarning,
+  Plus,
+  PlusCircle,
+  Trash
+} from "lucide-react"
 
+import { Alert, AlertTitle } from "~components/ui/Alert"
 import { Button } from "~components/ui/Button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "~components/ui/Select"
 import AsyncMessengerService from "~lib/services/async-messenger.service"
 import { MessageType } from "~lib/services/message-listener.service"
 import { MessageSenderService } from "~lib/services/message-sender.service"
@@ -27,7 +43,6 @@ import { getIdFromUrl } from "~shared/helpers/meeting.helper"
 
 import { AssistantEntry } from "../AssistantEntry"
 import { BouncingDots } from "../BouncingDots/BouncingDots"
-import { CustomSelect, type Option } from "../CustomSelect"
 
 // TODO: place in correct place
 const asyncMessengerService = new AsyncMessengerService()
@@ -207,8 +222,9 @@ export function AssistantList({
   // TODO: delete?
   const [clearField, setClearField] = useState<boolean>(false)
 
-  const handleThreadChange = (newSelectedThread: typeof selectedThread) => {
-    setSelectedThread(newSelectedThread[0])
+  const handleThreadChange = (newSelectedThreadId: string) => {
+    const newSelectedThread = threads.find((t) => t.id === newSelectedThreadId)
+    setSelectedThread(newSelectedThread)
     setIsOpen(false)
   }
 
@@ -552,53 +568,81 @@ export function AssistantList({
     fetchThreads()
   }, [])
 
+  const [textareaRows, setTextareaRows] = useState(1)
+
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const content = e.target.value
+    setUserMessage(content)
+
+    const lineHeight = 20
+    const newRows = Math.min(
+      3,
+      Math.max(1, Math.floor(e.target.scrollHeight / lineHeight))
+    )
+    setTextareaRows(newRows)
+  }
+
   return (
     <div
       ref={assistantListRef}
       className={`AssistantList flex flex-col max-h-full w-full h-full overflow-hidden ${className}`}>
       {lastErrorMessage && (
-        <div
-          style={{
-            backgroundColor: "red",
-            color: "white",
-            padding: "5px 15px",
-            borderRadius: "3px",
-            margin: "5px 0"
-          }}>
-          {lastErrorMessage}
+        <div className="px-4">
+          <Alert className="relative">
+            <MessageCircleWarning className="h-4 w-4" />
+            <AlertTitle>{lastErrorMessage}</AlertTitle>
+          </Alert>
         </div>
       )}
 
-      {
-        <div className="flex py-2 gap-3 w-full bg-[#1C1C1C]">
-          <div className="flex-grow" ref={dropdownRef}>
-            <CustomSelect
-              placeholder={<ThreadPlaceholder />}
-              selectedComponent={ThreadSelected}
-              options={threads}
-              isMulti={false}
-              keepOpen={isOpen}
-              selectedValue={selectedThread}
-              isSearchable={false}
-              onOpen={onDropdownOpenHandler}
-              onChange={handleThreadChange}
-              align="left"
-              noOptionsComponent={ThreadNoOption}
-              optionComponent={ThreadOption}
-            />
-          </div>
+      <div className="px-2 bg-[#1C1C1C] flex items-center justify-between max-w-full w-full overflow-hidden">
+        <div ref={dropdownRef} className="flex-grow flex items-center">
+          <Select onValueChange={handleThreadChange} value={selectedThread?.id}>
+            <SelectTrigger className="w-full text-primary bg-[#1C1C1C] border-none">
+              <SelectValue placeholder={<ThreadPlaceholder />}>
+                {selectedThread && (
+                  <ThreadSelected
+                    value={selectedThread.id}
+                    label={selectedThread.label}
+                  />
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="dark bg-background border border-border z-[9999999999999]">
+              {threads.length > 0 ? (
+                threads.map((thread) => (
+                  <SelectItem key={thread.id} value={thread.id}>
+                    {thread.label}
+                  </SelectItem>
+                ))
+              ) : (
+                <ThreadNoOption />
+              )}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <Button
-            onClick={() => onStartNewThread()}
-            variant="ghost"
-            size="icon">
-            <PlusCircle className="size-5 text-primary" />
+        <div className="flex items-center flex-basis-12">
+          {selectedThread && (
+            <Button
+              onClick={() =>
+                sendMessage(MessageType.DELETE_THREAD_START, {
+                  thread: selectedThread
+                })
+              }
+              variant="ghost"
+              size="icon">
+              <Trash className="size-4 text-muted-foreground" />
+            </Button>
+          )}
+          <Button onClick={() => onStartNewThread()} variant="ghost" size="sm">
+            <Plus className="size-4 text-muted-foreground" />
           </Button>
         </div>
-      }
+      </div>
 
       {threadMessages?.length || userMessagePending ? (
-        <div className="flex-grow overflow-y-auto" ref={messagedContainerRef}>
+        <div className="flex-1 overflow-y-auto py-4" ref={messagedContainerRef}>
           {threadMessages?.map((entry: ThreadMessage, index) => (
             <div key={index}>
               {entry.isUser && (
@@ -652,13 +696,14 @@ export function AssistantList({
               onKeyDown={(e: KeyboardEvent) => {
                 if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
               }}
-              onChange={(e) => setUserMessage(e.target.value)}
+              onChange={handleTextareaInput}
               placeholder="Start typing..."
               className="flex h-10 pr-5 w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 resize: "none",
                 maxHeight: "160px",
-                minHeight: "40px"
+                minHeight: "40px",
+                height: `${textareaRows * 20}px`
               }}
               name="assistant-input"
             />
@@ -680,28 +725,26 @@ export function AssistantList({
 }
 
 const ThreadNoOption: React.FC = () => (
-  <div className={`flex gap-2 items-center py-1 px-2 text-primary rounded-lg`}>
-    <p className="min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full mx-auto text-sm flex items-center">
-      No threads
-    </p>
-  </div>
+  <p className="whitespace-nowrap text-ellipsis overflow-hidden max-w-full mx-auto text-sm flex items-center">
+    No threads
+  </p>
 )
 
 const ThreadPlaceholder: React.FC = () => (
-  <div className="flex gap-2 text-[#CECFD2] font-semibold items-center w-full overflow-hidden">
-    <GitBranch className="size-5" />
+  <div className="flex gap-2 items-center">
+    <GitBranch className="size-4 text-muted-foreground" />
     <p className="flex items-center justify-center min-h-6 text-sm">Threads</p>
   </div>
 )
 
 const ThreadSelected: React.FC<{ value: any; label: string }> = (values) => (
-  <div className="flex w-full gap-1 overflow-hidden ThreadSelected">
-    <GitBranch className="size-5" />
-    <p
-      className="text-primary min-h-6 mr-auto w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm"
+  <div className="flex gap-2 items-center w-full">
+    <GitBranch className="size-4 text-muted-foreground" />
+    <span
+      className="text-primary w-auto whitespace-nowrap text-ellipsis flex items-center overflow-hidden text-sm max-w-[214px]"
       title={values.label}>
       {values.label}
-    </p>
+    </span>
   </div>
 )
 
@@ -719,26 +762,21 @@ const ThreadOption: React.FC<{
   }
 
   return (
-    <div
-      className={`flex gap-2 ${selected ? "bg-[#333741]" : "bg-[#1F242F]"} py-2 px-2 group hover:bg-[#333741] text-[#CECFD2] text-sm font-semibold rounded-lg ThreadOption`}>
+    <div className="flex w-full justify-between items-center">
       <p
         onClick={onClick}
-        className="mr-auto min-h-6 whitespace-nowrap text-ellipsis overflow-hidden max-w-full flex-grow text-left"
+        className="whitespace-nowrap text-ellipsis overflow-hidden w-full max-w-full text-left text-sm"
         title={option.label}>
         {option.label}
       </p>
-      <div className="flex gap-2">
-        <button
-          onClick={newFromThread}
-          className="bg-transparent h-5 w-5 hidden">
-          <img src={copyIcon} alt="Copy thread" />
-        </button>
+      <div className="flex items-center">
+        <Button onClick={newFromThread} variant="ghost" size="icon">
+          <Copy className="size-4 text-muted-foreground" />
+        </Button>
 
-        <button
-          onClick={deleteThread}
-          className="bg-transparent h-5 w-5 hidden group-hover:block">
-          <img src={trashIcon} alt="Delete thread" />
-        </button>
+        <Button onClick={deleteThread} variant="ghost" size="icon">
+          <Trash className="size-4 text-muted-foreground" />
+        </Button>
       </div>
     </div>
   )

@@ -69,13 +69,13 @@ export function AssistantSuggestions({
   }
 
   return (
-    <div className="bottom AssistantSuggestions px-4 py-2">
+    <div className="bottom hide-scrollbar flex gap-2 overflow-x-auto px-4 py-4 h-[64px]">
       {suggestions.map((suggestion, key) => (
         <Button
           key={key}
           onClick={() => handleClick(suggestion)}
           type="button"
-          variant="ghost"
+          variant="secondary"
           className="text-primary">
           {suggestion.name}
         </Button>

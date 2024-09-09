@@ -115,6 +115,8 @@ export function TranscriptEntry({
   timestamp,
   globalMode
 }: TranscriptEntryProps) {
+  const [isCopied, setIsCopied] = useState(false)
+
   const formattedTimestamp = formatDateString(timestamp)
 
   const editSpeaker = () => {
@@ -122,28 +124,31 @@ export function TranscriptEntry({
   }
 
   const copyTranscript = () => {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard.writeText(text).then(() => {
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+    })
   }
 
   return (
     <motion.div
       className="my-0.5"
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      // initial={{ y: -20, opacity: 0 }}
+      // animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}>
       <div className="flex flex-col p-1 relative group">
         <span className="sticky top-2 z-10 group-hover:block hidden">
           <span className="absolute top-0 right-0">
-            <CopyButton onClick={copyTranscript} />
+            <CopyButton onCopy={copyTranscript} />
           </span>
         </span>
         <div className="flex gap-2 mb-1 break-words items-center">
           <span className="flex gap-2">
             <span
               className={`font-medium text-primary select-text break-words ${speaker !== "TBD" && "cursor-pointer"}`}>
-              {speaker === "TBD" || speaker === "" ? "Unknown" : speaker}
+              {speaker === "TBD" ? "" : speaker}
             </span>
-            {speaker !== "TBD" && (
+            {speaker !== "TBD" && speaker !== "" && (
               <EditPenButton
                 onClick={editSpeaker}
                 className="hidden group-hover/speaker-name:inline-block stroke-[#94969C]"
@@ -155,7 +160,7 @@ export function TranscriptEntry({
           </span> */}
         </div>
         <p
-          className="break-words select-text text-primary/90"
+          className="break-words select-text text-primary/90 message-content"
           dangerouslySetInnerHTML={{
             __html: entry.getContentFor(globalMode)
           }}></p>

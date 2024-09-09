@@ -1,6 +1,13 @@
-import closeIcon from "data-base64:~assets/images/svg/x-close.svg"
+import { Edit, X } from "lucide-react"
 import React, { useEffect, useState } from "react"
 
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "~/components/ui/Dialog"
 import {
   MessageListenerService,
   MessageType
@@ -9,7 +16,6 @@ import { MessageSenderService } from "~lib/services/message-sender.service"
 import { onMessage } from "~shared/helpers/in-content-messaging.helper"
 
 import { BouncingDots } from "./BouncingDots"
-import { EditPenButton } from "./EditPenButton"
 
 export interface SpeakerEditorModalProps {}
 
@@ -67,66 +73,49 @@ export function SpeakerEditorModal({}: SpeakerEditorModalProps) {
   }
 
   return (
-    <div className="SpeakerEditorModal z-50">
-      {showEditorModal && (
-        <div>
-          <div className="ModalBackdrop top-0 left-0 fixed h-full w-full backdrop-blur">
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="ModalUi mx-3 p-4 rounded-lg w-full bg-background">
-                <div className="flex items-start bg-transparent">
-                  <EditPenButton
-                    svgClassName="w-[18px] h-[18px]"
-                    className="border-[1.5px] border-[#333741] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary h-12 w-12"
-                  />
-                  <button
-                    onClick={closeModal}
-                    className="bg-transparent ml-auto">
-                    <img src={closeIcon} alt="Close modal" />
-                  </button>
-                </div>
-                <h1 className="font-semibold text-lg text-primary mb-5 mt-3">
-                  Change Speaker Name
-                </h1>
-                <div className="flex flex-col gap-2 mb-6">
-                  <label htmlFor="name" className="text-[#CECFD2]">
-                    Name
-                  </label>
-                  <input
-                    value={speakerData.speaker || ""}
-                    onChange={handleInputChange}
-                    type="text"
-                    placeholder="Update speaker name"
-                    className="flex-grow rounded-lg border border-[#333741] h-11 bg-transparent p-2 text-primary"
-                    name="name"
-                  />
-                </div>
-                <div className="flex flex-col w-full gap-2">
-                  <button
-                    disabled={
-                      isUpdatingSpeakerName ||
-                      speakerData.speaker?.trim() === initialSpeaker ||
-                      !speakerData.speaker?.trim()
-                    }
-                    onClick={updateSpeakerName}
-                    className="w-full p-2 rounded-md disabled:bg-[#1F242F] bg-[#7F56D9] disabled:text-[#85888E] text-primary text-center font-semibold text-base">
-                    {isUpdatingSpeakerName ? (
-                      <BouncingDots className="py-[10px]" />
-                    ) : (
-                      "Confirm"
-                    )}
-                  </button>
-                  <button
-                    disabled={isUpdatingSpeakerName}
-                    onClick={closeModal}
-                    className="w-full p-2 rounded-md border border-[#333741] disabled:bg-[#1F242F] bg-[#161B26] text-[#CECFD2] text-center font-semibold text-base">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+    <Dialog open={showEditorModal} onOpenChange={setShowEditorModal}>
+      <DialogContent className="z-[99999999999] dark">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-primary">
+            <Edit className="h-5 w-5 text-primary" />
+            Change Speaker Name
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 mb-6">
+          <label htmlFor="name" className="text-sm text-muted-foreground">
+            Name
+          </label>
+          <input
+            value={speakerData.speaker || ""}
+            onChange={handleInputChange}
+            type="text"
+            placeholder="Update speaker name"
+            className="flex-grow rounded-lg border border-input bg-background px-3 py-2 text-sm text-primary"
+            name="name"
+          />
         </div>
-      )}
-    </div>
+        <DialogFooter>
+          <button
+            onClick={closeModal}
+            className="px-4 py-2 rounded-md border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+            Cancel
+          </button>
+          <button
+            disabled={
+              isUpdatingSpeakerName ||
+              speakerData.speaker?.trim() === initialSpeaker ||
+              !speakerData.speaker?.trim()
+            }
+            onClick={updateSpeakerName}
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            {isUpdatingSpeakerName ? (
+              <BouncingDots className="py-[10px]" />
+            ) : (
+              "Confirm"
+            )}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

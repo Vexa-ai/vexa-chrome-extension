@@ -1,8 +1,14 @@
-import React, { useEffect, useRef, useState } from "react"
-
-import "./CustomSelect.scss"
-
 import { ChevronsUpDown } from "lucide-react"
+import React, { useEffect, useState } from "react"
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "~/components/ui/Select"
 
 export interface Option {
   label: string
@@ -46,73 +52,38 @@ export function CustomSelect({
   optionComponent: OptionComponent = ({ option, selected, onClick }) => (
     <span
       onClick={onClick}
-      className={selected && "custom--dropdown-container"}>
+      className={selected ? "custom--dropdown-container" : ""}>
       {option.label}
     </span>
   )
 }: CustomSelectProps) {
-  const [showMenu, setShowMenu] = useState<boolean>(false)
   const [selectedValues, setSelectedValues] = useState<Option[]>([])
   const [searchValue, setSearchValue] = useState("")
-  const searchRef = useRef<HTMLInputElement>(null)
-  const inputRef = useRef<HTMLDivElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setSearchValue("")
-    if (showMenu) {
-      onOpen?.(selectedValues)
-      if (searchRef.current) {
-        searchRef.current.focus()
-      }
-    }
-  }, [showMenu])
-
-  useEffect(() => {
-    setShowMenu(keepOpen)
-  }, [keepOpen])
 
   useEffect(() => {
     setSelectedValues(initialValue ? [initialValue] : [])
   }, [initialValue])
 
-  const handleInputClick = () => {
-    setShowMenu((prev) => !prev)
-  }
-
-  const removeOption = (option: Option) => {
-    return selectedValues.filter((o) => o.value !== option.value)
-  }
-
-  const onItemClick = (option: Option) => {
-    let newValue
-    if (isMulti) {
-      if (selectedValues.some((o) => o.value === option.value)) {
-        newValue = removeOption(option)
+  const handleValueChange = (value: string) => {
+    const selectedOption = options.find((option) => option.value === value)
+    if (selectedOption) {
+      let newValue: Option[]
+      if (isMulti) {
+        newValue = selectedValues.some((o) => o.value === selectedOption.value)
+          ? selectedValues.filter((o) => o.value !== selectedOption.value)
+          : [...selectedValues, selectedOption]
       } else {
-        newValue = [...selectedValues, option]
+        newValue = [selectedOption]
       }
-    } else {
-      newValue = [option]
+      setSelectedValues(newValue)
+      onChange(isMulti ? newValue : newValue[0])
     }
-    setShowMenu(false)
-    setSelectedValues(newValue)
-    onChange(newValue)
-  }
-
-  const isSelected = (option: Option) => {
-    return selectedValues.some((o) => o.value === option.value)
-  }
-
-  const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value)
   }
 
   const getOptions = () => {
     if (!searchValue) {
       return options
     }
-
     return options.filter((option) =>
       option.label.toLowerCase().includes(searchValue.toLowerCase())
     )
@@ -122,64 +93,56 @@ export function CustomSelect({
     return <>{<NoOptionsComponent /> || <div>No options</div>}</>
   }
 
-  const renderPlaceholder = () => {
-    return (
-      <div
-        className={`dropdown-selected-value w-full overflow-hidden ${!selectedValues ? "placeholder" : ""}`}>
-        {selectedValues.length ? (
-          <SelectedComponent
-            value={selectedValues[0].value}
-            label={selectedValues[0].label}
-          />
-        ) : (
-          placeholder
-        )}
-      </div>
-    )
-  }
-
   return (
     <div className="CustomSelect">
-      <div className="custom--dropdown-container">
-        <div
-          ref={inputRef}
-          onClick={handleInputClick}
-          className="dropdown-input">
-          {renderPlaceholder()}
-          <div className="dropdown-tools">
-            <div className="dropdown-tool">
-              <ChevronsUpDown className="size-4 text-muted-foreground" />
-            </div>
-          </div>
-        </div>
-        {showMenu && (
-          <div
-            ref={dropdownRef}
-            className={`dropdown-menu !w-full alignment--${align || "auto"}`}>
+      <Select
+        onValueChange={handleValueChange}
+        value={selectedValues[0]?.value}
+        onOpenChange={(open) => {
+          if (open) onOpen?.(selectedValues)
+        }}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={placeholder}>
+            {selectedValues.length ? (
+              <SelectedComponent
+                value={selectedValues[0].value}
+                label={selectedValues[0].label}
+              />
+            ) : (
+              placeholder
+            )}
+          </SelectValue>
+          <ChevronsUpDown className="size-4 text-muted-foreground" />
+        </SelectTrigger>
+        <SelectContent align={align as "start" | "center" | "end"}>
+          <SelectGroup>
             {isSearchable && (
-              <div className="search-box">
+              <div className="search-box p-2">
                 <input
-                  className="form-control"
-                  onChange={onSearch}
+                  className="form-control w-full"
+                  onChange={(e) => setSearchValue(e.target.value)}
                   value={searchValue}
-                  ref={searchRef}
+                  placeholder="Search..."
                 />
               </div>
             )}
-            {getOptions()?.length > 0
-              ? getOptions().map((option, key) => (
-                  <OptionComponent
-                    key={key}
-                    option={option}
-                    options={options}
-                    selected={isSelected(option)}
-                    onClick={() => onItemClick(option)}
-                  />
+            {getOptions().length > 0
+              ? getOptions().map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <OptionComponent
+                      option={option}
+                      options={options}
+                      selected={selectedValues.some(
+                        (o) => o.value === option.value
+                      )}
+                      onClick={() => {}}
+                    />
+                  </SelectItem>
                 ))
               : renderNoOptions()}
-          </div>
-        )}
-      </div>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </div>
   )
 }

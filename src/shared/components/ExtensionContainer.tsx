@@ -1,10 +1,13 @@
 import { AnimatePresence, motion } from "framer-motion"
+import { Terminal, X } from "lucide-react"
 import React, { useEffect, useRef, useState } from "react"
 import Draggable, {
   type DraggableData,
   type DraggableEvent
 } from "react-draggable"
 import { NotificationContainer } from "react-notifications"
+
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/Alert"
 
 import "~global.css"
 
@@ -326,31 +329,28 @@ const Vexa = () => {
                   toolbarRef={vexaToolbarRef}
                 />
                 {outdated && !outdatedClosed && !isCapturing && (
-                  <div
-                    style={{
-                      backgroundColor: "red",
-                      color: "white",
-                      padding: "5px 15px",
-                      borderRadius: "3px",
-                      marginBottom: "5px"
-                    }}>
-                    Your version ({chrome.runtime.getManifest()?.version}) is
-                    outdated, please{" "}
-                    <a
-                      href={
-                        "https://chromewebstore.google.com/detail/vexa/ihibgadfkbefnclpbhdlpahfiejhfibl?hl=en&authuser=0&utm_medium=extension&utm_source=update"
-                      }
-                      target={"_blank"}
-                      style={{ color: "white", fontWeight: "bold" }}>
-                      update extension
-                    </a>{" "}
-                    to the latest version.{" "}
-                    <a
-                      href="#"
-                      onClick={closeAlert}
-                      style={{ color: "white", fontWeight: "bold" }}>
-                      Close
-                    </a>
+                  <div className="px-4">
+                    <Alert className="relative">
+                      <Terminal className="h-4 w-4" />
+                      <AlertTitle>Update Required</AlertTitle>
+                      <AlertDescription>
+                        Your version ({chrome.runtime.getManifest()?.version})
+                        is outdated. Please{" "}
+                        <a
+                          href="https://chromewebstore.google.com/detail/vexa/ihibgadfkbefnclpbhdlpahfiejhfibl?hl=en&authuser=0&utm_medium=extension&utm_source=update"
+                          target="_blank"
+                          className="font-medium underline text-primary">
+                          update the extension
+                        </a>{" "}
+                        to the latest version.{" "}
+                        <a
+                          href="#"
+                          onClick={closeAlert}
+                          className="absolute right-4 top-4">
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      </AlertDescription>
+                    </Alert>
                   </div>
                 )}
 

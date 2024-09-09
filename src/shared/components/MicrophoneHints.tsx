@@ -1,8 +1,10 @@
 import closeIcon from "data-base64:~assets/images/svg/x-close.svg"
+import { MicOff } from "lucide-react"
 import React, { useContext, useEffect, useState } from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
+import { Alert, AlertTitle } from "~components/ui/Alert"
 import {
   MessageListenerService,
   MessageType
@@ -51,13 +53,15 @@ export function MicrophoneHints({ className = "" }: MicrophoneHintsProps) {
   return (
     <div className={`MicrophoneHints ${className}`}>
       {!selectedMicrophone && (
-        <div className="flex flex-col py-5 px-4 rounded-lg bg-[#161B26]">
-          <div className="flex text-muted-foreground">
+        <Alert className="relative">
+          <MicOff className="h-4 w-4" />
+          <AlertTitle>
+            {" "}
             {!selectedMicrophone && (
               <p>Please enable microphone permissions to choose a microphone</p>
             )}
-          </div>
-        </div>
+          </AlertTitle>
+        </Alert>
       )}
     </div>
   )

@@ -1,6 +1,4 @@
-import customSelectCss from "data-text:../shared/components/CustomSelect/CustomSelect.scss"
 import mainContentViewCss from "data-text:../shared/components/MainContentView/MainContentView.scss"
-import microphoneSelectCss from "data-text:../shared/components/MicrophoneSelector/MicrophoneSelector.scss"
 import globalCssText from "data-text:global.css"
 import type { PlasmoCSConfig } from "plasmo"
 import React, { useEffect, useRef, useState } from "react"
@@ -93,8 +91,6 @@ export const getStyle = () => {
   const style = document.createElement("style")
   style.textContent = `
     ${globalCssText}
-    ${customSelectCss}
-    ${microphoneSelectCss}
     ${mainContentViewCss}
   `
   return style

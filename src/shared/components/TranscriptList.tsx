@@ -87,6 +87,7 @@ export function TranscriptList({
   const [isShortTranscript, setIsShortTranscript] = useState<boolean>(false)
 
   const [userMessage, setUserMessage] = useState<string>("")
+  const [textareaRows, setTextareaRows] = useState(1)
 
   const transcriptListRef = useRef<HTMLDivElement>(null)
   const copyTranscriptionRef = useRef<HTMLButtonElement>(null)
@@ -303,6 +304,22 @@ export function TranscriptList({
     }
   }
 
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const content = e.target.value
+    setUserMessage(content)
+
+    if (content.length === 0) {
+      setTextareaRows(1)
+    } else {
+      const lineHeight = 20
+      const newRows = Math.min(
+        3,
+        Math.max(1, Math.floor(e.target.scrollHeight / lineHeight))
+      )
+      setTextareaRows(newRows)
+    }
+  }
+
   return (
     <div
       ref={transcriptListRef}
@@ -331,7 +348,7 @@ export function TranscriptList({
         */}
       </div>
 
-      <div ref={scrollAreaRef} className="flex-grow px-4 py-2 overflow-y-auto">
+      <div ref={scrollAreaRef} className="flex-1 px-4 py-4 overflow-y-auto">
         {/*
         {transcripts.length > 0 && <div className={`mr-2 ${scrolledToTop ? '' : 'hidden'} group-hover/transcript-container:flex mt-2 sticky top-1 z-50 w-[fit-content]`}>
           <TranscriptionCopyButton className='rounded-lg' onCopyTranscriptClicked={copyTranscription}/>
@@ -366,7 +383,7 @@ export function TranscriptList({
       />
 
       <div
-        className={`AssistantInput mt-auto pb-2 pl-1`}
+        className={`AssistantInput mt-auto pb-2 w-full`}
         style={{ marginTop: "3px" }}>
         <form
           autoComplete="off"
@@ -376,16 +393,18 @@ export function TranscriptList({
             <textarea
               ref={userMessageInputRef}
               value={userMessage}
+              rows={textareaRows}
               onKeyDown={(e: KeyboardEvent) => {
                 if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
               }}
-              onChange={(e) => setUserMessage(e.target.value)}
+              onChange={handleTextareaInput}
               placeholder="Start typing..."
               className="flex h-10 pr-5 w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 resize: "none",
                 maxHeight: "160px",
-                minHeight: "40px"
+                minHeight: "40px",
+                height: `${textareaRows * 20}px`
               }}
               name="assistant-input"
             />

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react"
 
 import "@mdxeditor/editor/style.css"
 
+import { Check, X } from "lucide-react"
 import Markdown from "markdown-to-jsx"
 
 import { MessageType } from "~lib/services/message-listener.service"
@@ -30,9 +31,13 @@ export function AssistantEntry({
   const [entry, setEntry] = useState<ThreadMessage>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, setIsPending] = useState(pending)
+  const [isCopied, setIsCopied] = useState(false)
 
   const copyText = () => {
-    navigator.clipboard.writeText(entryData.label)
+    navigator.clipboard.writeText(entryData.label).then(() => {
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+    })
   }
 
   const showEditor = () => {
@@ -76,39 +81,37 @@ export function AssistantEntry({
       {entry ? (
         <motion.div
           className="my-1"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          // initial={{ y: -20, opacity: 0 }}
+          // animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, ease: "easeOut" }}>
           <div className="flex flex-col p-1 relative group">
             <span className="sticky top-2 z-10 group-hover:block hidden">
-              <span className="absolute top-0 right-0">
+              <span className="absolute top-0 right-0 flex gap-1 items-center">
                 {entry.role === "user" &&
                   (isEditing ? (
                     <button
                       onClick={handleTextUpdate}
                       disabled={!entry.label?.trim()}
-                      className="bg-[#121824] border border-[#333741] hover:bg-[#7F56D9] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
-                      {/* ... existing SVG ... */}
+                      className="bg-background border p-1 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
+                      <Check className="w-4 h-4 text-muted-foreground" />
                     </button>
                   ) : (
-                    <span className="w-9 h-9 bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
+                    <p className="bg-background border p-1 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
                       <EditPenButton
                         svgClassName="w-[14px] h-[15.4px]"
                         onClick={showEditor}
                       />
-                    </span>
+                    </p>
                   ))}
 
                 {isEditing ? (
                   <button
                     onClick={hideEditor}
-                    className="bg-[#121824] border border-[#333741] hover:bg-[#293347] disabled:bg-[#4c4c4d] p-2 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
-                    {/* ... existing SVG ... */}
+                    className="bg-background border p-1 flex gap-1 items-center justify-center rounded-lg font-medium text-primary">
+                    <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 ) : (
-                  <span className="w-9 h-9">
-                    <CopyButton onClick={copyText} />
-                  </span>
+                  <CopyButton onCopy={copyText} />
                 )}
               </span>
             </span>

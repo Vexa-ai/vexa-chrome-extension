@@ -217,12 +217,21 @@ export function TranscriptList({
               (prevTranscript) =>
                 prevTranscript.timestamp === response[0].timestamp
             )
-
             console.log({ cursorIndex })
-            setTranscripts([
-              ...previousTranscripts.splice(0, cursorIndex),
-              ...response
-            ])
+            setTranscripts((prevTranscripts) => {
+              const updatedTranscripts = [...prevTranscripts]
+              updatedTranscripts.splice(
+                cursorIndex,
+                updatedTranscripts.length - cursorIndex,
+                ...response.map((entry) => ({
+                  ...entry,
+                  getContentFor: (mode: TranscriptionEntryMode) => entry[mode],
+                  isExpanded: false,
+                  toggleMode: () => {}
+                }))
+              )
+              return updatedTranscripts
+            })
           }
         })
     }, 3000)
@@ -259,9 +268,15 @@ export function TranscriptList({
     })
     updatedTranscriptList(transcripts)
   }, [transcripts])
-
   useEffect(() => {
-    setTranscripts(transcriptList)
+    setTranscripts(
+      transcriptList.map((entry) => ({
+        ...entry,
+        getContentFor: (mode: TranscriptionEntryMode) => entry[mode],
+        isExpanded: false,
+        toggleMode: () => {}
+      }))
+    )
 
     MessageListenerService.unRegisterMessageListener(
       MessageType.UPDATE_SPEAKER_NAME_RESULT

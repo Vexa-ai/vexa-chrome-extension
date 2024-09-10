@@ -279,21 +279,22 @@ const Vexa = () => {
   }
 
   useEffect(() => {
-    const updateHeight = () => {
+    const updateHeightAndPosition = () => {
       if (isCapturing || hasRecorded) {
         const calculatedHeight = Math.max(300, window.innerHeight - 32)
         setExtensionHeight(calculatedHeight)
+        setPosition(defaultPosition)
       } else {
         setExtensionHeight(300)
       }
     }
 
-    updateHeight()
+    updateHeightAndPosition()
 
-    window.addEventListener("resize", updateHeight)
+    window.addEventListener("resize", updateHeightAndPosition)
 
     return () => {
-      window.removeEventListener("resize", updateHeight)
+      window.removeEventListener("resize", updateHeightAndPosition)
     }
   }, [isCapturing, hasRecorded])
 

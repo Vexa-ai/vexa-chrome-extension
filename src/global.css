@@ -114,7 +114,7 @@
 
   .markdown ul,
   .markdown ol {
-    @apply mt-4 mb-4 ml-4;
+    @apply mt-4 mb-4;
   }
 
   .markdown ul li {

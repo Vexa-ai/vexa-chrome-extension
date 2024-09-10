@@ -1,5 +1,5 @@
 import vexaSendButton from "data-base64:~assets/images/svg/send.svg"
-import { ArrowUp, Copy, CopyCheck } from "lucide-react"
+import { ArrowUp, Copy, CopyCheck, Loader2 } from "lucide-react"
 import React, {
   useCallback,
   useEffect,
@@ -88,6 +88,7 @@ export function TranscriptList({
 
   const [userMessage, setUserMessage] = useState<string>("")
   const [textareaRows, setTextareaRows] = useState(1)
+  const [isAssistantRequesting, setIsAssistantRequesting] = useState(false)
 
   const transcriptListRef = useRef<HTMLDivElement>(null)
   const copyTranscriptionRef = useRef<HTMLButtonElement>(null)
@@ -292,10 +293,15 @@ export function TranscriptList({
         return
       }
 
-      onAssistantRequest(content)
+      setIsAssistantRequesting(true)
+      try {
+        await onAssistantRequest(content)
+      } finally {
+        setIsAssistantRequesting(false)
+      }
       setUserMessage("")
     },
-    [userMessage]
+    [userMessage, onAssistantRequest]
   )
 
   const clickedInsideTranscriptList = (e) => {
@@ -407,14 +413,21 @@ export function TranscriptList({
                 height: `${textareaRows * 20}px`
               }}
               name="assistant-input"
+              disabled={isAssistantRequesting}
             />
             <Button
-              disabled={userMessage?.trim()?.length === 0}
+              disabled={
+                userMessage?.trim()?.length === 0 || isAssistantRequesting
+              }
               type="submit"
               variant="ghost"
               className="absolute top-0 right-4"
               size="icon">
-              <ArrowUp className="size-5 text-primary z-10" />
+              {isAssistantRequesting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUp className="size-5 text-primary z-10" />
+              )}
             </Button>
           </div>
         </form>

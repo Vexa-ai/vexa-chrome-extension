@@ -18,6 +18,7 @@ import {
   ArrowUp,
   Copy,
   GitBranch,
+  Loader2,
   MessageCircleWarning,
   Plus,
   PlusCircle,
@@ -164,14 +165,16 @@ class Thread implements Option {
 
 export interface AssistantListProps {
   className?: string
-  actionButtonClicked?: ActionButton
-  assistantMessage?: string
+  actionButtonClicked: ActionButton | null
+  assistantMessage: string | null
+  onActionComplete: () => void
 }
 
 export function AssistantList({
   className = "",
-  actionButtonClicked = null,
-  assistantMessage = null
+  actionButtonClicked,
+  assistantMessage,
+  onActionComplete
 }: AssistantListProps) {
   const MEETING_ID = getIdFromUrl(window.location.href)
 
@@ -225,6 +228,7 @@ export function AssistantList({
   const handleThreadChange = (newSelectedThreadId: string) => {
     const newSelectedThread = threads.find((t) => t.id === newSelectedThreadId)
     setSelectedThread(newSelectedThread)
+    AsyncMessengerService.selectedThread = newSelectedThread
     setIsOpen(false)
   }
 
@@ -355,17 +359,37 @@ export function AssistantList({
     })
   }
 
-  useEffect(() => {
-    if (actionButtonClicked) {
-      createThread(actionButtonClicked.prompt, actionButtonClicked.name)
-    }
-  }, [actionButtonClicked])
+  const [isCreatingNewThread, setIsCreatingNewThread] = useState(false)
+  const actionButtonRef = useRef<ActionButton | null>(null)
+  const assistantMessageRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (assistantMessage) {
-      createThread(assistantMessage, assistantMessage)
+    if (
+      actionButtonClicked &&
+      actionButtonClicked !== actionButtonRef.current
+    ) {
+      actionButtonRef.current = actionButtonClicked
+      setIsCreatingNewThread(true)
+      createThread(
+        actionButtonClicked.prompt,
+        actionButtonClicked.name
+      ).finally(() => {
+        setIsCreatingNewThread(false)
+        onActionComplete()
+      })
     }
-  }, [assistantMessage])
+  }, [actionButtonClicked, onActionComplete])
+
+  useEffect(() => {
+    if (assistantMessage && assistantMessage !== assistantMessageRef.current) {
+      assistantMessageRef.current = assistantMessage
+      setIsCreatingNewThread(true)
+      createThread(assistantMessage).finally(() => {
+        setIsCreatingNewThread(false)
+        onActionComplete()
+      })
+    }
+  }, [assistantMessage, onActionComplete])
 
   const sendUserMessage = useCallback(
     async (event: FormEvent) => {
@@ -553,7 +577,12 @@ export function AssistantList({
           const thread = responseThreads.find(
             (t) => t.id === AsyncMessengerService.selectedThread?.id
           )
-          setSelectedThread(thread || responseThreads[0])
+          if (thread) {
+            setSelectedThread(thread)
+          } else if (!selectedThread) {
+            setSelectedThread(responseThreads[0])
+            AsyncMessengerService.selectedThread = responseThreads[0]
+          }
         }
       })
       .catch((err) => {})
@@ -586,140 +615,155 @@ export function AssistantList({
     <div
       ref={assistantListRef}
       className={`AssistantList flex flex-col max-h-full w-full h-full overflow-hidden ${className}`}>
-      {lastErrorMessage && (
-        <div className="px-4">
-          <Alert className="relative">
-            <MessageCircleWarning className="h-4 w-4" />
-            <AlertTitle>{lastErrorMessage}</AlertTitle>
-          </Alert>
-        </div>
-      )}
-
-      <div className="px-2 bg-[#1C1C1C] flex items-center justify-between max-w-full w-full overflow-hidden">
-        <div ref={dropdownRef} className="flex-grow flex items-center">
-          <Select onValueChange={handleThreadChange} value={selectedThread?.id}>
-            <SelectTrigger className="w-full text-primary bg-[#1C1C1C] border-none">
-              <SelectValue placeholder={<ThreadPlaceholder />}>
-                {selectedThread && (
-                  <ThreadSelected
-                    value={selectedThread.id}
-                    label={selectedThread.label}
-                  />
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="dark bg-background border border-border z-[9999999999999]">
-              {threads.length > 0 ? (
-                threads.map((thread) => (
-                  <SelectItem key={thread.id} value={thread.id}>
-                    {thread.label}
-                  </SelectItem>
-                ))
-              ) : (
-                <ThreadNoOption />
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center flex-basis-12">
-          {selectedThread && (
-            <Button
-              onClick={() =>
-                sendMessage(MessageType.DELETE_THREAD_START, {
-                  thread: selectedThread
-                })
-              }
-              variant="ghost"
-              size="icon">
-              <Trash className="size-4 text-muted-foreground" />
-            </Button>
-          )}
-          <Button onClick={() => onStartNewThread()} variant="ghost" size="sm">
-            <Plus className="size-4 text-muted-foreground" />
-          </Button>
-        </div>
-      </div>
-
-      {threadMessages?.length || userMessagePending ? (
-        <div className="flex-1 overflow-y-auto py-4" ref={messagedContainerRef}>
-          {threadMessages?.map((entry: ThreadMessage, index) => (
-            <div key={index}>
-              {entry.isUser && (
-                <AssistantEntry
-                  onTextUpdated={updateThreadFromUserEdit}
-                  entryData={entry}
-                />
-              )}
-              {entry.isAssistant && <AssistantEntry entryData={entry} />}
-            </div>
-          ))}
-
-          {userMessagePending && (
-            <AssistantEntry
-              key={"pending"}
-              entryData={userMessagePending}
-              pending
-            />
-          )}
-
-          {isPrompting && (
-            <div className="flex flex-grow-0 p-2 w-[fit-content] text-muted-foreground">
-              <BouncingDots />
-            </div>
-          )}
-
-          <div style={{ height: "10px" }} ref={bottomDiv} />
+      {isCreatingNewThread ? (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="flex items-center justify-center flex-grow overflow-hidden">
-          <span>
-            {isLoadingMessages && !isPolling
-              ? "Loading your chat history..."
-              : 'Type your message. E.g. "What action points were on the call?"'}
-          </span>
-        </div>
-      )}
+        <>
+          {lastErrorMessage && (
+            <div className="px-4">
+              <Alert className="relative">
+                <MessageCircleWarning className="h-4 w-4" />
+                <AlertTitle>{lastErrorMessage}</AlertTitle>
+              </Alert>
+            </div>
+          )}
 
-      <div
-        className={`AssistantInput mt-auto pb-2 w-full`}
-        style={{ marginTop: "3px" }}>
-        <form
-          autoComplete="off"
-          onSubmit={sendUserMessage}
-          className="flex gap-1">
-          <div className="relative flex w-full px-4">
-            <textarea
-              ref={userMessageInputRef}
-              disabled={isPrompting}
-              value={userMessage}
-              onKeyDown={(e: KeyboardEvent) => {
-                if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
-              }}
-              onChange={handleTextareaInput}
-              placeholder="Start typing..."
-              className="flex h-10 pr-5 w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                resize: "none",
-                maxHeight: "160px",
-                minHeight: "40px",
-                height: `${textareaRows * 20}px`
-              }}
-              name="assistant-input"
-            />
-            <Button
-              disabled={isPrompting || userMessage?.trim()?.length === 0}
-              type="submit"
-              variant="ghost"
-              className="absolute top-0 right-4"
-              size="icon">
-              <ArrowUp className="size-5 text-primary z-10" />
-            </Button>
+          <div className="px-2 bg-[#1C1C1C] flex items-center justify-between max-w-full w-full overflow-hidden">
+            <div ref={dropdownRef} className="flex-grow flex items-center">
+              <Select
+                onValueChange={handleThreadChange}
+                value={selectedThread?.id}>
+                <SelectTrigger className="w-full text-primary bg-[#1C1C1C] border-none">
+                  <SelectValue placeholder={<ThreadPlaceholder />}>
+                    {selectedThread && (
+                      <ThreadSelected
+                        value={selectedThread.id}
+                        label={selectedThread.label}
+                      />
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="dark bg-background border border-border z-[9999999999999]">
+                  {threads.length > 0 ? (
+                    threads.map((thread) => (
+                      <SelectItem key={thread.id} value={thread.id}>
+                        {thread.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <ThreadNoOption />
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center flex-basis-12">
+              {selectedThread && (
+                <Button
+                  onClick={() =>
+                    sendMessage(MessageType.DELETE_THREAD_START, {
+                      thread: selectedThread
+                    })
+                  }
+                  variant="ghost"
+                  size="icon">
+                  <Trash className="size-4 text-muted-foreground" />
+                </Button>
+              )}
+              <Button
+                onClick={() => onStartNewThread()}
+                variant="ghost"
+                size="sm">
+                <Plus className="size-4 text-muted-foreground" />
+              </Button>
+            </div>
           </div>
-        </form>
-      </div>
 
-      <ThreadDeletePromptModal deleteThread={deleteThread} />
+          {threadMessages?.length || userMessagePending ? (
+            <div
+              className="flex-1 overflow-y-auto py-4"
+              ref={messagedContainerRef}>
+              {threadMessages?.map((entry: ThreadMessage, index) => (
+                <div key={index}>
+                  {entry.isUser && (
+                    <AssistantEntry
+                      onTextUpdated={updateThreadFromUserEdit}
+                      entryData={entry}
+                    />
+                  )}
+                  {entry.isAssistant && <AssistantEntry entryData={entry} />}
+                </div>
+              ))}
+
+              {userMessagePending && (
+                <AssistantEntry
+                  key={"pending"}
+                  entryData={userMessagePending}
+                  pending
+                />
+              )}
+
+              {isPrompting && (
+                <div className="flex flex-grow-0 p-2 w-[fit-content] text-muted-foreground">
+                  <BouncingDots />
+                </div>
+              )}
+
+              <div style={{ height: "10px" }} ref={bottomDiv} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center flex-grow overflow-hidden">
+              <span>
+                {isLoadingMessages && !isPolling
+                  ? "Loading your chat history..."
+                  : 'Type your message. E.g. "What action points were on the call?"'}
+              </span>
+            </div>
+          )}
+
+          <div
+            className={`AssistantInput mt-auto pb-2 w-full`}
+            style={{ marginTop: "3px" }}>
+            <form
+              autoComplete="off"
+              onSubmit={sendUserMessage}
+              className="flex gap-1">
+              <div className="relative flex w-full px-4">
+                <textarea
+                  ref={userMessageInputRef}
+                  disabled={isPrompting}
+                  value={userMessage}
+                  onKeyDown={(e: KeyboardEvent) => {
+                    if (e.key === "Enter" && !e.shiftKey) sendUserMessage(e)
+                  }}
+                  onChange={handleTextareaInput}
+                  placeholder="Start typing..."
+                  className="flex h-10 pr-5 w-full text-primary rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    resize: "none",
+                    maxHeight: "160px",
+                    minHeight: "40px",
+                    height: `${textareaRows * 20}px`
+                  }}
+                  name="assistant-input"
+                />
+                <Button
+                  disabled={isPrompting || userMessage?.trim()?.length === 0}
+                  type="submit"
+                  variant="ghost"
+                  className="absolute top-0 right-4"
+                  size="icon">
+                  <ArrowUp className="size-5 text-primary z-10" />
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <ThreadDeletePromptModal deleteThread={deleteThread} />
+        </>
+      )}
     </div>
   )
 }

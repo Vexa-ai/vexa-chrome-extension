@@ -30,8 +30,8 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
   const [hasRecordingHistory, setHasRecordingHistory] = useState(false)
 
   const [actionButtonClicked, setActionButtonClicked] =
-    useState<ActionButton>(null)
-  const [assistantMessage, setAssistantMessage] = useState<string>(null)
+    useState<ActionButton | null>(null)
+  const [assistantMessage, setAssistantMessage] = useState<string | null>(null)
 
   const copyTranscriptions = () => {
     const mergedTranscripts = transcriptList
@@ -85,14 +85,17 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
 
   function onActionButtonClicked(button: ActionButton) {
     setActionButtonClicked(button)
-
     setSelectedTabIndex(1)
   }
 
   function onAssistantMessage(message: string) {
     setAssistantMessage(message)
-
     setSelectedTabIndex(1)
+  }
+
+  function handleActionComplete() {
+    setActionButtonClicked(null)
+    setAssistantMessage(null)
   }
 
   return (
@@ -120,6 +123,7 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
           <AssistantList
             actionButtonClicked={actionButtonClicked}
             assistantMessage={assistantMessage}
+            onActionComplete={handleActionComplete}
           />
         </TabsContent>
       </Tabs>

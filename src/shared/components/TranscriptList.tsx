@@ -58,6 +58,13 @@ export interface TranscriptListProps {
   onAssistantRequest?: (message: string) => void
 }
 
+interface GroupedTranscript {
+  speaker: string
+  speaker_id: string
+  timestamp: string
+  contents: string[]
+}
+
 export function TranscriptList({
   transcriptList = [],
   updatedTranscriptList = (transcriptList) => {
@@ -67,9 +74,7 @@ export function TranscriptList({
   onActionButtonClicked = (ab: ActionButton) => {},
   onAssistantRequest = (message: string) => {}
 }: TranscriptListProps) {
-  const [transcripts, setTranscripts] = useState<
-    TranscriptionEntryData[] | TranscriptionEntry[]
-  >([])
+  const [transcripts, setTranscripts] = useState<TranscriptionEntry[]>([])
   // const [transcriptMode, setTranscriptMode] = useState<TranscriptionEntryMode>(TranscriptionEntryMode.HtmlContentShort);
   const [lastTranscriptTimestamp, setLastTranscriptTimestamp] =
     useState<Date | null>()
@@ -320,6 +325,36 @@ export function TranscriptList({
     }
   }
 
+  const groupTranscripts = (
+    transcripts: TranscriptionEntry[]
+  ): GroupedTranscript[] => {
+    return transcripts.reduce(
+      (
+        grouped: GroupedTranscript[],
+        current: TranscriptionEntry,
+        index: number
+      ) => {
+        if (
+          index === 0 ||
+          current.speaker !== transcripts[index - 1].speaker ||
+          (index > 1 &&
+            transcripts[index - 1].speaker !== transcripts[index - 2].speaker)
+        ) {
+          grouped.push({
+            speaker: current.speaker,
+            speaker_id: current.speaker_id,
+            timestamp: current.timestamp,
+            contents: [current.content]
+          })
+        } else {
+          grouped[grouped.length - 1].contents.push(current.content)
+        }
+        return grouped
+      },
+      []
+    )
+  }
+
   return (
     <div
       ref={transcriptListRef}
@@ -355,21 +390,34 @@ export function TranscriptList({
         </div>}
         */}
 
-        {transcripts.map((transcript: TranscriptionEntry, index: number) => (
-          <div
-            key={index}
-            ref={transcripts.length - 1 === index ? lastEntryRef : null}
-            className="block">
-            <TranscriptEntry
-              entry={transcript}
-              globalMode={transcriptMode}
-              speaker_id={transcript.speaker_id}
-              timestamp={transcript.timestamp}
-              text={transcript.content}
-              speaker={transcript.speaker}
-            />
-          </div>
-        ))}
+        {groupTranscripts(transcripts as TranscriptionEntry[]).map(
+          (group: GroupedTranscript, index: number) => (
+            <div
+              key={index}
+              ref={
+                index === groupTranscripts(transcripts).length - 1
+                  ? lastEntryRef
+                  : null
+              }
+              className="block">
+              <TranscriptEntry
+                entry={
+                  new TranscriptionEntry({
+                    speaker: group.speaker,
+                    speaker_id: group.speaker_id,
+                    timestamp: group.timestamp,
+                    content: group.contents.join(" ")
+                  })
+                }
+                globalMode={transcriptMode}
+                speaker_id={group.speaker_id}
+                timestamp={group.timestamp}
+                text={group.contents.join(" ")}
+                speaker={group.speaker}
+              />
+            </div>
+          )
+        )}
 
         {isCapturing && (
           <div className="flex flex-grow-0 p-2 w-[fit-content] text-muted-foreground">

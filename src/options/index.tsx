@@ -48,6 +48,8 @@ const OptionsIndex = () => {
     }
   )
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const getMediaPermissions = async () => {
     try {
       await navigator.mediaDevices.getUserMedia({
@@ -114,9 +116,10 @@ const OptionsIndex = () => {
     getMediaPermissions()
   }, [])
 
-  const onSendInitialChatMessageChanged = (e) => {
-    setDoSendInitialChatMessage(e.target.checked)
+  const onSendInitialChatMessageChanged = (checked: boolean) => {
+    setDoSendInitialChatMessage(checked)
     setIsLoadingUserSettings(true)
+    setErrorMessage(null)
 
     StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
       __vexa_token: "",
@@ -129,12 +132,23 @@ const OptionsIndex = () => {
           method: "PATCH",
           headers: { "Content-type": "application/json" },
           body: JSON.stringify({
-            is_allowed_send_init_message: e.target.checked
+            is_allowed_send_init_message: checked
           })
         }
-      ).finally(() => {
-        setIsLoadingUserSettings(false)
-      })
+      )
+        .then(() => {
+          setDoSendInitialChatMessage(checked)
+        })
+        .catch((error) => {
+          console.error("Error updating user settings:", error)
+          setTimeout(() => {
+            setDoSendInitialChatMessage(false)
+            setErrorMessage("Failed to update settings. Please try again.")
+          }, 2000)
+        })
+        .finally(() => {
+          setIsLoadingUserSettings(false)
+        })
     })
   }
 
@@ -215,22 +229,26 @@ const OptionsIndex = () => {
                 </CardContent>
               </Card>
 
-              {!isLoadingUserSettings ? (
+              <div className="flex flex-col space-y-2 px-6">
                 <div className="flex items-center space-x-2">
                   <Switch
+                    disabled={isLoadingUserSettings}
                     id="send-notification"
                     checked={doSendInitialChatMessage}
                     onCheckedChange={onSendInitialChatMessageChanged}
                   />
                   <label
                     htmlFor="send-notification"
-                    className="text-sm text-muted-foreground">
+                    className="text-primary text-base">
                     Send notification in the chat about using vexa
                   </label>
                 </div>
-              ) : (
-                <p className="text-muted-foreground">Loading...</p>
-              )}
+                {errorMessage && (
+                  <p className="pl-[50px] text-xs text-red-500">
+                    {errorMessage}
+                  </p>
+                )}
+              </div>
             </div>
 
             <BuildInfo className="text-muted-foreground mt-8" hideLogo />

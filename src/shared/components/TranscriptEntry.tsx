@@ -148,12 +148,12 @@ export function TranscriptEntry({
               className={`font-medium text-primary select-text break-words ${speaker !== "TBD" && "cursor-pointer"}`}>
               {speaker === "TBD" ? "" : speaker}
             </span>
-            {speaker !== "TBD" && speaker !== "" && (
+            {/* {speaker !== "TBD" && speaker !== "" && (
               <EditPenButton
                 onClick={editSpeaker}
                 className="hidden group-hover/speaker-name:inline-block stroke-[#94969C]"
               />
-            )}
+            )} */}
           </span>
           {/* <span className="items-center text-muted-foreground text-xs select-text break-words ml-auto">
             {formattedTimestamp}

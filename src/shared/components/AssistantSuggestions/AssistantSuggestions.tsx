@@ -69,7 +69,7 @@ export function AssistantSuggestions({
   }
 
   return (
-    <div className="bottom hide-scrollbar flex gap-2 overflow-x-auto px-4 py-4 h-[64px]">
+    <div className="bottom hide-scrollbar overflow-x-hidden overflow-y-auto flex gap-2 flex-wrap px-4 py-4 h-[124px]">
       {suggestions.map((suggestion, key) => (
         <Button
           key={key}

@@ -124,7 +124,7 @@ export function PlayButton({ ...rest }: VexaPlayButtonProps) {
         variant="default"
         size="sm"
         className="flex gap-2 items-center justify-center">
-        <Play size={16} className="fill-primary" />
+        <Play size={14} className="fill-primary" />
         <span>Record</span>
       </Button>
     </div>

@@ -57,7 +57,7 @@ export function PauseButton({ ...rest }: VexaPauseButtonProps) {
         variant="default"
         size="sm"
         className="flex gap-1 items-center justify-center">
-        <Square size={16} className="fill-red-500 text-red-500" />
+        <Square size={14} className="fill-red-500 text-red-500" />
         <span className={`${hours === 0 ? "w-12" : "w-16"} text-base`}>
           {hours < 1 ? "" : hours + ":"}
           {minutes < 10 ? "0" + minutes : minutes}:

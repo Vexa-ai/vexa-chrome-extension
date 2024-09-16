@@ -1,5 +1,6 @@
 import React from "react"
 
+import { SettingsButton } from "./SettingsButton"
 import { VexaLogo } from "./VexaLogo"
 
 export interface VexaBuildInfoProps {
@@ -16,10 +17,13 @@ export function BuildInfo({
   return (
     <div
       className={`font-semibold text-center w-full px-4 items-center flex justify-between ${className}`}>
-      {!hideLogo && <VexaLogo />}
-      <span className="text-sm font-medium text-muted-foreground">
-        {versionNumber}
-      </span>
+      <div className="flex items-center gap-2">
+        {!hideLogo && <VexaLogo />}
+        <span className="text-sm font-medium text-muted-foreground">
+          {versionNumber}
+        </span>
+      </div>
+      {!hideLogo && <SettingsButton />}
     </div>
   )
 }

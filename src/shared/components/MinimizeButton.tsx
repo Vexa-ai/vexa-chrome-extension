@@ -18,8 +18,13 @@ export function MinimizeButton({ ...rest }: VexaMinimizeButtonProps) {
 
   return (
     <div {...rest} className="VexaMinimizeButton">
-      <Button onClick={minimizeVexa} variant="ghost" size="icon">
+      <Button
+        onClick={minimizeVexa}
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-2">
         <Minimize size={16} />
+        <span>Minimize</span>
       </Button>
     </div>
   )

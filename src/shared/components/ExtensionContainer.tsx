@@ -320,7 +320,7 @@ const Vexa = () => {
                 width: "380px",
                 minHeight: "300px"
               }}
-              className="flex flex-col bg-background py-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl">
+              className="flex flex-col bg-background py-4 rounded-2xl overflow-y-auto overflow-x-hidden shadow-xl pointer-events-auto">
               <AudioCaptureContext.Provider value={audioCapture}>
                 <NotificationContainer />
                 <Toolbar

@@ -58,7 +58,7 @@ const VexaInMeetContext = ({ onMaximizedChanged = (isMax: boolean) => {} }) => {
     matchesUrl && (
       <div
         id="vexa-content-ui"
-        className="fixed dark z-10 right-8 top-1/2 -translate-y-1/2"
+        className="fixed dark z-10 right-8 top-1/2 -translate-y-1/2 pointer-events-none"
         style={{
           position: "fixed",
           zIndex: 99999999

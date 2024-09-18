@@ -27,7 +27,7 @@ export function Toolbar({
       {...rest}
       className="VexaToolbar flex flex-row w-full h-9 mb-3 px-4 items-center">
       <DragHandle
-        className="items-center mr-3 cursor-move"
+        className="items-center mr-3 cursor-move p-3"
         onHandleMouseOut={onDragHandleMouseOut}
         onHandleMouseUp={onDragHandleMouseUp}
         onHandleMouseOver={onDragHandleMouseOver}

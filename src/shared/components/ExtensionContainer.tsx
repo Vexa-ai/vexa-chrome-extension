@@ -281,7 +281,7 @@ const Vexa = () => {
   useEffect(() => {
     const updateHeightAndPosition = () => {
       if (isCapturing || hasRecorded) {
-        const calculatedHeight = Math.max(300, window.innerHeight - 32)
+        const calculatedHeight = Math.max(300, window.innerHeight - 180)
         setExtensionHeight(calculatedHeight)
         setPosition(defaultPosition)
       } else {

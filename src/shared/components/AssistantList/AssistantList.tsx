@@ -384,10 +384,15 @@ export function AssistantList({
     if (assistantMessage && assistantMessage !== assistantMessageRef.current) {
       assistantMessageRef.current = assistantMessage
       setIsCreatingNewThread(true)
-      createThread(assistantMessage).finally(() => {
-        setIsCreatingNewThread(false)
-        onActionComplete()
-      })
+      createThread(assistantMessage)
+        .then(() => {
+          setIsCreatingNewThread(false)
+          onActionComplete()
+        })
+        .catch(() => {
+          setIsCreatingNewThread(false)
+          onActionComplete()
+        })
     }
   }, [assistantMessage, onActionComplete])
 
@@ -452,6 +457,13 @@ export function AssistantList({
   }
 
   const createThread = (prompt: string, label = null) => {
+    const newThread = new Thread({
+      title: "Starting thread..."
+    })
+
+    setThreads((prev) => [...prev, newThread])
+    setSelectedThread(newThread)
+
     userMessagePendingRef.current = new ThreadMessage({
       text: prompt,
       role: "user",
@@ -461,20 +473,6 @@ export function AssistantList({
     setUserMessagePending(userMessagePendingRef.current)
     setIsPrompting(true)
     isSendingMessageRef.current = true
-
-    const thread = (() => {
-      if (selectedThread && !selectedThread.id) {
-        return selectedThread
-      }
-
-      const thread = new Thread({
-        title: "Starting thread..."
-      })
-      setThreads((prev) => [...prev, thread])
-      setSelectedThread(thread)
-
-      return thread
-    })()
 
     const showErrorMessage = (message: string) => {
       if (lastErrorMessageTimeoutRef.current) {
@@ -496,19 +494,17 @@ export function AssistantList({
       })
       .then((response: Thread) => {
         if (!response.id || !response.title || !response.messages) {
-          // TODO: show error
           showErrorMessage("Ooops... can't create thread. Try again later.")
           return
         }
 
-        thread.id = response.id
-        thread.title = response.title
-        setSelectedThread(thread)
+        newThread.id = response.id
+        newThread.title = response.title
+        setSelectedThread(newThread)
 
-        setThreadMessages((prev) => [
-          ...prev,
-          ...response.messages?.map((m) => new ThreadMessage(m))
-        ])
+        setThreadMessages(
+          response.messages?.map((m) => new ThreadMessage(m)) || []
+        )
       })
       .catch((err) => {
         setUserMessage(userMessagePendingRef.current.text)

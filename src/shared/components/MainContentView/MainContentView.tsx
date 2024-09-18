@@ -98,6 +98,13 @@ export function MainContentView({ className, ...rest }: MainContentViewProps) {
     setAssistantMessage(null)
   }
 
+  useEffect(() => {
+    if (selectedTabIndex === 0) {
+      setActionButtonClicked(null)
+      setAssistantMessage(null)
+    }
+  }, [selectedTabIndex])
+
   return (
     <div
       {...rest}

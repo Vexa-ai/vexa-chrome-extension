@@ -32,6 +32,7 @@ import {
   AudioCaptureContext,
   useAudioCapture
 } from "~shared/hooks/use-audiocapture"
+import { ProfileInfo } from "~shared/components/ProfileInfo"
 
 const chatManager = new ChatManager()
 
@@ -367,7 +368,9 @@ const Vexa = () => {
                 ) : (
                   <>
                     <MicrophoneOptions />
-                    <BuildInfo className="mt-auto" />
+                    <div className="flex-grow" />
+                    <ProfileInfo />
+                    <BuildInfo />
                   </>
                 )}
                 <SpeakerEditorModal />

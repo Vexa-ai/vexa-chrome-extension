@@ -200,11 +200,12 @@ const Vexa = () => {
         )?.innerText
         Array.from(document.querySelectorAll("[data-participant-id]")).map(
           (el: HTMLDivElement) => {
-            const nameNode: HTMLDivElement =
-              el.querySelector("[data-self-name]")
-            const micNode: HTMLDivElement = el.querySelector(
-              "[jscontroller=ES310d]"
-            )
+            let nameNode: HTMLDivElement = el.querySelector("[data-self-name]")
+            if (!nameNode) {
+              nameNode = el.querySelector("[jscontroller=LxQ0Q]");
+            }
+
+            const micNode: HTMLDivElement = el.querySelector("[jscontroller=ES310d]")
             if (!micNode || !nameNode) {
               return null
             }

@@ -1,7 +1,7 @@
 {
   "name": "vexa",
   "displayName": "VEXA: Real-time AI Meeting Assistant",
-  "version": "9.2.3",
+  "version": "10.0.0",
   "description": "VEXA.AI - Free meeting transcription and ChatGPT prompting in real-time",
   "author": "Vexa",
   "scripts": {

@@ -448,3 +448,17 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 createOffscreenDocument();
 resetRecordingState();
+
+MessageListenerService.registerMessageListener(MessageType.OPEN_LOGIN_POPUP, async (message) => {
+    try {
+        await chrome.windows.create({
+            url: message.data.url,
+            type: 'popup',
+            width: 400,
+            height: 600,
+            focused: true
+        });
+    } catch (error) {
+        console.error("Failed to open login popup:", error);
+    }
+});

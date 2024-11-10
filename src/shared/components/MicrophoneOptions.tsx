@@ -1,6 +1,7 @@
 import React from "react"
 
-import { MicrophoneHints, MicrophoneStatus } from "./MicrophoneHints"
+import { DeauthorizeButton } from "./DeauthorizeButton"
+import { MicrophoneHints } from "./MicrophoneHints"
 import { MicrophoneSelector } from "./MicrophoneSelector"
 
 export interface MicrophoneOptionsProps {
@@ -12,6 +13,7 @@ export function MicrophoneOptions({ className = "" }: MicrophoneOptionsProps) {
     <div className={`MicrophoneOptions flex flex-col w-full px-4 ${className}`}>
       <MicrophoneSelector />
       <MicrophoneHints className="mt-2" />
+      <DeauthorizeButton className="mt-2" />
     </div>
   )
 }

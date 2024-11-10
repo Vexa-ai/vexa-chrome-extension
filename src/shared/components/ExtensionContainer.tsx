@@ -287,7 +287,7 @@ const Vexa = () => {
         setExtensionHeight(calculatedHeight)
         setPosition(defaultPosition)
       } else {
-        setExtensionHeight(300)
+        setExtensionHeight(500)
       }
     }
 

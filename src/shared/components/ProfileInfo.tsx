@@ -1,44 +1,60 @@
 import React, { useEffect, useState } from "react"
-import { StorageService, StoreKeys } from "~lib/services/storage.service"
+import { MessageType } from "~lib/services/message-listener.service"
+import { MessageSenderService } from "~lib/services/message-sender.service"
+import { StorageService, StoreKeys, type AuthorizationData } from "~lib/services/storage.service"
 import AsyncMessengerService from "~lib/services/async-messenger.service"
+import type { UserInfo } from "~shared/types"
 import { DeauthorizeButton } from "./DeauthorizeButton"
-
-interface UserInfo {
-  email: string
-  username: string
-  first_name: string
-  last_name: string
-  image: string
-}
-
-const asyncMessengerService = new AsyncMessengerService()
 
 export function ProfileInfo() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
+  const messageSender = new MessageSenderService()
+  const asyncMessenger = new AsyncMessengerService()
+  const [authData] = StorageService.useHookStorage<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA)
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const authData = await StorageService.get<AuthorizationData>(StoreKeys.AUTHORIZATION_DATA, {
+  const fetchUserInfo = async () => {
+    try {
+      const currentAuthData = await StorageService.get<AuthorizationData>(
+        StoreKeys.AUTHORIZATION_DATA,
+        {
           __vexa_token: "",
           __vexa_main_domain: "",
           __vexa_chrome_domain: ""
+        }
+      )
+
+      if (!currentAuthData.__vexa_token) {
+        messageSender.sendBackgroundMessage({ 
+          type: MessageType.OPEN_LOGIN_POPUP,
+          data: {
+            url: `${process.env.PLASMO_PUBLIC_LOGIN_ENDPOINT}?caller=vexa-ext`
+          }
         })
-        const data = await asyncMessengerService.getRequest(
-          `/api/v1/users/me?token=${authData["__vexa_token"]}`
-        )
-        setUserInfo(data)
-      } catch (error) {
-        console.error("Failed to fetch user info:", error)
+        return
+      }
+
+      const data = await asyncMessenger.getRequest(
+        `/api/v1/users/me?token=${currentAuthData.__vexa_token}`
+      )
+      setUserInfo(data)
+    } catch (error) {
+      console.error("Failed to fetch user info:", error)
+      if (error.status === 401 || error.status === 403) {
+        messageSender.sendBackgroundMessage({ 
+          type: MessageType.USER_UNAUTHORIZED
+        })
       }
     }
+  }
+
+  useEffect(() => {
     fetchUserInfo()
-  }, [])
+  }, [authData])
 
   const displayName = userInfo ? 
     (userInfo.first_name && userInfo.last_name ? 
       `${userInfo.first_name} ${userInfo.last_name}` : 
-      userInfo.username || userInfo.email.split('@')[0]
+      (userInfo.username || (userInfo.email ? userInfo.email.split('@')[0] : ''))
     ) : ''
 
   return (

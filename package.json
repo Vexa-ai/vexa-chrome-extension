@@ -1,8 +1,8 @@
 {
   "name": "vexa",
-  "displayName": "VEXA: Real-time AI Meeting Assistant",
+  "displayName": "VEXA: AI for Google Meet and Knowledge Organization",
   "version": "10.0.2",
-  "description": "Real-time meeting transcription and ChatGPT over your meetings",
+  "description": "AI assistant that enhances meetings in real-time and builds a unified knowledge base for quick insights and deep research.",
   "author": "Vexa",
   "scripts": {
     "dev": "plasmo dev",

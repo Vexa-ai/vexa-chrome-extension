@@ -6,7 +6,8 @@ import { type AuthorizationData, StorageService, StoreKeys } from "~lib/services
 export const config: PlasmoCSConfig = {
     matches: [
         "https://dashboard.vexa.ai/signin?caller=vexa-ext*",
-     //   "https://ext-dev.vexa.ai/signin?caller=vexa-ext*"
+        "https://vexa.ai/signin?caller=vexa-ext*",
+        "https://ext-dev.vexa.ai/signin?caller=vexa-ext*"
     ]
 }
 const messageSender = new MessageSenderService();

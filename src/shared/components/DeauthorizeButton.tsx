@@ -29,7 +29,7 @@ export function DeauthorizeButton({ className = "" }: DeauthorizeButtonProps) {
   }
 
   const clearCookies = async () => {
-    const domains = ["dashboard.vexa.ai", "ext-dev.vexa.ai", ".vexa.ai"]
+    const domains = ["dashboard.vexa.ai", "ext-dev.vexa.ai", "vexa.ai"]
     await Promise.all(domains.map(async domain => {
       const cookies = await chrome.cookies.getAll({ domain })
       return Promise.all(cookies.map(cookie => 

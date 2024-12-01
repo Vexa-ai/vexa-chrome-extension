@@ -13,7 +13,7 @@ export function VexaLogo({ ...rest }: VexaLogoProps) {
       <VexaIcon size="16" />
       <h2
         className="font-semibold text-primary"
-        onClick={() => open("https://assistant.dev.vexa.ai/app")}
+        onClick={() => open("https://vexa.ai/app")}
         style={{ cursor: "pointer" }}>
         Vexa
       </h2>

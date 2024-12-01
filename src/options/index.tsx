@@ -109,7 +109,7 @@ const OptionsIndex = () => {
   }
 
   const goToVexaDashboard = () => {
-    window.open("https://assistant.dev.vexa.ai/app", "__blank")
+    window.open("https://vexa.ai/app", "__blank")
   }
 
   useEffect(() => {
